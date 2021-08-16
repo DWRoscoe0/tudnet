@@ -24,9 +24,9 @@ public class TUDNetStarter
       Have app delete any empty temporary directories on exit
       to prevent their number growing beyond a few.
     
-    This class is used as a process to start the Infogora app process.
-    It is in the same jar file as the Infogora class.
-    Both this class and the Infogora class have their own main(..) methods.
+    This class is used as a process to start the TUDNet app process.
+    It is in the same jar file as the TUDNet class.
+    Both this class and the TUDNet class have their own main(..) methods.
     
     This cless was created because of the characteristics of the
     7Zip SFX Modules used as a decompressor and launcher.
@@ -49,14 +49,14 @@ public class TUDNetStarter
     In this case, presently, execution is aborted.
 
     Switches output in command line to 
-    a descendant Infogora app process that is being started:
+    a descendant TUDNet app process that is being started:
     -starterPort : followed by port number descendant processes should use
       to send messages back to this process.
     -userDir : passed through, see above.
     -tempDir : passed through, see above.
 
     Legal switches input through the -starterPort TCP socket from
-    descendant Infogora app processes are;
+    descendant TUDNet app processes are;
     -delegatorExiting : indicates that a descendant process which
       delegated its job to its own descendant, is exiting.
       Its descendant might still need the temporary directory to exist. 
@@ -64,7 +64,7 @@ public class TUDNetStarter
       did not delegate its job to its own descendant, is exiting.
       Therefore it should be safe for the temporary directory to be deleted. 
 
-    ///fix When Infogora.exe delegates to another Infogora.exe,
+    ///fix When TUDNet.exe delegates to another TUDNet.exe,
       the temporary directory doesn't needs to be preserved.
       Figure out a different logic for this.
       
@@ -84,9 +84,9 @@ public class TUDNetStarter
       /* This method is the app starter's entry point.  
         It does the following, in the following order:
         * It sets a default Exception handler.
-        * It starts the Infogora app as another process.
-        * It waits for that Infogora app process to terminate.
-        * It waits for all of the Infogora app's child processes to terminate.
+        * It starts the TUDNet app as another process.
+        * It waits for that TUDNet app process to terminate.
+        * It waits for all of the TUDNet app's child processes to terminate.
         * It terminates itself.
 
         */
@@ -101,12 +101,13 @@ public class TUDNetStarter
           
           Process theProcess= null;
           DefaultExceptionHandler.setDefaultExceptionHandlerV(); 
-          theAppLog.info(true,
-              "InfogoraStarter.main() beginning. ======== STARTER IS STARTING ========");
+          theAppLog.info(true, Config.appString + "Starter.main() beginning. "
+              + "======== STARTER IS STARTING ========");
           CommandArgs theCommandArgs= new CommandArgs(argStrings); 
           AppSettings.initializeV(TUDNetStarter.class, theCommandArgs);
           if (theCommandArgs.switchValue("-userDir") == null) {
-            theAppLog.error("InfogoraStarter.main() Not an exe file launch!");
+            theAppLog.error(Config.appString + "Starter.main() "
+                + "Not an exe file launch!");
             break toExit;
             }
           setupLoopbackPortB();
@@ -118,8 +119,10 @@ public class TUDNetStarter
           theArrayListOfStrings.add(System.getProperty("java.home") + 
               File.separator + "bin" + File.separator + "java.exe");
           theArrayListOfStrings.add("-cp"); // java.exe -cp (classpath) option.
-          theArrayListOfStrings.add("Infogora.jar"); // Path of .jar file to run
-          theArrayListOfStrings.add("allClasses.Infogora"); // entry point.
+          theArrayListOfStrings.add( // Path of .jar file to run
+              Config.appString+".jar");
+          theArrayListOfStrings.add(
+              "allClasses."+Config.appString);
           theArrayListOfStrings.add("-starterPort"); // For feedback...
             theArrayListOfStrings.add(""+starterPortL); // ...using this port.
           theArrayListOfStrings.add("-userDir"); // Pass userDir switch.
@@ -128,36 +131,36 @@ public class TUDNetStarter
             theArrayListOfStrings.add(theCommandArgs.switchValue("-tempDir"));
           theArrayListOfStrings.add("SENTINEL"); // ///dbg
   
-          theAppLog.debug("InfogoraStarter.main() starting Infogora process.");
+          theAppLog.debug("TUDNetStarter.main() starting TUDNet process.");
           theProcess= ProcessStarter.startProcess(
               theArrayListOfStrings.toArray(new String[0]));
           if (theProcess == null) { // Handle start failure.
-            theAppLog.error("InfogoraStarter.main() Process start failed.");
+            theAppLog.error("TUDNetStarter.main() Process start failed.");
             break toExit;
             }
           theAppLog.info(
-            "InfogoraStarter.main() waiting for process termination.");
+            "TUDNetStarter.main() waiting for process termination.");
           try { // Waiting for terminations.
             int exitCodeI= theProcess.waitFor();
             if (exitCodeI != 0 ) { // Handle termination error.
               theAppLog.error(
-                "InfogoraStarter.main() child process exit code="+exitCodeI);
+                "TUDNetStarter.main() child process exit code="+exitCodeI);
               break toExit;
               }
             theAppLog.info(
-                "InfogoraStarter.main() First child process has terminated.");
+                "TUDNetStarter.main() First child process has terminated.");
             theLoopbackMonitorThread.join();
             theAppLog.info(
-                "InfogoraStarter.main() Last child process is terminating.  "
+                "TUDNetStarter.main() Last child process is terminating.  "
                 + "Waiting 1 second before exiting.");
             Thread.sleep( 1000); // Wait extra time for safety.
           } catch (InterruptedException e) {
-            theAppLog.info("InfogoraStarter.main() "
+            theAppLog.info("TUDNetStarter.main() "
                 + "wait for process termination was interrupted.");
             break toExit;
           } // Waiting for terminations.
           } // toExit:
-        theAppLog.info(true, "InfogoraStarter.main() calling exit(0). "
+        theAppLog.info(true, "TUDNetStarter.main() calling exit(0). "
             + "======== STARTER IS ENDING ========");
         theAppLog.closeFileIfOpenB(); // Close log for exit.
         System.exit(0); // Will kill any remaining unknown threads running??

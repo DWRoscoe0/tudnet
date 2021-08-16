@@ -148,7 +148,8 @@ public class BackupTerminator extends Thread
         */
       {
         synchronized (theAppLog) { // Output thread list as single log entry.
-          theAppLog.info("Infogora.logThreadsV(), remaining active threads:"); 
+          theAppLog.info(
+              "BackupTerminator.logThreadsV(), remaining active threads:"); 
           Set<Thread> threadSet= Thread.getAllStackTraces().keySet();
           for (Thread t : threadSet) {
               Thread.State threadState= t.getState();

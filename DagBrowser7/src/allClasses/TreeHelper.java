@@ -99,7 +99,7 @@ public class TreeHelper
       though it might be closely associated with a node in the tree.
 
     * TreePathEvent: The class used to communicate locations of
-      Wholes and Parts within the Infogora DAG.
+      Wholes and Parts within the app's DAG.
       In earlier versions the TreeSelectionEvent was used.
 
     Things provided by this class:
@@ -251,7 +251,7 @@ public class TreeHelper
       	  It does this by setting the TreeModel to null.
 
       	  Not all Listeners need to be unregistered.
-      	  The Infogora TreeModelListeners must be unregistered because
+      	  The app's TreeModelListeners must be unregistered because
       	  they are components with shorter scope than the TreeModel
       	  and many of them can be created, used briefly, and then dereferenced.
       	  Failure to unregister them would result in massive Listener memory leaks.
@@ -952,7 +952,7 @@ public class TreeHelper
           when in the RootJTree highlighted node, either:
           * The (Enter) key is pressed.
           * The mouse is double-clicked.
-          See RootJTree and Infogora details.
+          See RootJTree and TUDNet details.
           */
         {
           fireSetPartTreePathV(  // Notify the listeners about node change

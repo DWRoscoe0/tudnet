@@ -19,10 +19,10 @@ public class InstallerBuilder
   extends VolumeChecker
 
   /* This class is used to write a mass storage volume with
-   * the files needed to create an Infogora installation.
+   * the files needed to create an app installation.
    * 
    * Files that it will or might write:
-   * * Infogora.exe
+   * * TUDNet.exe
    * * ReadMe.txt
    * * Persistent.txt
    * * User Content (///enh comes later)
@@ -92,7 +92,7 @@ public class InstallerBuilder
         theAppLog.debug("InstallerBuilder.installToVolumeV(.) begins.");
         String resultString;
         queueAndDisplayOutputSlowV("\n\nInstalling to " + volumeFile);
-        buildFolderFile= new File(volumeFile,"InfogoraInstall");
+        buildFolderFile= new File(volumeFile,Config.appString+"Install");
       goReturn: {
       goFinish: {
         /// resultString= deleteAllVolumeFilesReturnString(volumeFile);
@@ -164,8 +164,8 @@ public class InstallerBuilder
         queueAndDisplayOutputSlowV("\nWriting ReadMe.txt file.");
         File destinationFile= 
             new File(destinationFolderFile, "ReadMe.txt");
-        String sourceString= "To install, [double-]click on "
-            + "the Infogora application file.";
+        String sourceString= "To install, [double-]click on the "
+            + Config.appString + " application file.";
         InputStream sourceInputStream= 
             new ByteArrayInputStream(sourceString.getBytes());
         boolean successB= FileOps.tryCopyingInputStreamToFileB(

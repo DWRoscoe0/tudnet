@@ -36,7 +36,7 @@ public class JavaFXGUI
    * Since that time I learned how to start the JavaFX runtime 
    * without involving an Application subclass instance.
    * This is done by calling startup(.) from startJavaFXAndReturnString(),
-   * which is called from Infogora.main(.).
+   * which is called from TUDNet.main(.).
    * 
    * ///org It should now be possible to eliminate much of the kludginess
    * in the code that follows it, and maybe move all the remaining code into
@@ -183,7 +183,7 @@ public class JavaFXGUI
           aJavaFXGUI.theSelections= theSelections;
           theJavaFXGUI= aJavaFXGUI; // Finish by storing in static variable.
           runningLockAndSignal.notifyingV(); // Inform caller of definition.
-          theAppLog.debug("JavaFXGUILog", "Infogora.initializeJavaFXGUI(.) "
+          theAppLog.debug("JavaFXGUILog", "initializeJavaFXGUI(.) "
               + "defining theJavaFXGUI=="+theJavaFXGUI);
           }
       theAppLog.debug("JavaFXGUILog","initializeJavaFXGUI(.) ends.");

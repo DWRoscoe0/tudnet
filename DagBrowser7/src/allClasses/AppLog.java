@@ -69,7 +69,7 @@ public class AppLog extends EpiThread
     use the method getPrintWriter() to get the PrintWriter,
     and put all of the code inside a block synchronized on this log object.
     Like all synchronized code, this code should complete quickly.
-    See the method Infogora.logThreadsV() for an example of doing this.
+    See the method TUDNet.logThreadsV() for an example of doing this.
 
     ///enh: Transition to a logger that can be changed and dependency-injected.
      * Allow both static and injected-non-static, at least for a while.
@@ -82,7 +82,7 @@ public class AppLog extends EpiThread
       the Windows Task Manager, the log file is truncated,
       though judging from Console output, the app exits normally.
 
-    ///tst? MakeMultiprocessSafe:  Ready for testing, with InfogoraStarter. 
+    ///tst? MakeMultiprocessSafe:  Ready for testing, with TUDNetStarter. 
 	    ///fix: When the presently kludgy buffered mode is enabled,
 	      interleaving of log entries might not work correctly
 	      when there are two running instances on the same computer,

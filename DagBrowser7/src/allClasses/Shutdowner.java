@@ -287,8 +287,8 @@ public class Shutdowner
         2. If the shutdown of this process is not the final shutdown,
            meaning this process is being replaced by another process,
            then ProcessBuilder is used to create and start that next process.
-           If this is the final Infogora process shutdown then 
-           it signals this to the Infogora starter process by 
+           If this is the final app process shutdown then 
+           it signals this to the app starter process by 
            deleting a flag .txt file.
           
         3. It signals this classes shutdown hook thread,

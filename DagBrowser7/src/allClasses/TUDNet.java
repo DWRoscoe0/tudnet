@@ -117,31 +117,31 @@ class TUDNet
         Command line switches in method parameter argStrings
         are used to pass information from one app instance to another.  
         Legal switches are listed below.
-        Ignore anything related to InfogoraStarter, 
+        Ignore anything related to TUDNetStarter, 
         an old module that is not presently being used.
-        * Legal switches input on the command line from the InfogoraStarter are;
+        * Legal switches input on the command line from the TUDNetStarter are;
           -starterPort : followed by port number to be used
-            to send messages back to the InfogoraStarter process.
-          -userDir : see InfogoraStarter.
-          -tempDir : see InfogoraStarter.
-        * Legal switches output from a parent Infogora/TUDNet app process
-          to a new child Infogora/TUDNet app process:
+            to send messages back to the TUDNetStarter process.
+          -userDir : see TUDNetStarter.
+          -tempDir : see TUDNetStarter.
+        * Legal switches output from a parent TUDNet app process
+          to a new child TUDNet app process:
           -otherAppIs : followed by the full path to 
             the parent processes initiator file.
           -starterPort : passed through, see above.
-        * Legal switches output by an Infogora/TUDNet app instance 
+        * Legal switches output by an TUDNet app instance 
           which is starting to the InstancePort of an already running 
-          Infogora/TUDNet app instance:
+          TUDNet app instance:
           -otherAppIs : followed by the full path to 
             the starting apps initiator file.
-        * Legal switches output from a descendant Infogora/TUDNet app to 
-          the TCP socket -starterPort of an its ancestor InfogoraStarter app:
+        * Legal switches output from a descendant TUDNet app to 
+          the TCP socket -starterPort of an its ancestor TUDNetStarter app:
           -delegatorExiting : indicates that this descendant process which
             delegated its job to its own descendant, is exiting.
             Its descendant might still need the temporary directory to exist. 
           -delegateeExiting : indicates that a descendant process which
             did not delegate its job to its own descendant, is exiting.
-            Therefore it should be safe for the ancestor InfogoraStarter app
+            Therefore it should be safe for the ancestor TUDNetStarter app
             to exit, which would cause the temporary directory to be deleted.
 
 			  */

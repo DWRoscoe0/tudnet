@@ -165,7 +165,7 @@ public class VolumeChecker
         if (! EpiString.isAbsentB(resultString)) break goReturn;
         offsetOfProgressReportI= thePlainDocument.getLength();
         pushOperationV("VolumeChecker");
-        buildFolderFile= new File(volumeFile,"InfogoraTemp");
+        buildFolderFile= new File(volumeFile,Config.appString + "Temp");
         initialVolumeFreeBytesL= volumeFile.getUsableSpace();
         toCheckTotalBytesL= initialVolumeFreeBytesL;
         resultString= FileOps.makeDirectoryAndAncestorsString(

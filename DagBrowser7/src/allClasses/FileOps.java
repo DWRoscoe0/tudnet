@@ -581,9 +581,9 @@ public class FileOps
         All but the last element represents a directory,
         The last element could be either a directory or a file,
         fileRelativePathStrings may contain a single name element, such as 
-          {"TCPCopierStaging" + File.separator + "Infogora.exe"} 
+          {"TCPCopierStaging" + File.separator + "TUDNet.exe"} 
         or multiple elements, such as 
-          {"TCPCopierStaging", "Infogora.exe"} 
+          {"TCPCopierStaging", "TUDNet.exe"} 
         Note that the above 2 examples represent the same path
         expressed in 2 different ways.
         */

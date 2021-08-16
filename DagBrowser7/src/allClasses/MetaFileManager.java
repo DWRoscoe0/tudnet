@@ -48,9 +48,9 @@ public class MetaFileManager {
     private static final String nestedFileNameString= "Nested.txt";
 
     private static final String flatHeaderTokenString= 
-      "Infogora-Flat-Meta-Data-File";
+      Config.appString + "-Flat-Meta-Data-File";
     private static final String nestedHeaderTokenString= 
-      "Infogora-Nested-Meta-Data-File";
+      Config.appString + "-Nested-Meta-Data-File";
       
   // Instance variables injected through constructor.
 

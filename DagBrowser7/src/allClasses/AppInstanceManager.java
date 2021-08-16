@@ -690,7 +690,6 @@ l    * If the app receives a message indicating
   			    				 	int answerI= JOptionPane.showConfirmDialog(
   			    				 		null, // No parent component. 
   			                outString,
-  			                //// "Infogora Info",
   			                Config.appString + " Info",
   			                JOptionPane.OK_CANCEL_OPTION
   			                );
@@ -701,7 +700,6 @@ l    * If the app receives a message indicating
   				    				JOptionPane.showMessageDialog(
   			    						null, // No parent component. 
   			                outString,
-  			                //// "Infogora Info",
                         Config.appString + " Info",
   			                JOptionPane.INFORMATION_MESSAGE
   			                );
@@ -721,7 +719,7 @@ l    * If the app receives a message indicating
 	      /* Normally this method is called at app start-up,
 	        before the GUI has been activated.
 	        It begins the process of checking for and installing or updating
-	        the app file in the Infogora standard folder to make it
+	        the app file in the app's standard folder to make it
 	        the latest version, and then runs it.
 	        It returns true if this app instance should shutdown
 	          because further work has been delegated to

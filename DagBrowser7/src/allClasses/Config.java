@@ -88,7 +88,7 @@ public class Config
 		public static final char delimiterC= '!';
 		public static final char pathSeperatorC= '/'; 
 
-		public static final String appString= "TUDNet"; //// "Infogora";
+		public static final String appString= "TUDNet"; // Previously "Infogora";
     public static final String appImportFolderString= "Imports";
     public static final String appJarString= appString + ".jar";
     public static final String textStream1FolderString= "Peers";

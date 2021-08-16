@@ -61,7 +61,7 @@
               Carol's TUDNet Site
               .
             .
-            infogora
+            TUDNet
               Bob's TUDNet Site
               .
               Carol's TUDNet Site

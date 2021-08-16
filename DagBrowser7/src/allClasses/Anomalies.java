@@ -60,7 +60,7 @@ public class Anomalies
      * Some of the source code that deals with these anomalies 
      * is marked with the string "///ano".
      * Search this app's source code for that string to see examples.
-     * A good place to start is the Infogora.main(.) method, 
+     * A good place to start is the TUDNet.main(.) method, 
      * which is this app's entry point.
      * 
      * Why is so much attention being paid to anomalies?
