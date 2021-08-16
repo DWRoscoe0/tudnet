@@ -289,7 +289,7 @@ public class Shutdowner
            then ProcessBuilder is used to create and start that next process.
            If this is the final Infogora process shutdown then 
            it signals this to the Infogora starter process by 
-           deleting flag file InfogoraAppActiveFlag.txt.
+           deleting a flag .txt file.
           
         3. It signals this classes shutdown hook thread,
           which was previously registered with the JVM,
@@ -332,9 +332,9 @@ public class Shutdowner
             ProcessStarter.startProcess(
                 exitProcessStrings); // No, start other process before exiting.
             theAppLog.info("Shutdowner.delegationDependentFinishingV() "
-                + "deleting InfogoraAppActiveFlag.txt.");
+                + "deleting " + Config.appString + "AppActiveFlag.txt.");
             FileOps.makeRelativeToAppFolderFile(
-                "InfogoraAppActiveFlag.txt").delete();
+                Config.appString+ "AppActiveFlag.txt").delete();
             sendFeedbackMessageToStarterV("-delegatorExiting");
             }
           else 

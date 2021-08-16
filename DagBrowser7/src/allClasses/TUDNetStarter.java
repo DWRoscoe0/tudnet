@@ -11,9 +11,9 @@ import static allClasses.SystemSettings.NL;
 import static allClasses.AppLog.theAppLog;
 
 
-public class InfogoraStarter
+public class TUDNetStarter
 
-  /* ///enh: Remove this class?  
+  /* ///enh: Remove this class, or maybe save it in an old code package?
     It is no longer being used since discovering that
     if there is no mixing of exe and jar processes then
     each exe process has its own temporary directory.
@@ -104,7 +104,7 @@ public class InfogoraStarter
           theAppLog.info(true,
               "InfogoraStarter.main() beginning. ======== STARTER IS STARTING ========");
           CommandArgs theCommandArgs= new CommandArgs(argStrings); 
-          AppSettings.initializeV(InfogoraStarter.class, theCommandArgs);
+          AppSettings.initializeV(TUDNetStarter.class, theCommandArgs);
           if (theCommandArgs.switchValue("-userDir") == null) {
             theAppLog.error("InfogoraStarter.main() Not an exe file launch!");
             break toExit;
