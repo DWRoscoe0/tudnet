@@ -4,5 +4,7 @@ pause Before java.
 rem jre1.8.0_191\bin\java.exe -jar Infogora.jar allClasses.Infogora
 rem jre1.8.0_191\bin\java.exe -cp Infogora.jar allClasses.InfogoraStarter
 rem jre1.8.0_191\bin\java.exe -cp Infogora.jar allClasses.Infogora -userDir \"%1\" -tempDir \"%2\"
-jre1.8.0_191\bin\java.exe -cp Infogora.jar allClasses.Infogora -userDir "%1" -tempDir "%2"
+rem jre1.8.0_191\bin\java.exe -cp Infogora.jar allClasses.Infogora -userDir "%1" -tempDir "%2"
+rem jre1.8.0_191\bin\java.exe -cp TUDNet.jar allClasses.Infogora -userDir "%1" -tempDir "%2"
+jre1.8.0_191\bin\java.exe -cp TUDNet.jar allClasses.TUDNet -userDir "%1" -tempDir "%2"
 pause After java.
