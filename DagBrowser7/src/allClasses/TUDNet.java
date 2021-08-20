@@ -162,7 +162,9 @@ class TUDNet
         theAppLog.info(true,"TUDNet.main() ======= APP IS STARTING =======");
 
         if (null != javaFXStartAnomalyString) ///ano Report any problem with
-          theAppLog.error(javaFXStartAnomalyString); ///ano runtime startup.
+          //// theAppLog.error(javaFXStartAnomalyString); ///ano runtime startup.
+          theAppLog.error( ///ano runtime startup.
+              "JavaFX startup anomaly",javaFXStartAnomalyString);
 
         CommandArgs theCommandArgs= new CommandArgs(argStrings);
         AppSettings.initializeV(TUDNet.class, theCommandArgs);

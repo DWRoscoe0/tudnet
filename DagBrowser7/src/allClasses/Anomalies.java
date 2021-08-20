@@ -257,6 +257,7 @@ public class Anomalies
        */
       {
         java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
+          ///ano The above line causes debug tracing to fail!
 
         if (null == summaryIDLineString) 
           summaryIDLineString= "Uncategorized Anomaly";

@@ -570,7 +570,10 @@ public class AppLog extends EpiThread
         }
 
 
-    // Error methods.
+    /* Error methods.  
+     * They all eventually call the error(.) method with the most arguments.
+     * See that method for documentation.
+     */
     
     public void error(String summaryIDLineString)
       {
@@ -601,14 +604,29 @@ public class AppLog extends EpiThread
 
         It also throws, catches, and ignores a DebugException.
         This can be used with the IDE in determining the causes of anomalies.
-        
+
+        The arguments to this function are as follows:
+        * summaryIDLineString is for a hopefully short description of the error,
+          or at least an error types, that will serve as a cache key
+          for Dialog windows so the windows can be reused.  
+        * detailsString is for a longer string with details about the error.
+        * Throwable theThrowable is for an exception that produced the error.
+        Any of these parameters can be null.
+        Reasonable attempts will be made to provide values in these cases.
+
         ///ano Maybe not all errors should be reported as anomalies.
         Maybe only a subset should be, 
         and should go through the Anomalies class.
         */
       { 
         synchronized(this) { // Synchronized on AppLog object for coherence. 
-          logV( ERROR, summaryIDLineString, detailsString, theThrowable, true);
+          logV( 
+              ERROR, 
+              summaryIDLineString, 
+              detailsString, 
+              theThrowable, 
+              true // Send to console also.
+              );
           doStackTraceV(theThrowable);
           }
 
@@ -620,7 +638,12 @@ public class AppLog extends EpiThread
         }
 
 
-    // Warning methods.
+
+    /* Warning methods.
+     * They all eventually call the warning(.) method with the most arguments.
+     * See that method for documentation.
+     */
+    
 
     public void warning(String summaryIDLineString)
       {
@@ -630,12 +653,31 @@ public class AppLog extends EpiThread
     public void warning(String summaryIDLineString, String detailsString)
       /* This method writes a warning String to a log entry
         and to an Anomaly dialog.
-        A warn is something with which the app should not have to deal.
+        A warning is something with which the app should not have to deal.
         Response to a warning is usually to either ignore it and continue.
-       */
+
+        The arguments to this function are as follows:
+        * summaryIDLineString is for a hopefully short description of the error,
+          or at least an error types, that will serve as a cache key
+          for Dialog windows so the windows can be reused.  
+        * detailsString is for a longer string with details about the error.
+        * Throwable theThrowable is for an exception that produced the error.
+        Any of these parameters can be null.
+        Reasonable attempts will be made to provide values in these cases.
+
+        ///ano Maybe not all errors should be reported as anomalies.
+        Maybe only a subset should be, 
+        and should go through the Anomalies class.
+        */
       {
         synchronized(this) { // Synchronized on AppLog object for coherence. 
-          logV( WARNING, summaryIDLineString, detailsString, null, false);
+          logV( 
+              WARNING, 
+              summaryIDLineString, 
+              detailsString, 
+              null, // No associated Exception/Trhowable.
+              false // Nothing to console.
+              );
           /// doStackTraceV(theThrowable);
           }
         }

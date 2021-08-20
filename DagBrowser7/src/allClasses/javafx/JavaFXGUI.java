@@ -9,6 +9,7 @@ import com.sun.javafx.application.PlatformImpl;
 
 import allClasses.DataNode;
 import allClasses.DataRoot;
+//// import allClasses.EpiThread;
 import allClasses.LockAndSignal;
 import allClasses.Persistent;
 import allClasses.Shutdowner;
@@ -89,7 +90,12 @@ public class JavaFXGUI
        * and a timeout was added to mitigate it.  
        * After that code was added, the failures stopped,
        * but the mitigation code was left in case they returned.
-       * The code was tested with a breakpoint to simulate the failure.
+       * The failures have returned but happened only occasionally.
+       * 
+       * The code was originally tested with a breakpoint 
+       * to pause execution of the startup(.) Runnable argument
+       * but lately that hasn't worked because something interrupts
+       * the breakpoint and causes the execution to resume.
        * 
        * This method returns a String describing the anomalous behavior
        * if the failure happened, or null if it didn't happen.
@@ -115,7 +121,7 @@ public class JavaFXGUI
         // theAppLog.error("Test 1, before runtime start."); ///ano
         PlatformImpl.startup( // Start FX runtime with confirmation Runnable. 
           () -> {
-            // EpiThread.interruptibleSleepB(5000); // Test.
+            // EpiThread.interruptibleSleepB(5000); // Force time-out to test.
             theAppLog.info("JavaFXGUI.startAndReturnString() " ///ano
                 + "notify begins, RUNTIME IS UP!"); ///ano
             runtimeIsActiveB= true; // Confirm that JavaFX queue is active.
@@ -146,10 +152,12 @@ public class JavaFXGUI
 
         String waitResultString= ///ano
             "JavaFXGUI.startAndReturnString() wait ended because of "
-            +theInput+".\n  Used total of "
-            +(waitStartTimeMsL-javaFXStartTimeMsL)
-            +"+"+(System.currentTimeMillis()-waitStartTimeMsL)
-            +" ms.";
+            + theInput+"."
+            + "\n  " + (waitStartTimeMsL-javaFXStartTimeMsL) 
+              + "ms from startup() to confirmation Runnable running."
+            + "\n  " + (System.currentTimeMillis()-waitStartTimeMsL) 
+              + "ms from confirmation Runnable running to end of wait."
+            + "\n  " + maxWaitL + "ms wait limit.";
         theAppLog.debug("JavaFXGUILog", ///ano Report how wait ended.
             waitResultString); ///ano
         if (theInput == Input.TIME) ///ano If wait time-out anomaly happened,

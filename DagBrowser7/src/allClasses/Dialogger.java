@@ -81,7 +81,10 @@ public class Dialogger extends Object
        * a String describing the failure if it fails.  
        * 
        * ///ano WindowOpensOffScreen.  It happened after I added
-        JavaFXGUI.setDefaultStyle(theAlert.getDialogPane());
+       *  JavaFXGUI.setDefaultStyle(theAlert.getDialogPane());
+       *  
+       * ///enh Format detailsString to indent the continuation of 
+       *   wrapped lines so line/paragraph boundaries stand out. 
        */
       {
         String resultString= null;
