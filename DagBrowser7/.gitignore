@@ -6,3 +6,6 @@ Outline.tmp
 # Ignore reference launcher folders.
 launcher1805/**
 launcherKolich/**
+
+# Ignore binaries
+bin/**
