@@ -22,7 +22,7 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-public abstract class DataNode //// test.
+public abstract class DataNode
 
   implements ElementMultiLink<DataNode>
 
@@ -1076,8 +1076,8 @@ public abstract class DataNode //// test.
         //// theEpiTreeItem.setValue(null);
         theEpiTreeItem.setValue(dummyDataNode);
         // theEpiTreeItem.setValue(theDataNode);
-        System.out.println(
-          "DataNode.displayChangedSubtreeV(.) "+theDataNode+", "+theEpiTreeItem);
+        //// System.out.println(
+        ////  "DataNode.displayChangedSubtreeV(.) "+theDataNode+", "+theEpiTreeItem);
         }); 
       }
 
