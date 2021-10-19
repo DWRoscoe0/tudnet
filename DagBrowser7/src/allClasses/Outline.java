@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.net.URL;
 
 import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
@@ -407,14 +408,20 @@ public class Outline
           distributed in jar files.
           */
         { // createTheRandomAccessFileV(..)
-          InputStream resourceInputStream= 
-            getClass().getResourceAsStream("Outline.txt");
+          URL resourceURL= getClass().getResource("Outline.txt");
+                //// getClass().getResourceAsStream("Outline.txt");
+          theAppLog.info("Outline.createTheRandomAccessFileV() URL="
+                +resourceURL.toString());
+          InputStream resourceInputStream= null;
           { // open random-access file for creation and reading.
             try { // Try creating file.
+              resourceInputStream=
+                  resourceURL.openStream();
               theRandomAccessFile=  // For open random access Outline file.
                 new RandomAccessFile( "Outline.tmp", "rw" );
               } // Try creating file.
-            catch (FileNotFoundException e) { // Handle any errors.
+            //// catch (FileNotFoundException e) { // Handle any errors.
+            catch (IOException e) { // Handle any errors.
               theAppLog.error("Outline.createTheRandomAccessFileV(), new "+e);
               } // Handle any errors.
             } // open random-access file for creation and reading.
