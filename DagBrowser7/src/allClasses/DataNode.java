@@ -22,11 +22,7 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-<<<<<<< HEAD
 public abstract class DataNode
-=======
-public abstract class DataNode //// test 1
->>>>>>> refs/heads/temporary
 
   implements ElementMultiLink<DataNode>
 
