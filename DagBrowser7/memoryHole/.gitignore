@@ -1,0 +1,15 @@
+# The directory (memoryHole) containing this file
+# is for things to be ignored by Git,
+# at least temporarily until they are deleted.
+# The files to be ignored are described next.
+
+# Include all regular files.
+*
+
+# Include all directories.
+*/
+
+# Exclude the file containing this text.
+!.gitignore
+
+# end
