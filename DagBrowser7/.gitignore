@@ -3,9 +3,5 @@
 # Ignore temporary UI file that app creates.
 Outline.tmp
 
-# Ignore reference launcher folders.
-launcher1805/**
-launcherKolich/**
-
 # Ignore binaries
 bin/**
