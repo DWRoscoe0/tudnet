@@ -1,12 +1,22 @@
-*.class
-*.sfx
-*.7z
-*.exe
+# This file controls the Git ignoring for
+# the builder of the app executable .exe file.
 
-# Package Files #
+# Ignore directories of input libraries.
+/jre1.8.0_191/**
+/sfx/**
+/7zip/**
+
+# Ignore input-output archive files.
 *.jar
 *.war
 *.ear
+*.7z
 
-7zip/**
-jre1.8.0_191/**
+# Ignore other input-output files.
+*.class
+*.exe
+
+# Ignore app UI temporary output file.
+/Outline.tmp
+
+# End.

@@ -1,7 +1,9 @@
-# Main .ignore file.
+# Main .gitignore file.
 
-# Ignore temporary UI file that app creates.
-Outline.tmp
+# Ignore output binary files.
+/bin
 
-# Ignore binaries
-bin/**
+# Ignore app UI temporary output file.
+/Outline.tmp
+
+# End.
