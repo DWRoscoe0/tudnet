@@ -1,13 +1,15 @@
 The directory that contains this file also contains 
 files used to build TUDNet.exe, which is 
-the TUDNet app in the form of a Windows executable file.  
+the TUDNet app in the form of a Windows executable file.
+The files here are based on the files at: 
+  https://github.com/markkolich/7zip-sfx-java
 
 TUDNet.exe is a self-extracting .7z archive file.  When run:
 * It extracts to a temporary directory:
   * the files and folders of a Java Runtime Environment (JRE) and  
   * TUDNet.jar which is the app as a Java program stored in 
     an executable .jar file .
-* It runs the app by using the JRE to run TUDNet.jar .
+* Next it runs the app by using the JRE to run TUDNet.jar .
 * After TUDNet.jar and the JRE terminate, it deletes the temporary directory.
 
 TUDNet.exe is the concatenation of the following 3 files:
