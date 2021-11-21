@@ -1,17 +1,35 @@
-;!@Install@!UTF-8!
-; launcherKolichM tests.
-;Title="Infogora Launcher"
+; This file is named "config.txt".
+;
+, config.txt is one of the 3 files concatenated to create
+; the TUDNet.exe self-extracting Windows executable app file.
+;
+; config.txt contains parameters that control the behavior of 
+; the processes of extracting and launching.
+;
+; For more information, see 00ReadMe.txt.
+;
+; "; " begins comment lines containing documentation.
+; ";;" begins comment lines containing old code.
+;
+;;!@Install@!UTF-8!
+;
 Title="TUDNet Launcher"
+;
 ;ExtractDialogText="Program will start in a moment."
 ExtractDialogText="TUDNet will start in a moment."
+;
 GUIFlags="32"
-;ExtractTitle="Extracting program."
+;
+;;ExtractTitle="Extracting program."
 ExtractTitle="Extracting TUDNet."
-; FinishMessage="The program has terminated."
+;
+;; FinishMessage="The program has terminated."
+;
 ; javaw.exe stopped working? Using java.exe instead.
-; RunProgram="jre1.8.0_191\bin\java.exe -jar Infogora.jar"
-; RunProgram="jre1.8.0_191\bin\java.exe -cp Infogora.jar allClasses.InfogoraStarter -userDir \"%%S\" -tempDir \"%%T\""
-; RunProgram="subTest.bat \"%%S\" \"%%T\" ."
-;RunProgram="hidcon:jre1.8.0_191\bin\java.exe -cp Infogora.jar allClasses.Infogora -userDir \"%%S\" -tempDir \"%%T\""
+;; RunProgram="jre1.8.0_191\bin\java.exe -jar Infogora.jar"
+;; RunProgram="jre1.8.0_191\bin\java.exe -cp Infogora.jar allClasses.InfogoraStarter -userDir \"%%S\" -tempDir \"%%T\""
+;; RunProgram="subTest.bat \"%%S\" \"%%T\" ."
+;; RunProgram="hidcon:jre1.8.0_191\bin\java.exe -cp Infogora.jar allClasses.Infogora -userDir \"%%S\" -tempDir \"%%T\""
 RunProgram="hidcon:jre1.8.0_191\bin\java.exe -cp TUDNet.jar allClasses.TUDNet -userDir \"%%S\" -tempDir \"%%T\""
-;!@InstallEnd@!
+;
+;;!@InstallEnd@!
