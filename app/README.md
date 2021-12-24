@@ -20,6 +20,7 @@ TUDNET draws technical inspiration and ideas from the following:
   * InterPlanetary Filesystem (IPFS)  
   * Secure Quick Reliable Login (SQRL)
   * Faceted Search
+  * Dependency Injection
   * Java and JavaFX
 
 If you are interested in the free flow of information, or any of the technical subjects above, consider contributing to this project.
