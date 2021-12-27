@@ -10,10 +10,10 @@ import static allClasses.SystemSettings.NL;
 /* This file is the root of this application.  
   If you want to understand how this application works,
   then you should start reading here.  That reading should include:
-  * The main(.) method in this class.
+  * The main(.) method in this file.
   * The factory classes, starting with the AppFactory constructed by main(.).
   * Anomalies, which are explained in more detail 
-    by documentation with the Anomalies class.  ///ano  
+    by documentation in file Anomalies.java.  ///ano  
 
   The main(.) method in this class is the entry point of this app.
   It acts as the top-level time sequencer of the app.
@@ -60,7 +60,8 @@ import static allClasses.SystemSettings.NL;
     * Maker methods, which construct a new object each time called.
     
   ///ano The main(.) method deals with 2 anomalies.
-  For more information, see the main(.) method and the Anomalies class.
+  For more information, see the main(.) method in this file
+  and the file Anomalies.java.
 
   */
 

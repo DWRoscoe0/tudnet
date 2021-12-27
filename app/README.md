@@ -9,19 +9,19 @@ To achieve this goal and to achieve wide adoption, this project will attempt to:
 TUDNET draws technical inspiration and ideas from the following:
   * Overlay Networks
   * Peer-To-Peer (P2P) architecture
-  * Hierarchical data structures such as
-    * Trees
-    * Directed Acyclic Graphs (DAGs)
+  * Hierarchical data structures such as Trees and Directed Acyclic Graphs (DAGs)
   * Distributed Hash Tables (DHTs)
   * Prefix Hash Trees (PHTs)
   * Git
   * Bitcoin and other blockchain systems
   * Freenet
-  * InterPlanetary Filesystem (IPFS)  
+  * InterPlanetary File System (IPFS)  
   * Secure Quick Reliable Login (SQRL)
   * Faceted Search
   * Dependency Injection
   * Java and JavaFX
 
-If you are interested in the free flow of information, or any of the technical subjects above, consider contributing to this project.
+If you would like to learn how this app works, go to 
+tudnet/app/src/allClasses/TUDNet.java and start reading.
 
+If you are interested in the free flow of information, or any of the technical subjects above, please consider contributing to this project.
