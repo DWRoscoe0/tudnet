@@ -25,3 +25,5 @@ If you would like to learn how this app works, go to
 tudnet/app/src/allClasses/TUDNet.java and start reading.
 
 If you are interested in the free flow of information, or any of the technical subjects above, please consider contributing to this project.
+
+For more information see the TUDNet website at [http://tudnet.org](http://tudnet.org).
