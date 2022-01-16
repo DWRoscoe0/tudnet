@@ -119,7 +119,9 @@ public class AppSettings {
             }
           if (iFile.getName().endsWith(".jar")) break toStoreAndExit; 
           iFile= new File( // Append entry-point class file name.
-              iFile, entryPointClass.getCanonicalName() + ".class");
+              iFile, 
+              entryPointClass.getCanonicalName().replace('.','\\') + ".class"
+              );
         } // toStoreAndExit:
           AppSettings.initiatorFile= iFile; // Save File.
           initiatorNameString= iFile.getName();
