@@ -25,9 +25,15 @@ public class IFile
 
   extends INamedList
 
-  /* This class represents regular files.
-    */
-  
+  /* This class extends INamedList to represent a regular file.
+   * 
+   * ///org
+   * It never actually uses the list capabilities of INamedList.
+   * This is wasteful of resources.  Fix?
+   * Some of the following code could probably be deleted.
+   * Some ancestor class rearrangement might be necessary.
+   */
+
   { // class IFile
   
     // Variables.
@@ -47,11 +53,15 @@ public class IFile
           }
     
       public int getIndexOfChild( Object childObject ) 
-        /* Returns the index of childObject in directory ParentObject.  
+        /* Returns the index of childObject in directory ParentObject.
+          This method must exist and override the version in class DataNode
+          as part of this classes lazy evaluation feature.
+
+          Instead of searching for a child object that is equal to childObject,
+          this method searches for a child with a matching name.
           It does this by searching for a child with a matching name.
-          This works regardless of how many the children
+          This works regardless of whether children 
           have been converted to IFiles.
-          This avoids calculating a lot of IFiles unnecessarily.
           */
         {
       		DataNode childDataNode= (DataNode)childObject;

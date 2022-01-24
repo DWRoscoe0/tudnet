@@ -9,14 +9,27 @@ public class EpiFileRoots
 
   extends NamedList
 
-  /* This class is the root of the TUDNet user's file system.  
-   * It is similar in structure and operation to EpiDirectory,
-   * which is used for other, non-root folders.
+  /* This class is part of an experiment with virtual file systems. 
    * 
-   * ///org The base class is NamedList, not because
-   *   it any of its functionality is needed,
-   *   but because the parameter for DataNode.setParentToV(.) 
-   *   must be a NamedList.
+   * This class is a TUDNet hierarchy node which represents 
+   * the list of virtual file system roots.
+   * 
+   * This class is similar in function to class IRoots which represents
+   * a list of the device's OS file system roots.
+   * 
+   * This class is similar in structure and operation to EpiDirectory,
+   * which is used for other, non-root virtual directories.
+   * 
+   * This class does lazy evaluation of its list elements,
+   * each of which is an EpiDirectory.
+   *   
+   * ///org 
+   * This class does not use NameList's list functionality
+   * because of the list element caching that must be done.
+   * NameList is the base class because 
+   * the parameter for DataNode.setParentToV(.),
+   * which is called by this class' children, must be a NamedList.
+   * 
    */
 
   { // class EpiFileRoots
@@ -28,7 +41,8 @@ public class EpiFileRoots
        Each slot represents one filesystem root.
        */
       File[] childFiles;  // Initially empty cache array of root Files.
-      EpiDirectory childEpiDirectories[];  // Initially empty cache array of root EpiDirectories.
+      EpiDirectory childEpiDirectories[];  // Initially empty cache array of 
+        // root EpiDirectories.
     
     // Constructors (none yet).
     

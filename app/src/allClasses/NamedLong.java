@@ -53,7 +53,7 @@ public class NamedLong extends NamedLeaf implements LongLike
     }
 
     if (changedB) { // Firing change listeners.
-      reportChangeOfSelfV(); // Reporting change of this node.
+      signalChangeOfSelfV(); // Reporting change of this node.
     }
     return resultL; // Returning old before-changed value.
   }

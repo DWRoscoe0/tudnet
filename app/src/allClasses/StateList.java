@@ -1345,7 +1345,7 @@ public class StateList extends MutableList implements Runnable {
 			  	  	subStateList.invalidateActiveV(); // Invalidate in one subtree.
 			  	  	}
 					cachedActiveBoolean= null; // Invalidate here by assigning null.
-					reportChangeOfSelfV(); // Trigger eventual GUI redisplay.
+					signalChangeOfSelfV(); // Trigger eventual GUI redisplay.
 					}
 			}
 
@@ -1407,7 +1407,7 @@ class SentinelState extends StateList {
 	  and null checks can be avoided.
 	 	*/
 
-  protected void reportChangeOfSelfV()
+  protected void signalChangeOfSelfV()
 		/* This method does nothing because SentinelStates
 		  should never be part of display-able DAG.
 		 	*/

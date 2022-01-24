@@ -72,7 +72,7 @@ public class NamedFloat // A DataNode for tracking floating point things.
   	  	}
   	  
   	  if (changedB) { // Firing change listeners.
-        reportChangeOfSelfV(); // Reporting change of this node.
+        signalChangeOfSelfV(); // Reporting change of this node.
   	  	}
 			return resultF; // Returning old before-changed value.
 	  	}

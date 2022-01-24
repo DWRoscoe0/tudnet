@@ -13,7 +13,16 @@ public class INamedList
   extends NamedList
   
   /* This class is meant to be the base class for all
-   * ifile / IFile-related classes.
+   * ifile / IFile related classes.
+   * It add knowledge about Files to NamedList.
+   * 
+   * There are 0 or more File instances 
+   * associated with each instance of this class.
+   * * One File references is stored in this class,
+   *   unless it's an IRoots subclass.
+   *   IRoots is a list of Files, but not a File itself.
+   * * The NamedList superclass may have 
+   *   children which contain File references. 
    */
   
   {
@@ -48,7 +57,7 @@ public class INamedList
         {
           this(
               nameString,
-              null
+              (File)null
               );
           }
 

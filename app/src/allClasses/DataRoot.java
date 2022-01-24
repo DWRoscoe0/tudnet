@@ -67,7 +67,7 @@ public class DataRoot {
           );
 
       // Use propagateDownV(..) to store theDataTreeModel in structure.
-      parentOfRootDataNode.propagateIntoSubtreeV(  
+      parentOfRootDataNode.propagateTreeModelIntoSubtreeV(  
           theDataTreeModel // This will be copied to all non-leaf nodes.
           ); 
 
@@ -90,7 +90,7 @@ public class DataRoot {
     /* This method finalizes the DataNode tree by finalizing the root DataNode.  */
     { 
       theAppLog.info("DataRoot.finalizeDataNodesV() begins.");
-      int nodeTotalI= rootDataNode.finalizeDataNodesI();
+      int nodeTotalI= rootDataNode.finalizeThisSubtreeI();
       theAppLog.info(
           "DataRoot.finalizeDataNodesV() ends, total nodes finalized=" + nodeTotalI);
       }

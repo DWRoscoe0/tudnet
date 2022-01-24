@@ -230,11 +230,11 @@ public class TextStream2
               subscriberMapEpiNode,subscriberUserIdString);
           }
 
-      protected int finalizeDataNodesI()
+      protected int finalizeThisSubtreeI()
         /* This override method finalizes all the children and then the base class. */
         {
           storeDocumentV( streamFile );
-          return super.finalizeDataNodesI(); // Finalize base class
+          return super.finalizeThisSubtreeI(); // Finalize base class
           }
 
       private void storeDocumentV( File theFile )

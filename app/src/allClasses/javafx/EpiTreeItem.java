@@ -47,7 +47,7 @@ public class EpiTreeItem
        * If not, then it calculates and stores it.
        * Finally it returns the TreeItem's child list.
        * 
-       * Note-1: childCacheLoadedB is set before loading is complete.
+       * Note-1: childCacheLoadedB is set before loading is complete!
        * This is done because super.getChildren() called getChildren(),
        * specifically in TreeItem.updateExpandedDescendentCount(boolean reset), 
        * which resulted in a StackOverflowError when 
@@ -64,24 +64,25 @@ public class EpiTreeItem
        * an overridden getChildren() that uses lazy-evaluation. 
        */
       {
-        if (! childCacheLoadedB) {
-          childCacheLoadedB= true; // See Note-1 above.
-          DataNode parentDataNode= getValue();
-          ArrayList<EpiTreeItem> childrenListOfTreeItems= // Make empty list. 
-              new ArrayList<EpiTreeItem>();
-          /*  ////
-          Iterator<DataNode> theIterator=
-              parentDataNode.getChildListOfDataNodes().iterator();
-          while (theIterator.hasNext()) { // See Note-2 above.
-            DataNode childDataNode= theIterator.next();
-            accumulatorList.add(new EpiTreeItem(childDataNode));
+        if (! childCacheLoadedB) // Load cache if not loaded yet.
+          { // Load cache.
+            childCacheLoadedB= true; // See Note-1 above.
+            DataNode parentDataNode= getValue();
+            ArrayList<EpiTreeItem> childrenListOfTreeItems= // Make empty list. 
+                new ArrayList<EpiTreeItem>();
+            /*  ////
+            Iterator<DataNode> theIterator=
+                parentDataNode.getChildListOfDataNodes().iterator();
+            while (theIterator.hasNext()) { // See Note-2 above.
+              DataNode childDataNode= theIterator.next();
+              accumulatorList.add(new EpiTreeItem(childDataNode));
+              }
+            */  ////
+            for // Add all children as TreeItems.  See Note-2 above.
+              (DataNode childDataNode : parentDataNode.getChildrenAsListOfDataNodes())
+              childrenListOfTreeItems.add(new EpiTreeItem(childDataNode));
+            super.getChildren().setAll(childrenListOfTreeItems);
             }
-          */  ////
-          for // Add all children as TreeItems.  See Note-2 above.
-            (DataNode childDataNode : parentDataNode.getChildListOfDataNodes())
-            childrenListOfTreeItems.add(new EpiTreeItem(childDataNode));
-          super.getChildren().setAll(childrenListOfTreeItems);
-          }
         return super.getChildren();
         }
         

@@ -69,7 +69,7 @@ public class TitledListNode
         BorderPane.setAlignment(titleLabel,Pos.CENTER);
 
         ObservableList<DataNode> childObservableList= 
-            subjectDataNode.getChildObservableListOfDataNodes();
+            subjectDataNode.getChildrenAsObservableListOfDataNodes();
         theListView.setItems(childObservableList);
         setCenter(theListView);
         Platform.runLater( () -> theListView.requestFocus() );

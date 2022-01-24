@@ -44,7 +44,7 @@ public class NamedMutable
     	  	}
     	  
     	  if (changedB) { // Firing change listeners.
-	        reportChangeOfSelfV(); // Reporting change of this node.
+	        signalChangeOfSelfV(); // Reporting change of this node.
     	  	}
 				return resultObject; // Returning old before-changed value.
 		  	}

@@ -14,102 +14,189 @@ import static allClasses.SystemSettings.NL;
 
 public class NamedList 
 
-	extends NamedBranch  // Will override all remaining leaf behavior.
+	extends NamedBranch
+
+  { // Beginning of class NamedList.
   
-  /* This is a utility class that is simply a List with a name.
-    It is immutable after construction and initialization, 
-    but subclasses could add mutation abilities.
-    Also, there is nothing preventing changes in
-    its children or other descendants.
-
-    ///opt Reduce storage used by eliminating redundant child collections,
-      not necessarily in this class, but in its subclasses.
-
-    This one of 3 non-leaf classes that define storage for child references.
-    This class uses a List to store its children.
-    The other 2 are 
-    * MutableListWithMap, which contains a HashMap for fast child lookup. 
-    * StateList, which contains a list of children which
-      duplicates some of the regular child list, but only the ones that are states.
-    This might be possible by defining some new classes, such as
-    * EmptyList, whose subclasses can use the type of child lists
-      that best fits its purpose.  
-
-    ///enh? Should NamedList be converted to a generic class?
-      getChild(int indexI) returns a DataNode, so maybe there's no point.
-      Maybe getChildE(int indexI) could be added 
-      to have the best of both worlds? 
-    */
+    /* This class is a utility class that is simply a List with a name.
   
-  { // class NamedList
-	
+      This class adds to its superclass the ability to store child DataNodes.
+      It includes methods for adding children to its list of children.
+      These methods are used during construction and initialization, 
+      but they may be used later also.
+
+      If deletion of children is needed then it must be done in a subclass.
+
+      This class uses a List to store its children.
+      This is one of 3 non-leaf classes that define storage for child references.
+      The other 2 classes are 
+      * MutableListWithMap, which contains a HashMap for fast child lookup. 
+      * StateList, which contains a list of children which
+        duplicates some of the regular child list, 
+        but only the children that are states.
+  
+      ///opt Reduce storage used by eliminating redundant child collections,
+        not necessarily in this class, but in its subclasses.
+  
+      ///enh? Should NamedList be converted to a generic class
+        whose elements can be something other than DataNodes?
+        getChild(int indexI) returns a DataNode, so maybe there's no point.
+        Or maybe getChildE(int indexI) could be added 
+        to have the best of both worlds? 
+      */
+
+
 		// Instance variables.
-	
-	    protected MultiLink<DataNode> childMultiLinkOfDataNodes= // Set to empty
-          new ListMultiLink<DataNode>(); // ListMultiLink of DataNodes.
 
-	    
-	    /* Constructors: An instance of this class can be created by either
-	       * using NamedList(String nameString,DataNode... inDataNodes).
-	         This is the preferred way.  It is simpler for this class and its subclasses. 
-	       * using NamedList() followed by 
-	         initializeV(String nameString,DataNode... inDataNodes).
-	         
+    protected MultiLink<DataNode> childMultiLinkOfDataNodes /* The children. */
+      = new ListMultiLink<DataNode>(); // Set the List of children to empty.
 
-	     */
-      
-      public NamedList(
-          String nameString, 
-          DataNode... inDataNodes 
-          )
-        { 
-          initializeV(nameString, inDataNodes); 
-          }
-      
-      public NamedList()
-        /* If this constructor is used then 
-          initializeV(String nameString,DataNode... inDataNodes)
-          should be called afterward to do remaining initialization.
-         */
-        { 
-          }
-	    
-	    public void initializeV(String nameString,DataNode... inDataNodes)
-      /* This initializes the NamedList with a name and
-        0 or more DataNodes from the array inDataNodes.
-        Theoretically it could be used for 
-        many different types of DataNodes.
-        
-        ///fix This needs to initialize parent references.
-        */
+
+    /* Constructors and initializers.
+     * 
+     * An instance of this class can be created by either
+     * 
+     * * using constructor NamedList(String nameString,DataNode... inDataNodes).
+     *   This is the preferred way.
+     *   It is simpler for this class and its subclasses.
+     *   
+     * * using constructor NamedList() followed by calling
+     *   initializeV(String nameString,DataNode... inDataNodes).
+     */
+
+    public NamedList( String nameString, DataNode... inDataNodes )
       {
-    		super.setNameV( nameString );
-
-	  		for ( DataNode theDataNode : inDataNodes) // For each new child
-	  			addAtEndV( theDataNode ); // append child to list.
+        this();
+        initializeV(nameString, inDataNodes); 
         }
 
-    public void addAtEndV(  // Add child at end of List.
-        final DataNode childDataNode 
-        )
-      /* This method uses addB( childDataNode ) to add
-        childDataNode at the end of the List.  
-        It returns void.
-        Otherwise it's identical.
+    public NamedList()
+      /* If this constructor is used then care must be taken to call 
+        initializeV(String nameString,DataNode... inDataNodes)
+        to complete the initialization.
+       */
+      { 
+        }
+    
+    public void initializeV(String nameString,DataNode... inDataNodes)
+    /* This method initializes this NamedList instance.
+     * 
+     * nameString is the name for this DataNode.
+     * 
+     * inDataNodes is an array of DataNodes to become this nodes children.
+      
+      ///fix? This needs to initialize parent references?
+      */
+    {
+  		super.setNameV( nameString );
+
+  		for ( DataNode theDataNode : inDataNodes) // For each new child
+  			addAtEndV( theDataNode ); // append child to list.
+      }
+
+
+    // Finalization.
+
+    @Override
+    protected int finalizeThisSubtreeI()
+      /* This method finalizes this node and its descendants.
+       * This includes this node and its children recursively.
+       * It returns the number of DataNodes finalized.
+       */
+      {
+        int nodeTotalI= 0;
+        for // For each child
+          ( DataNode theDataNode : 
+            childMultiLinkOfDataNodes.getLinksIterable()
+            )
+          nodeTotalI+= // recursively finalize it, adding number to total.
+            theDataNode.finalizeThisSubtreeI();
+        nodeTotalI+=  // Finish by calling finalizer of the base class.
+            super.finalizeThisSubtreeI();
+        return nodeTotalI;
+        }
+
+    
+    /* Subtree propagation methods.
+     * These methods are used when data needs to be duplicated
+     * throughout an entire subtree.
+     * 
+     * Propagation into subtrees happens recursively.
+     * Recursion stops when either of the following occurs:
+     * * A leaf DataNode is reach, because a leaf has no children.
+     * * A DataNode is reach which already has the value being propagated.
+     * 
+     * These methods may be called at any time,
+     * but are usually called when subtrees are being constructed or inserted.
+     */
+    
+    protected void propagateTreeModelIntoSubtreeV( 
+        DataTreeModel theDataTreeModel )
+      /* This method propagates theDataTreeModel into 
+        the subtree rooted at this DataNode.
         */
+      {
+        if // Propagate only if 
+          ( ( theDataTreeModel != null ) // input TreeModel is not null and 
+            && ( this.theDataTreeModel == null )  // our TreeModel is null.
+            )
+          { // Propagate.
+            for // For each child
+              (DataNode theDataNode : getChildLazyListOfDataNodes())
+              theDataNode.propagateTreeModelIntoSubtreeV(theDataTreeModel);
+
+            super.propagateTreeModelIntoSubtreeV( // Propagate List into super-class. 
+                theDataTreeModel // This stores theDataTreeModel.
+                ); // It's done last because it is the controlling flag.
+            }
+        }
+
+    protected void propagateLogLevelIntoSubtreeV( LogLevel theMaxLogLevel )  
+      /* This method propagates theMaxLogLevel into 
+        the subtree rooted at this DataNode.
+        */
+      {
+        boolean changeNeededB= ( this.theMaxLogLevel != theMaxLogLevel ); 
+        if // Propagate further only if new level is different from old one.
+          ( changeNeededB )
+          { // Propagate further.
+            for  // For each child
+              (DataNode theDataNode : getChildLazyListOfDataNodes())
+              theDataNode.propagateLogLevelIntoSubtreeV(theMaxLogLevel);
+            super.propagateLogLevelIntoSubtreeV( // Propagate into super-class. 
+                theMaxLogLevel); // the new level.  This eliminates
+                // the difference in LogLevel which enabled propagation.
+            }
+        }
+
+
+    /* Child addition methods.
+     * These methods add child DataNodes to this DataNode.
+     * If these methods are called only during construction and initialization
+     * and this node is changed in no other way,
+     * they it will be an immutable node.
+     */
+
+    public void addAtEndV(final DataNode childDataNode)
+      /* This method adds childDataNode 
+       * at end of this DataNode's list of child DataNodes.
+       * If the child is already in the list, this method changes nothing.
+       */
       {
         addAtEndB(childDataNode);
         }
 
-    public boolean addAtEndB(  // Add child at end of List.
-        final DataNode childDataNode 
-        )
-      /* This method uses addB( indexI , childDataNode ) to add
-        childDataNode at the end of the List.  Otherwise it's identical.
-        */
+    public boolean addAtEndB(final DataNode childDataNode)
+      /* This method tries to add childDataNode 
+       * at end of this DataNode's list of child DataNodes.
+       * If returns true if successful.
+       * If the child is already in the list then
+         this method changes nothing and returns false.
+       */
       {
-        boolean resultB= addB(  // Adding with index == -1 which means end of list.
-            -1, childDataNode 
+        boolean resultB= addB( // Try adding.
+            -1, // -1 means at end of list. 
+            childDataNode
             );
         if (! resultB)
           theAppLog.error( // Logging error if already in list.
@@ -117,31 +204,32 @@ public class NamedList
               );
         return resultB;
         }
-    
+
 	  public synchronized boolean addB(  // Add at index. 
 	  		final int requestedIndexI, final DataNode childDataNode 
 	  		)
-	    /* This method adds childDataNode to the list.
-
-	      If childDataNode is already in the List 
-	      then this method does nothing and returns false,
-	      otherwise it adds childDataNode to the List and returns true. 
-	      It adds childDataNode at index position requestedIndexI,
-	      or the end of the list if requestedIndexI < 0. 
-
-	      If childDataNode is actually added then
-	      it also informs theDataTreeModel about it
-	      so that TreeModelListeners can be notified.
-
-        Also, it makes the following adjusts to the child:
-        * It propagates theDataTreeModel, into the childDataNode,
-          and its descendants if necessary.
-        * It stores this NamedList as the child's parent node.
-
-	      These operations are done in a thread-safe manner
-	      by being synchronized and using synchronized methods.
-	      The EDT thread might not be used at all.
-  	    */
+	    /* This method tries to add childDataNode to 
+	     * this DataNode's list of child DataNodes.
+	     * If childDataNode is already in the list
+	     * then this method changes nothing and returns false,
+	     * otherwise it adds childDataNode to the list and returns true.
+	     * The childDataNode is added at index position requestedIndexI,
+	     * or the end of the list if requestedIndexI < 0.
+	     * 
+	     * If childDataNode is actually added then
+	     * * This method also notifies theDataTreeModel about it
+	     *   so that TreeModelListeners can be notified.
+	     *   This is for the Java Swing UI.
+	     * 
+	     * * This method also makes the following adjustments to childDataNode:
+	     *   * It propagates theDataTreeModel into the childDataNode,
+	     *     and its descendants if necessary.
+	     *   * It stores this DataNode as childDataNode's parent node.
+	     *  
+	     * These operations are done in a thread-safe manner
+	     * by being synchronized and using synchronized methods.
+	     * The EDT thread might not be involved at all.
+	     */
 	    {
 	  		final boolean successB; 
 	  		final DataNode parentDataNode= this; // Because vars must be final.
@@ -151,130 +239,36 @@ public class NamedList
     	  	successB= false; // Returning add failure.
     	  	else // Child was not found in list.
 	    	  { // Adding to List because it's not there yet.
-            childDataNode.propagateIntoSubtreeV( theDataTreeModel );
+            childDataNode.propagateTreeModelIntoSubtreeV( theDataTreeModel );
             childDataNode.setTreeParentToV( this ); // Set child's parent link.
 	    	  	int actualIndexI= // Converting 
 	    	  			(requestedIndexI < 0) // requested index < 0 
 	    	  			? childMultiLinkOfDataNodes.getCountI() // to mean end of list,
             	  : requestedIndexI; // otherwise use requested index.
             childMultiLinkOfDataNodes.addV(actualIndexI, childDataNode );
-            notifyTreeModelAboutAdditionV(
-            		parentDataNode, actualIndexI, childDataNode );
+            //// notifyAboutAdditionV(
+            ////		parentDataNode, actualIndexI, childDataNode );
+            DataNode.signalInsertionV(
+                //// parentDataNode, insertAtI, childDataNode
+                parentDataNode, actualIndexI, childDataNode );
+                //// );
             successB= true; // Returning add success.
     	  	  }
 	  		return successB; // Returning whether add succeeded.
 	      }
 
-    private void notifyTreeModelAboutAdditionV(
-    		DataNode parentDataNode, int insertAtI, DataNode childDataNode )
-	    {
-	      if // Notify TreeModel only if there is one referenced. 
-	        ( theDataTreeModel != null ) 
-		      {
-		      	//// theDataTreeModel.signalInsertionV( 
-	          DataNode.signalInsertionV(
-		      			parentDataNode, insertAtI, childDataNode 
-			      		);
-		      	}
-	      }
-
-    protected int finalizeDataNodesI()
-      /* This override method finalizes all the children and then the base class. 
-        It increases and returns nodeCountI by the number of nodes finalized.*/
-      {
-        int nodeTotalI= 0;
-        for // For each child
-          ( DataNode theDataNode : 
-            childMultiLinkOfDataNodes.getLinksIterable()
-            )
-          nodeTotalI+=   // recursively finalize it, adding the number finalized to total.
-            theDataNode.finalizeDataNodesI();
-        nodeTotalI+= super.finalizeDataNodesI(); // Finalize base class
-        return nodeTotalI;
-        }
-
-	  protected void propagateIntoSubtreeV( DataTreeModel theDataTreeModel )
-	    /* This method propagates theDataTreeModel into 
-	      this node and any of its descendants which need it. 
-	      */
-		  {
-		  	if // Propagate only if 
-		  	  ( ( theDataTreeModel != null ) // input TreeModel is not null and 
-		  	  	&& ( this.theDataTreeModel == null )  // our TreeModel is null.
-		  	  	)
-			  	{
-		  	    for // For each child
-		  	      (DataNode theDataNode : getChildLazyListOfDataNodes())
-			  			theDataNode.propagateIntoSubtreeV(  // recursively propagate
-			  					theDataTreeModel // the TreeModel 
-			  					);
-
-		  	    super.propagateIntoSubtreeV( // Propagate List into super-class. 
-			  	  		theDataTreeModel // This stores theDataTreeModel.
-			  	  		); // It's done last because it is the controlling flag.
-
-		  		  //// this.theDataTreeModel=  // Finally set TreeModel last because
-		  		  ////		theDataTreeModel; // it is the controlling flag.
-			  		}
-		  	}
-
-	  protected boolean propagateIntoSubtreeB( LogLevel theMaxLogLevel )  
-	    /* This method propagates theMaxLogLevel into 
-		    this node and any of its descendants which need it.
-		    It acts only if the present level is different from theMaxLogLevel.
-		    */
-		  {
-	  		boolean changeNeededB= ( this.theMaxLogLevel != theMaxLogLevel ); 
-		  	if // Propagate into children only if new level limit is different.
-	  	    ( changeNeededB )
-			  	{
-		  			propagateIntoDescendantsV(theMaxLogLevel);
-				  	super.propagateIntoSubtreeB( // Propagate into super-class. 
-				  			theMaxLogLevel); // the new level.  This eliminates
-				  			// the difference in LogLevel which enabled propagation.
-			  		}
-		  	return changeNeededB;
-		  	}
-
-	  protected void propagateIntoDescendantsV( LogLevel theMaxLogLevel )
-	    /* This method propagates theMaxLogLevel into the descendants,
-	      but not into this node.  It remains unchanged.
-		    */
-		  {
-        for  // For each child
-          (DataNode theDataNode : getChildLazyListOfDataNodes())
-	  			theDataNode.propagateIntoSubtreeB( // recursively propagate  
-	  					theMaxLogLevel); // the new level into child subtree.
-		  	}
-
-    protected boolean reportChangeInChildB( final DataNode childDataNode )
-      /* This method reports a change to the DataTreeModel of 
-        a change in childDataNode, which must be one of this node's children.
-        This will [eventually] cause an update of the user display 
-        to show that change if needed.
-
-        This method always returns true.
-        Earlier versions returned false if there was an error,
-        This method returns true if successful, false if there was an error,
-          such as a null parameter or the the DataNode tree root
-          not being reachable from the child. 
-        */
-    	{
-    		//// theDataTreeModel.signalChangeV( childDataNode );
-        DataNode.signalChangeV( childDataNode );
-    	  return true;
-				}
-
+    
+    // Scanning/visiting method.
+    
+    @Override
     protected boolean tryProcessingMapEpiNodeB(MapEpiNode theMapEpiNode)
-      /* This method tries processing a MapEpiNode.
-        It does this by trying to have each child process the theMapEpiNode 
-        by its method of the same name, until one of them returns true,
-        or the end of the child list is reached.
-        It returns true if the processing was successful by a child, 
-        false otherwise.
-        This is a general purpose child scanner which can be used by subclasses
-        or overridden for customized behavior.
-        */
+      /* This method is not used for anything now.  It has not been tested.
+       * 
+       * It was meant to try to process a theMapEpiNode in some way by
+       * trying to have each of its children process it.
+       * It was to return true if the processing was successful by a child,
+       * false otherwise.
+       */
       { 
         boolean processedB= false; // Assume all children will fail to process.
         Iterator<DataNode> theIterator= // Prepare a child iterator.
@@ -288,24 +282,37 @@ public class NamedList
         return processedB; 
         }
 
-	  
-	  // interface DataNode methods.
+
+    // Child getting methods.'
+
+	  // Child DataNode getter methods.
  
     public DataNode getChild( int indexI ) 
-      /* This returns the child with index indexI or null
-        if no such child exists.
-        */
+      /* This returns the child with index indexI or 
+       * null if no such child exists.
+       * 
+       * If lazy evaluation is being used by a subclass,
+       * this object knows nothing about it.
+       */
       { 
         return childMultiLinkOfDataNodes.getE(indexI); 
         }
     
     public List<DataNode> getChildLazyListOfDataNodes()
+      /* This method returns a List of the child DataNodes.
+       * 
+       * This method is named what it is to emphasize that 
+       * no evaluation of nodes is done.
+       * If lazy evaluation is being used by a subclass,
+       * this object knows nothing about it.
+       */
       { 
         return childMultiLinkOfDataNodes.getListOfEs(); 
         }
 
-	  ///dbg methods.
-	  
+
+	  ///dbg Debug methods.
+
   	protected void logNullDataTreeModelsV()  ///dbg
   	  /* Recursively checks for null TreeModel in node and ancestors.
   	   */
