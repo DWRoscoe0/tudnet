@@ -9,12 +9,18 @@ public class TUDNetRoot  extends NamedList {
     */
   
   public TUDNetRoot(   // Constructor. 
-      DataNode... inDataNodes 
+      DataNode... childrenDataNodes // The children of the root DataNode. 
       )
     {
-	    initializeV( // Calling superclass NamedList with...
-	        Config.appString + "-Root", // ...the name for this DataNode and...
-	        inDataNodes // ...the array of all child DataNodes.
+	    initializeV( // Call superclass initializer with...
+
+          ( // ...the name for this DataNode which is
+            Config.appString // the name of this app
+            + "-Root" // concatenated with "-Root"
+            ), // and
+
+	        childrenDataNodes // the array of all child DataNodes.
+
 	        );
       }
   

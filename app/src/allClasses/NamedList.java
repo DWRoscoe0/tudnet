@@ -18,17 +18,19 @@ public class NamedList
 
   { // Beginning of class NamedList.
   
-    /* This class is a utility class that is simply a List with a name.
-  
-      This class adds to its superclass the ability to store child DataNodes.
-      It includes methods for adding children to its list of children.
+    /* This class adds to its superclass the ability to store child DataNodes.
+      It includes methods for adding children to its stored list of children.
       These methods are used during construction and initialization, 
       but they may be used later also.
 
       If deletion of children is needed then it must be done in a subclass.
 
-      This class uses a List to store its children.
-      This is one of 3 non-leaf classes that define storage for child references.
+      This class does not do lazy evaluation of its children.
+      Further, if lazy evaluation is being done by a subclass,
+      then this object knows nothing about it.
+
+      This class uses a List to store its children.  It is 
+      one of 3 non-leaf classes that define storage for child references.
       The other 2 classes are 
       * MutableListWithMap, which contains a HashMap for fast child lookup. 
       * StateList, which contains a list of children which
@@ -56,42 +58,42 @@ public class NamedList
      * 
      * An instance of this class can be created by either
      * 
-     * * using constructor NamedList(String nameString,DataNode... inDataNodes).
+     * * using constructor NamedList(String nameString,DataNode... childDataNodes).
      *   This is the preferred way.
      *   It is simpler for this class and its subclasses.
      *   
      * * using constructor NamedList() followed by calling
-     *   initializeV(String nameString,DataNode... inDataNodes).
+     *   initializeV(String nameString,DataNode... childDataNodes).
      */
 
-    public NamedList( String nameString, DataNode... inDataNodes )
+    public NamedList( String nameString, DataNode... childDataNodes )
       {
         this();
-        initializeV(nameString, inDataNodes); 
+        initializeV(nameString, childDataNodes); 
         }
 
     public NamedList()
       /* If this constructor is used then care must be taken to call 
-        initializeV(String nameString,DataNode... inDataNodes)
+        initializeV(String nameString,DataNode... childDataNodes)
         to complete the initialization.
        */
       { 
         }
     
-    public void initializeV(String nameString,DataNode... inDataNodes)
+    public void initializeV(String nameString,DataNode... childDataNodes)
     /* This method initializes this NamedList instance.
      * 
      * nameString is the name for this DataNode.
      * 
-     * inDataNodes is an array of DataNodes to become this nodes children.
+     * childDataNodes is an array of DataNodes to become this nodes children.
       
       ///fix? This needs to initialize parent references?
       */
     {
   		super.setNameV( nameString );
 
-  		for ( DataNode theDataNode : inDataNodes) // For each new child
-  			addAtEndV( theDataNode ); // append child to list.
+  		for ( DataNode childDataNode : childDataNodes) // For each new child
+  			addAtEndV( childDataNode ); // append child to list.
       }
 
 
@@ -106,11 +108,11 @@ public class NamedList
       {
         int nodeTotalI= 0;
         for // For each child
-          ( DataNode theDataNode : 
+          ( DataNode childDataNode : 
             childMultiLinkOfDataNodes.getLinksIterable()
             )
           nodeTotalI+= // recursively finalize it, adding number to total.
-            theDataNode.finalizeThisSubtreeI();
+            childDataNode.finalizeThisSubtreeI();
         nodeTotalI+=  // Finish by calling finalizer of the base class.
             super.finalizeThisSubtreeI();
         return nodeTotalI;
@@ -142,8 +144,8 @@ public class NamedList
             )
           { // Propagate.
             for // For each child
-              (DataNode theDataNode : getChildLazyListOfDataNodes())
-              theDataNode.propagateTreeModelIntoSubtreeV(theDataTreeModel);
+              (DataNode childDataNode : getChildLazyListOfDataNodes())
+              childDataNode.propagateTreeModelIntoSubtreeV(theDataTreeModel);
 
             super.propagateTreeModelIntoSubtreeV( // Propagate List into super-class. 
                 theDataTreeModel // This stores theDataTreeModel.
@@ -161,8 +163,8 @@ public class NamedList
           ( changeNeededB )
           { // Propagate further.
             for  // For each child
-              (DataNode theDataNode : getChildLazyListOfDataNodes())
-              theDataNode.propagateLogLevelIntoSubtreeV(theMaxLogLevel);
+              (DataNode childDataNode : getChildLazyListOfDataNodes())
+              childDataNode.propagateLogLevelIntoSubtreeV(theMaxLogLevel);
             super.propagateLogLevelIntoSubtreeV( // Propagate into super-class. 
                 theMaxLogLevel); // the new level.  This eliminates
                 // the difference in LogLevel which enabled propagation.
@@ -216,15 +218,14 @@ public class NamedList
 	     * The childDataNode is added at index position requestedIndexI,
 	     * or the end of the list if requestedIndexI < 0.
 	     * 
-	     * If childDataNode is actually added then
-	     * * This method also notifies theDataTreeModel about it
-	     *   so that TreeModelListeners can be notified.
-	     *   This is for the Java Swing UI.
+	     * If childDataNode is actually added then:
 	     * 
-	     * * This method also makes the following adjustments to childDataNode:
-	     *   * It propagates theDataTreeModel into the childDataNode,
-	     *     and its descendants if necessary.
+	     * * This method notifies all interested listeners about the addition.
+	     * 
+	     * * This method makes the following adjustments to childDataNode:
 	     *   * It stores this DataNode as childDataNode's parent node.
+       *   * It propagates theDataTreeModel into the childDataNode,
+       *     and its descendants if necessary.
 	     *  
 	     * These operations are done in a thread-safe manner
 	     * by being synchronized and using synchronized methods.
@@ -245,13 +246,10 @@ public class NamedList
 	    	  			(requestedIndexI < 0) // requested index < 0 
 	    	  			? childMultiLinkOfDataNodes.getCountI() // to mean end of list,
             	  : requestedIndexI; // otherwise use requested index.
-            childMultiLinkOfDataNodes.addV(actualIndexI, childDataNode );
-            //// notifyAboutAdditionV(
-            ////		parentDataNode, actualIndexI, childDataNode );
-            DataNode.signalInsertionV(
-                //// parentDataNode, insertAtI, childDataNode
+            childMultiLinkOfDataNodes.addV( // Insert child at correct spot.
+                actualIndexI, childDataNode );
+            DataNode.signalInsertionV( // Notify interested listeners about add.
                 parentDataNode, actualIndexI, childDataNode );
-                //// );
             successB= true; // Returning add success.
     	  	  }
 	  		return successB; // Returning whether add succeeded.
@@ -275,9 +273,10 @@ public class NamedList
             getChildLazyListOfDataNodes().iterator();
         while (true) { // Process children until something causes exit.
           if (! theIterator.hasNext()) break; // Exit if no more children.
-          DataNode theDataNode= theIterator.next(); // Get next child.
-          processedB= theDataNode.tryProcessingMapEpiNodeB(theMapEpiNode);
-          if (processedB) break; // Exit if the child successfully processed the data.
+          DataNode childDataNode= theIterator.next(); // Get next child.
+          processedB= childDataNode.tryProcessingMapEpiNodeB(theMapEpiNode);
+          if (processedB) // Exit if the child successfully processed the data.
+            break;
           }
         return processedB; 
         }
@@ -289,7 +288,7 @@ public class NamedList
  
     public DataNode getChild( int indexI ) 
       /* This returns the child with index indexI or 
-       * null if no such child exists.
+       * null if no child exists with that index.
        * 
        * If lazy evaluation is being used by a subclass,
        * this object knows nothing about it.

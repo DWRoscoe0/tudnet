@@ -78,7 +78,7 @@ public class DirectoryTableModel
           }
 
       public Object getValueAt(int rowI, int columnI)
-        /* Returns the table entry at row rowI and column ComumnI.
+        /* Returns the table entry at row rowI and column ColumnI.
           If the value is undefined for some reason,
           for example, an unreadable directory,
           then it returns null.
