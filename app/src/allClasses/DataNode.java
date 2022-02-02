@@ -622,25 +622,6 @@ public abstract class DataNode
         return theList;
         }
 
-    //// @SuppressWarnings("unused")
-    protected List<DataNode> getChildLazyListOfDataNodes()
-      /* This method returns a List of the child DataNodes.
-       * Some or all of them might be temporary unevaluated children.
-       * This method is named what it is to emphasize that 
-       * no evaluation of nodes is done by this method.
-       * 
-       * This version of the method builds and returns an empty list.
-       * 
-       * This method should be overridden by:
-       * * Any class that has 1 or more children.
-       * * Any class whose children's laziness differs from its superclass.
-       */
-      { 
-        List<DataNode> theList= // Create empty list. 
-            new ArrayList<DataNode>();
-        return theList; // Return it.
-        }
-
 
     /* Methods which do or are related to returning Strings about this DataNode.
       These may be overridden by subclasses as needed.

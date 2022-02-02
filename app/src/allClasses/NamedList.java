@@ -303,7 +303,6 @@ public class NamedList
         return childMultiLinkOfDataNodes.getE(indexI); 
         }
 
-    @Override 
     public List<DataNode> getChildLazyListOfDataNodes()
       /* This method returns a List of the child DataNodes.
        * 

@@ -100,7 +100,6 @@ public class MutableList extends NamedList
 		    	  {
 	          	//appLogger.debug("MutableList.remove(..): removing.");
 				  		childMultiLinkOfDataNodes.removeE(indexI);
-				  		//// theDataTreeModel.signalRemovalV( 
 				  		DataNode.signalRemovalV(
 				      		parentDataNode, indexI, childDataNode 
     				      );
