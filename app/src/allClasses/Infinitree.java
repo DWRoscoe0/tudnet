@@ -39,7 +39,7 @@ public class Infinitree
     // Other methods.
   
       public int getChildCount( ) 
-        /* This method returns the child cound.
+        /* This method returns the child count.
           Because the children are virtual, calculated as needed,
           the child count is calculated from the number of 
           ancestor levels between here and the tree root.

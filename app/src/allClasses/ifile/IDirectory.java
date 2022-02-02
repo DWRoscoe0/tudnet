@@ -18,8 +18,9 @@ public class IDirectory
 
     /* This class is a TUDNet hierarchy DataNode which represents 
       a directory in an OS filesystem.
-      It contains a list of 0 or more files, sub-directories, or both.
-  
+      It contains a list of 0 or more children which are
+      files, sub-directories, or both.
+
       This class does lazy evaluation of its list elements.
       Initially each list element is stored only as the slement's name
       in the form of an instance of the NamedLeaf class.
@@ -31,7 +32,7 @@ public class IDirectory
       * If the entire list is needed in evaluated form,
         any elements that have not yet been evaluated are evaluated
         before the list is returned. 
-  
+
       ///org
       This class does not distinguish duplicate links to files and directories,
       from links to separate copies of files and directories.
@@ -129,7 +130,7 @@ public class IDirectory
         }
 
     public List<DataNode> getChildrenAsListOfDataNodes()
-      /* This method returns the list of directory entries.
+      /* This method returns the list of evaluated children.
        * It does evaluation of the entire list if it hasn't been done before.
        * It evaluates every child by getting each one.
        * 
@@ -155,14 +156,15 @@ public class IDirectory
       }
 
     public DataNode getChild( int childI ) 
-      /* This method tries to return the child with index childI.
-        If childI is out of range then this method returns null.
-        If childI is in range then this method 
-        examines the associated child in the child cache.
-        If the child has not been evaluated yet then
-        it is evaluated and the result stored back into the cache.
-        Finally a reference to the evaluated child is returned.
-        */
+      /* This method tries to return the evaluated child 
+       * that is associated with index childI.
+       * If childI is out of range then this method returns null.
+       * If childI is in range then this method
+       * examines the associated child in the child cache.
+       * If the child has not been evaluated yet then
+       * it is evaluated and the result stored back into the cache.
+       * Finally a reference to the evaluated child is returned.
+       */
       { 
         DataNode resultChildDataNode;
 
@@ -176,10 +178,14 @@ public class IDirectory
           if // Exit with evaluated child if it is the same as cached child.
             (cachedChildDataNode == resultChildDataNode) // 
             break goReturn;
-          { // Process the evaluation.
-            resultChildDataNode.setTreeParentToV( this ); // Set child's parent link.
-            childMultiLinkOfDataNodes.setE( // Save in cache.
-                childI, resultChildDataNode);
+          { // Replace the place-holder child with its evaluation.
+            resultChildDataNode.propagateTreeModelIntoSubtreeV( theDataTreeModel );
+            resultChildDataNode.setTreeParentToV( // Set child's parent link
+                this ); // to reference this DataNode.
+            childMultiLinkOfDataNodes.setE( // Replace in cache the old child
+                childI, // which at the specified index
+                resultChildDataNode // with the new evaluated child.
+                );
             }
           } // goReturn:
 
@@ -188,15 +194,20 @@ public class IDirectory
 
     private DataNode evaluateDataNode(DataNode childDataNode)
       /* This method returns childDataNode evaluated 
-       * in the context of this object.
+       * in the context of this DataNode which should be its parent.
        * If childDataNode has already been evaluated
        * then it returns childDataNode.
        * 
-       * This method does not access the child cache, for reading or writing.
+       * This method does not read any children from the cache.
+       * This method does not write a new evaluated child to the cache.
+       * This method does not link a new child to its parent-to-be or
+       * unlink the old child from its present parent.
+       * This method does not propagate LogLevel or TreeLevel from the parent.
+       * These things must be done by the caller.
        */
       {
         goReturn: {
-          if // If child value is not lazy evaluation place-holder 
+          if // If child value is not a lazy evaluation place-holder 
             (! (childDataNode instanceof NamedLeaf)) {
               break goReturn; // exit with input child as evaluated result.
               }

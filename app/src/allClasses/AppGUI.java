@@ -221,6 +221,7 @@ public class AppGUI
        */
       {
       toReturn: {
+          try {
           EDTUtilities.runOrInvokeAndWaitV( () -> { // Do on EDT thread. 
               DataNode.displayChangedNodesFromV( // Display from...
                   theDataRoot.getParentOfRootTreePath( ), 
@@ -228,11 +229,15 @@ public class AppGUI
                   theDataRoot.getRootEpiTreeItem()
                   );
               });
+          } catch (Exception theException) {
+            theAppLog.info("!!!doPollingJobsV().");
+            
+          }
         if (theAppInstanceManager.tryToStartUpdateB())
           break toReturn; // Exit immediately to complete update.
         theConnectionManager.tryProcessingImportDataB();
       } // goReturn:
-        }
+      }
 
   } // class AppGUI
 

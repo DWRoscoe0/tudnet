@@ -12,7 +12,7 @@ import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
 
 
-public class NamedList 
+public class NamedList
 
 	extends NamedBranch
 
@@ -25,9 +25,7 @@ public class NamedList
 
       If deletion of children is needed then it must be done in a subclass.
 
-      This class does not do lazy evaluation of its children.
-      Further, if lazy evaluation is being done by a subclass,
-      then this object knows nothing about it.
+      This class has some basic knowledge of lazy evaluation of its children.
 
       This class uses a List to store its children.  It is 
       one of 3 non-leaf classes that define storage for child references.
@@ -132,10 +130,16 @@ public class NamedList
      * but are usually called when subtrees are being constructed or inserted.
      */
     
-    protected void propagateTreeModelIntoSubtreeV( 
+    public void propagateTreeModelIntoSubtreeV( 
         DataTreeModel theDataTreeModel )
-      /* This method propagates theDataTreeModel into 
+      /* This recursive method propagates theDataTreeModel into 
         the subtree rooted at this DataNode.
+        
+        This is different from propagateLogLevelIntoSubtreeV(.) because
+        it does not propagate TreeModels into DataNodes 
+        with different TreeModels.
+        It only propagates non-null TreeModels into DataNodes
+        with null TreeModels.
         */
       {
         if // Propagate only if 
@@ -147,15 +151,16 @@ public class NamedList
               (DataNode childDataNode : getChildLazyListOfDataNodes())
               childDataNode.propagateTreeModelIntoSubtreeV(theDataTreeModel);
 
-            super.propagateTreeModelIntoSubtreeV( // Propagate List into super-class. 
+            super.propagateTreeModelIntoSubtreeV( // Propagate into super-class. 
                 theDataTreeModel // This stores theDataTreeModel.
                 ); // It's done last because it is the controlling flag.
             }
         }
 
     protected void propagateLogLevelIntoSubtreeV( LogLevel theMaxLogLevel )  
-      /* This method propagates theMaxLogLevel into 
+      /* This recursive method propagates theMaxLogLevel into 
         the subtree rooted at this DataNode.
+        It stops if the DataNode has the same theMaxLogLevel.
         */
       {
         boolean changeNeededB= ( this.theMaxLogLevel != theMaxLogLevel ); 
@@ -286,6 +291,7 @@ public class NamedList
 
 	  // Child DataNode getter methods.
  
+    @Override 
     public DataNode getChild( int indexI ) 
       /* This returns the child with index indexI or 
        * null if no child exists with that index.
@@ -296,7 +302,8 @@ public class NamedList
       { 
         return childMultiLinkOfDataNodes.getE(indexI); 
         }
-    
+
+    @Override 
     public List<DataNode> getChildLazyListOfDataNodes()
       /* This method returns a List of the child DataNodes.
        * 

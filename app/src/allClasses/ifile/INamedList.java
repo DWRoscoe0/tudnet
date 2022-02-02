@@ -1,16 +1,19 @@
 package allClasses.ifile;
 
 import java.io.File;
+
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.Objects;
 
-import allClasses.NamedList;
+import allClasses.LazyNamedList;
+//// import allClasses.NamedList;
 
 public class INamedList 
 
-  extends NamedList
+  extends LazyNamedList
+  ////  extends NamedList
   
   {
   

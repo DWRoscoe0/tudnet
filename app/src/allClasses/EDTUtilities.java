@@ -68,9 +68,9 @@ public class EDTUtilities {
     	  while (true) { // Keep trying until an invokeAndWait(..) finishes.
 				  try  // Queuing and waiting for theRunnable on EDT thread.
 			  	  { 
-	            //appLogger.info( "EDTUtilities.invokeAndWaitV(..) before invokeAndWait(jobRunnable).");
+	            //// theAppLog.info( "EDTUtilities.invokeAndWaitV(..) before invokeAndWait(jobRunnable).");
 	            SwingUtilities.invokeAndWait( theRunnable );            
-	            //appLogger.info( "EDTUtilities.invokeAndWaitV(..) after invokeAndWait(jobRunnable).");
+	            //// theAppLog.info( "EDTUtilities.invokeAndWaitV(..) after invokeAndWait(jobRunnable).");
 				  		break;  // Exiting because invokeAndWait(..) ended normally.
 			  	  	}
 			    catch // Wait was interrupted.

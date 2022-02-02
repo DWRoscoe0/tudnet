@@ -622,17 +622,18 @@ public abstract class DataNode
         return theList;
         }
 
-    @SuppressWarnings("unused")
-    private List<DataNode> getChildLazyListOfDataNodes()
-      /* Returns a List containing the children of this object
-       * which might contain temporary unevaluated children.
-       * It returns a regular evaluated list 
-       * if an unevaluated one does not exist.
+    //// @SuppressWarnings("unused")
+    protected List<DataNode> getChildLazyListOfDataNodes()
+      /* This method returns a List of the child DataNodes.
+       * Some or all of them might be temporary unevaluated children.
+       * This method is named what it is to emphasize that 
+       * no evaluation of nodes is done by this method.
        * 
-       * This version builds and returns an empty list.
+       * This version of the method builds and returns an empty list.
        * 
-       * This method should be overridden by any class
-       * whose children's laziness differs from its superclass.
+       * This method should be overridden by:
+       * * Any class that has 1 or more children.
+       * * Any class whose children's laziness differs from its superclass.
        */
       { 
         List<DataNode> theList= // Create empty list. 
@@ -1108,7 +1109,7 @@ public abstract class DataNode
 
   // Other miscellaneous methods.
 
-    protected void propagateTreeModelIntoSubtreeV( 
+    public void propagateTreeModelIntoSubtreeV( 
         DataTreeModel theDataTreeModel )
       /* This method is called to propagate theDataTreeModel
         into the nodes which needed it when 
