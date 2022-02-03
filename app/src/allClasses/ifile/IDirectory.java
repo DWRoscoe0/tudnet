@@ -1,7 +1,7 @@
 package allClasses.ifile;
 
 import java.io.File;
-import java.util.List;
+//// import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
@@ -40,13 +40,6 @@ public class IDirectory
       from a tree to a DAG.
   
       */
-
-
-    // Variables.
-
-    private boolean childrenEvaluatedB= false; /* If this is true then 
-      it means that all child NamedLeafs have been evaluated 
-      and converted to either an IFile or an IDirectory.  */
 
 
     // Constructors and initialization.
@@ -128,32 +121,6 @@ public class IDirectory
       {
         return false; 
         }
-
-    public List<DataNode> getChildrenAsListOfDataNodes()
-      /* This method returns the list of evaluated children.
-       * It does evaluation of the entire list if it hasn't been done before.
-       * It evaluates every child by getting each one.
-       * 
-       * This method is called by:
-       * * DataNode.getChildObservableListOfDataNodes()
-       * * ObservableList<TreeItem<DataNode>> EpiTreeItem.getChildren()
-       *   
-       * This method was added for use with JavaFX.
-       */
-    {
-      if (! childrenEvaluatedB) // Evaluate entire child list if not done yet.
-        { // Evaluate entire child list 
-          for // Evaluate each child.
-            (
-              int childIndexI= 0; 
-              childIndexI < getChildCount();
-              childIndexI++
-              )
-            getChild(childIndexI); // Get the child to evaluate it.
-          childrenEvaluatedB= true; // Mark entire list evaluated.
-          }
-      return childMultiLinkOfDataNodes.getListOfEs(); // Return the list.
-      }
 
     public DataNode evaluateDataNode(DataNode childDataNode)
       /* This method returns childDataNode evaluated 
