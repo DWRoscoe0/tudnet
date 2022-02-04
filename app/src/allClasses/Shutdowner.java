@@ -256,19 +256,24 @@ public class Shutdowner
   	  	    }
 	  	  }
 
-    public LockAndSignal.Input waitForAppShutdownRequestedOrTimeOutOfE(
+    public boolean waitForTimeOutOf1OrTerminationB(
         long waitMsL)
       /* This method Waits until either:
-        * app shutdown has been requested, or
-        * this thread's isInterrupted() is true, or
-        * waitMsL milliseconds have passed.
+       * * termination has been initiated, either by
+       *   * app shutdown being requested, or
+       *   * this thread's isInterrupted() status being true, or
+       * * waitMsL milliseconds having passed.
+       *
+       * This method returns true if termination has been initiated,
+       * false otherwise.
        */
       { 
-        LockAndSignal.Input theInput=
+        LockAndSignal.Input theInput= // Wait for any input.
           appShutdownRequestedLockAndSignal.
             waitingForInterruptOrDelayOrNotificationE(waitMsL);
-        // theAppLog.debug( "Shutdowner.waitForAppShutdownRequestedV(.) exit." );
-        return theInput;
+        boolean terminationInitiatedB= // Termination initiation is 
+            LockAndSignal.Input.TIME != theInput; // anything but a time-out.
+        return terminationInitiatedB;
         }
 
     private boolean finishVCalledB= false; // For detecting re-entry.

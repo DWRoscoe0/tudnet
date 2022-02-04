@@ -27,23 +27,26 @@ import static allClasses.AppLog.theAppLog;  // For appLogger;
 
 public class AppGUI
 
-  /* 
-    ///org The name of this class, AppGUI, is not appropriate because:
-    1. Though this class includes elements of the app's GUI, 
-      it includes non-GUI elements also.
-    2. Since the addition of JavaFX, some GUI interaction 
-      can occur before this class becomes active.
-    The GUI presently includes elements of both 
-    the Java Swing and JavaFX libraries.
-    A transition from Swing to JavaFX is underway.
-    Eventually the Swing elements might be eliminated.
-
-    For more information, see the runV(.) method.
-    */
-
   { // class AppGUI
 
+    /* This class manages SOME OF the app's Graphical User Interface.
+  
+      ///org The name of this class, AppGUI, is not appropriate because:
+      1. Though this class includes elements of the app's GUI, 
+        it includes non-GUI elements also.
+      2. Since the addition of JavaFX, some GUI interaction 
+        can occur before this class becomes active.
+      The GUI presently includes elements of both 
+      the Java Swing and JavaFX libraries.
+      A transition from Swing to JavaFX is underway.
+      Eventually the Swing elements might be eliminated.
+  
+      For more information, see the runV(.) method.
+      */
+  
+  
     // AppGUI's constructor injected dependency variables.
+  
     private EpiThread theConnectionManagerEpiThread;
     private EpiThread theCPUMonitorEpiThread;
     private DataTreeModel theDataTreeModel;
@@ -55,7 +58,8 @@ public class AppGUI
     private AppInstanceManager theAppInstanceManager;
     private ConnectionManager theConnectionManager;
     private DataRoot theDataRoot;
-
+  
+  
     public AppGUI(   // Constructor.
         EpiThread theConnectionManagerEpiThread,
         EpiThread theCPUMonitorEpiThread,
@@ -70,8 +74,8 @@ public class AppGUI
         DataRoot theDataRoot
         )
       {
-	      this.theConnectionManagerEpiThread= theConnectionManagerEpiThread;
-	      this.theCPUMonitorEpiThread= theCPUMonitorEpiThread;
+        this.theConnectionManagerEpiThread= theConnectionManagerEpiThread;
+        this.theCPUMonitorEpiThread= theCPUMonitorEpiThread;
         this.theDataTreeModel= theDataTreeModel;
         this.theInitialRootDataNode= theInitialRootDataNode;
         this.theGUIManager= theGUIManager;
@@ -82,54 +86,58 @@ public class AppGUI
         this.theConnectionManager= theConnectionManager;
         this.theDataRoot= theDataRoot;
         }
-    
+  
+  
     class InstanceCreationRunnable // Listens for other local app instances.
+  
     	implements AppInstanceListener, Runnable
-      /* This nested class does 2 things:
-	        
-	      * It acts as an AppInstanceListener because of
-	        its appInstanceCreatedV() method,
-	        which calls the invokeLater(..) method.
-        
-	      * It contains a run() method for executing code on the AWT thread.
-
-				Because this class is a non-static nested class,
-				it can do anything its parent, the AppInstanceManager, can do.
-				
-        Presently the only thing the run() method does is
-        try to move the app's main JFrame to the front and display a dialog.
-        Other actions might be appropriate if the UI were different, 
-        such as there being multiple tabs and/or multiple JFrames.
-
-        ///enh
-        Note, move-to-front is problematic.
-        In some Windows versions, move-to-front works only once,
-        or only highlights the app's task-bar button, or both.
-        The following code was moving the first time, 
-        and highlighting after that.  Now it only highlights.
-        This might be part of the focus-stealing arms race.
-        Fix this to work in all cases?
-        Maybe try using a JFrame method override,
-        which is described by the [best] answer, with 18 votes, at
-        http://stackoverflow.com/questions/309023/howto-bring-a-java-window-to-the-front
-
-        ?? Eventually this method might also process command arguments
-        as part of the software update process as part of
-        the AppInstanceManager logic.
-
-        ?? Maybe some of this should be done in DagBrowserPanel?
-
-        */
-      {
-    		private JFrame theJFrame;
-
+  
+    	{
+        /* This nested class does 2 things:
+            
+          * It acts as an AppInstanceListener because of
+            its appInstanceCreatedV() method,
+            which calls the invokeLater(..) method.
+          
+          * It contains a run() method for executing code on the AWT thread.
+    
+          Because this class is a non-static nested class,
+          it can do anything its parent, the AppInstanceManager, can do.
+          
+          Presently the only thing the run() method does is
+          try to move the app's main JFrame to the front and display a dialog.
+          Other actions might be appropriate if the UI were different, 
+          such as there being multiple tabs and/or multiple JFrames.
+    
+          ///enh
+          Note, move-to-front is problematic.
+          In some Windows versions, move-to-front works only once,
+          or only highlights the app's task-bar button, or both.
+          The following code was moving the first time, 
+          and highlighting after that.  Now it only highlights.
+          This might be part of the focus-stealing arms race.
+          Fix this to work in all cases?
+          Maybe try using a JFrame method override,
+          which is described by the [best] answer, with 18 votes, at
+          http://stackoverflow.com/questions/309023/howto-bring-a-java-window-to-the-front
+    
+          ?? Eventually this method might also process command arguments
+          as part of the software update process as part of
+          the AppInstanceManager logic.
+    
+          ?? Maybe some of this should be done in DagBrowserPanel?
+    
+          */
+  
+        private JFrame theJFrame;
+  
     		InstanceCreationRunnable( JFrame theJFrame )  // Constructor.
-	    		{
+      		{
     				this.theJFrame= theJFrame;
     				
-	    			//throw new NullPointerException(); // Un-comment to test this path.
-	      		}
-
+      			//throw new NullPointerException(); // Un-comment to test this path.
+        		}
+  
         public void appInstanceCreatedV()  // AppInstanceListener method.
           /* This AppInstanceListener method handles 
             the detection of the creation of
@@ -141,27 +149,29 @@ public class AppGUI
           {
             java.awt.EventQueue.invokeLater( this );
             }
-
+  
         public void run() // Method executed by appInstanceCreatedV(). 
           {
             theAppLog.info("Trying move-to-front.");
             theJFrame.toFront();
             theJFrame.repaint();
             }
-
+  
         } // class InstanceCreationRunnable
-
-    public void runV()
+  
+    public void runV() // Completes initialization, runs, and finalizes.
+  
       /* This method does the main AppGUI run phase.
        * It does 3 things:
        * 
-       * * Finishes app initialization and startup, including the GUI.
+       * * Finishes app initialization and startup, but not only the GUI.
        * * Waits for a shutdown request, which can come from various places.
        * * Does shutdown and finalization of 
        *   the things it initialized and started earlier.
-       *   
+       *
        * It does not return until it has finished all of these things.
        */
+  
       {
     		theAppLog.info("AppGUI.runV() begins.");
         theDataTreeModel.initializeV( theInitialRootDataNode );
@@ -169,13 +179,13 @@ public class AppGUI
         theConnectionManagerEpiThread.startV();
         theCPUMonitorEpiThread.startV();
         theTCPCopier.initializeV();
-
+  
         /// theAppLog.error("AppGUI.runV() Test Anomaly Dialog.");
         
         // At this point, full interaction is possible
         // with the user and with other network devices.
-        doPollingTasksWhileWaitingForShutdownV();
-
+        doPollingJobsWhileWaitingForShutdownV();
+  
         // At this point, shutdown has been requested.
         theTCPCopier.finalizeV();
         theCPUMonitorEpiThread.stopAndJoinV();
@@ -186,10 +196,11 @@ public class AppGUI
         theDataTreeModel.finalizeV();
     		theAppLog.info("AppGUI.runV() ends.");
         }
-
-    private void doPollingTasksWhileWaitingForShutdownV()
+  
+    private void doPollingJobsWhileWaitingForShutdownV()
       /* This method polls some things that need to polled until
-       * app shutdown is requested.  Then it returns.
+       * termination is requested.  Then it returns.
+       * The request to terminate might or might not come from a polled job.
        * 
        * ///org Use absolute instead of relative timing in wait.
        */
@@ -197,60 +208,63 @@ public class AppGUI
         while (true) {
           // theAppLog.debug(
           //     "GUIManager.doPollingTasksWhileWaitingForShutdownV()() loop.");
-          LockAndSignal.Input theInput= 
-              theShutdowner.waitForAppShutdownRequestedOrTimeOutOfE(1000);
-          if (LockAndSignal.Input.TIME != theInput) // If not time-out then
-            break; // we must be shutting down, so exit loop.
-          
-          // Time-out has occurred.
+  
+          boolean terminationRequestedB= // Wait while testing for termination. 
+              theShutdowner.waitForTimeOutOf1OrTerminationB(
+                  1000); // 1-second polling interval.
+  
+          if (terminationRequestedB) break; // Exit if termination requested.
+  
           doPollingJobsV();
           }
         }
-
+  
     private void doPollingJobsV()
-      /* This method does various polling jobs.
-       * It always displays TreeModel changes.
-       * It may then do one additional job, 
-       * the first one that succeeds from the following list:
+      /* This method tries to do various polling jobs during each call.
+       * It does at least one job, then exits.
+       * It always displays changes that affect the Swing UI.
+       * It may then do one additional job that is ready to be done,
+       * the first job that is ready from the following list:
        * * a executable file update using the AppInstanceManager
        * * a data importation operation using the ConnectionManager
        * 
-       *  An earlier version of this method returned a boolean 
-       *  to indicate that an exit should be done, but this was not needed.
-       *  
+       * ///enh Add job: display to JavaFX UI.  Now it does only the Swing UI.
        */
       {
-      toReturn: {
-          try {
-          EDTUtilities.runOrInvokeAndWaitV( () -> { // Do on EDT thread. 
-              DataNode.displayChangedNodesFromV( // Display from...
+        toReturn: {
+          try { // Display state changes that affect the Swing UI.
+              EDTUtilities.runOrInvokeAndWaitV( () -> { // Do on EDT thread. 
+                DataNode.displayChangedNodesFromV( // Display from...
                   theDataRoot.getParentOfRootTreePath( ), 
                   theDataRoot.getRootDataNode( ),
                   theDataRoot.getRootEpiTreeItem()
                   );
-              });
-          } catch (Exception theException) {
-            theAppLog.info("!!!doPollingJobsV().");
-            
-          }
-        if (theAppInstanceManager.tryToStartUpdateB())
-          break toReturn; // Exit immediately to complete update.
-        theConnectionManager.tryProcessingImportDataB();
-      } // goReturn:
+                });
+            } catch (Exception theException) {
+              theAppLog.info("!!!doPollingJobsV().");
+              
+            }
+          if (theAppInstanceManager.tryToStartUpdateB())
+            break toReturn; // Exit immediately to continue the update.
+          theConnectionManager.tryProcessingImportDataB();
+        } // goReturn:
       }
+  
+    } // class AppGUI end
 
-  } // class AppGUI
 
-class GUIManager 
+class GUIManager
+
   implements KeyEventDispatcher 
-
-  /* This nested class is used to manage the app's GUI.
-   * Originally this included only a Swing GUI.
-   * Later a JavaFX GUI component was added. 
-   */
 
   { // GUIManager
 
+    /* This nested class is used to manage the app's GUI.
+     * Originally this included only a Swing GUI.
+     * Later a JavaFX GUI component was added. 
+     */
+
+  
 		// Injected dependency variables.
 		private AppInstanceManager theAppInstanceManager;
 		private DagBrowserPanel theDagBrowserPanel;
@@ -261,6 +275,7 @@ class GUIManager
     // Other AppGUI instance variables.
     private JFrame theJFrame;  // App's only JFrame (now).
     private JavaFXGUI theJavaFXGUI;
+
 
     GUIManager(   // Constructor. 
     		AppInstanceManager theAppInstanceManager,
@@ -285,19 +300,18 @@ class GUIManager
         It does it for both the Swing and JavaFX GUIs.
         
         It initializes JavaFX first, but this is no longer necessary,
-        because the JavaFX runtime is started earlier manually
+        because the JavaFX runtime was started earlier manually
         for use in delivering message dialogs to the user.
         */
       {
-
         // Start JavaFX GUI.
         theJavaFXGUI.startJavaFXLaunchV(); // Start thread that presents
           // JavaFX GUI window.
-        
+
         ///fix? Might need to wait, either here, or in the above method,
         /// to guarantee that JavaFX has completed initialization
-        /// before continuing?  What would be nice to have is
-        /// Need an equivalent to Swing's runAndWait(.).
+        /// before continuing?  What would be nice to have and use
+        /// an equivalent to Swing's runAndWait(.) for this.
 
         // Start Swing GUI.
         EDTUtilities.invokeAndWaitV( // Dispatching on EDT
@@ -309,7 +323,7 @@ class GUIManager
         }
 
     
-    // GUI start and stop methods.
+    // Swing GUI start and stop methods.
     
     public void initializeOnEDTV() // GUIManager.
       /* This method does initialization of the Swing GUI.  
@@ -319,27 +333,29 @@ class GUIManager
       {
     		theAppLog.info("GUIManager.initializeOnEDTV() begins.");
 
-    		theTracingEventQueue.initializeV(); 
-    		  // Start monitor thread is our customized Event dispatcher.
-      	Toolkit.getDefaultToolkit().getSystemEventQueue().push(
-      			theTracingEventQueue); // Replace Event dispatcher with our customized one.
+        theTracingEventQueue.initializeV(); 
+          // Start monitor thread is our customized Event dispatcher.
+        Toolkit.getDefaultToolkit().getSystemEventQueue().push( // Replace queue
+          theTracingEventQueue); // and dispatcher with our customized ones.
 
     	  //try { // Change GUI look-and-feel to be OS instead of java.
         //  UIManager.setLookAndFeel(UIManager.
         //    getSystemLookAndFeelClassName());
         //  } catch(Exception e) {}
-      	
-      	PlatformUI.setUIFont( new javax.swing.plaf.FontUIResource(
+
+      	PlatformUI.setUIFont( // Select a fixed width font. 
+      	  new javax.swing.plaf.FontUIResource(
       			Font.MONOSPACED,Font.PLAIN,12
       			));
 
-    		theDagBrowserPanel.initializeV();
+    		theDagBrowserPanel.initializeV(); // Initialize main window.
 
     		buildJFrameV(); // Build and display the app JFrame.
 
         // theDagBrowserPanel.showCommandHelpV(); // Build and 
     		  // display the Help dialog.
 
+    		// Add KeyListener for app-level keyboard pre-processing.
         KeyboardFocusManager.getCurrentKeyboardFocusManager().
           addKeyEventDispatcher( this );
 
@@ -352,11 +368,12 @@ class GUIManager
 
     public void finalizeV()
       /* This method does finalization of the Swing GUI and JavaFXGUI.  
-       * It is called during shutdown.
+       * It is called during app shutdown.
        * It switches to the appropriate threads to do the work.
        */
       {
-        theAppLog.info("GUIManager.finalizeOnV() called, doing on EDT.");
+        theAppLog.info("GUIManager.finalizeV() called, for Swing and JavaFX.");
+
         EDTUtilities.invokeAndWaitV( // Dispatching on EDT
             new Runnable() {
               @Override
@@ -365,7 +382,9 @@ class GUIManager
                 finalizeOnEDTV();  
                 // appLogger.info("GUIManager.finalizeOnV() invokeAndWaitV() run() ends.");
                 } } );
+
         Platform.runLater( () -> theJavaFXGUI.finalizeV() );
+
         // appLogger.info("GUIManager.finalizeOnV() ends.");
         }
     
@@ -495,35 +514,47 @@ class PlatformUI
 		static int minFontSizeI= 3;  // minimum font size. 
 
 	  public static void adjustUIFont(int sizeChangeI)
-	    /* This method adjusts the default font for all UI component types
-	      by changing the font size by sizeChangeI.
-	      
-	      ///enh Fix to not change the color of JTextAreas to white
-	        when the Font is adjusted.
-	      */
+	    /* This method adjusts the font sizes throughout the app.
+	     * It changes the default font for all UI component types,
+	     * updates all the apps windows, and redisplays displayed windows.
+	     * The font that is used is a fixed width font.
+	     * 
+	     * ///enh Fix to not change the color of JTextAreas to white
+	     * when the Font is adjusted.
+	     */
 	    {
-	  	  fontSizeI+= sizeChangeI;
+	  	  fontSizeI+= sizeChangeI; // Calculate tentative new font size.
+
+        // Limit the minimum font size.
 	  	  if ( fontSizeI < minFontSizeI ) fontSizeI= minFontSizeI;
-      	FontUIResource newFont= new FontUIResource(
+
+      	FontUIResource newFont= new FontUIResource( // Construct new font.
       			Font.MONOSPACED,Font.PLAIN,fontSizeI
       			);
-      	PlatformUI.setUIFont( newFont );
+
+      	PlatformUI.setUIFont( newFont ); // Set the new font.
 	      } 
 
 	  public static void setUIFont(javax.swing.plaf.FontUIResource f)
-	    // This method sets the default font for all UI component types.
-	  	//
-	  	///fix components that use default font.
-	  	///doc : Better document variable names.
+	    /* This method sets the default font for all UI component types,
+	     * updates all windows, and redisplays the displayable ones..
+	     * 
+	     * ///fix components that use default font.
+	     * ///doc : Better document variable names.
+	     */
 	    {
-	      Enumeration<Object> keys = UIManager.getDefaults().keys();
-	      while (keys.hasMoreElements()) {
+	      Enumeration<Object> keys= // Get keys for all component types. 
+	          UIManager.getDefaults().keys();
+
+	      while (keys.hasMoreElements()) { // For every key
 	        Object key = keys.nextElement();
 	        Object value = UIManager.get (key);
-	        if (value instanceof javax.swing.plaf.FontUIResource)
-	          UIManager.put (key, f);
+	        if // if key selects a font 
+	          (value instanceof javax.swing.plaf.FontUIResource)
+	          UIManager.put (key, f); // replace it with new font.
 	        }
-	      allWindowsUpdateUIV(); // Make font change take effect.
+
+	      allWindowsUpdateUIV(); // Make default font changes take effect.
 	      } 
 		
 	  public static void allWindowsUpdateUIV()
@@ -534,13 +565,25 @@ class PlatformUI
 	      */
 	    	///doc Better document variable names.
 	    {
-	    	for (Window w : Window.getWindows()) {
-	        SwingUtilities.updateComponentTreeUI(w);
-	        if (w.isDisplayable() &&
-	            (w instanceof Frame ? !((Frame)w).isResizable() :
-	            w instanceof Dialog ? !((Dialog)w).isResizable() :
-	            true)) w.pack();
-	    		}
+	    	for (Window theWindow : Window.getWindows()) // Process every window. 
+  	    	{ // Process one window.
+	    	  
+	    	    // Update all components in this window.
+  	        SwingUtilities.updateComponentTreeUI(theWindow);
+
+  	        if // Redisplay the window if appropriate. 
+  	          ( theWindow.isDisplayable() &&
+  	            ( theWindow instanceof Frame 
+  	              ? !((Frame)theWindow).isResizable() 
+  	              : ( theWindow instanceof Dialog 
+    	                ? !((Dialog)theWindow).isResizable() 
+    	                : true
+    	                )
+    	            )
+  	            ) 
+  	          theWindow.pack(); // Redisplay window.
+  	    		}
+
 	      } 
 	
 		}
