@@ -19,34 +19,36 @@ import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.stage.Window;
 
+
 public class JavaFXGUI
 
-  /* This class is used to manage JavaFX operations,
-   * including:
-   * * the JavaFX runtime
-   * * the launching of a JavaFX Application
-   * 
-   * ///klu This class contains much kludgy JavaFX code because 
-   * I was new to JavaFX and I wanted to transition gradually 
-   * from the Swing libraries in this app to the JavaFX libraries,
-   * so I wanted to have code from both sets of libraries coexist.
-   * I tried to do it by adapting example code
-   * normally offered to show how to start a JavaFX-only app.
-   * I succeeded, but the result was definitely a kludge.
-   * 
-   * Since that time I learned how to start the JavaFX runtime 
-   * without involving an Application subclass instance.
-   * This is done by calling startup(.) from startJavaFXAndReturnString(),
-   * which is called from TUDNet.main(.).
-   * 
-   * ///org It should now be possible to eliminate much of the kludginess
-   * in the code that follows it, and maybe move all the remaining code into
-   * JavaFXApp, the Application subclass.
-   */
-
   {
+  
+    /* This class is used to manage JavaFX operations,
+     * including:
+     * * the JavaFX runtime
+     * * the launching of a JavaFX Application
+     * 
+     * ///klu This class contains much kludgy JavaFX code because 
+     * I was new to JavaFX and I wanted to transition gradually 
+     * from using the Swing libraries to using the JavaFX libraries,
+     * so I wanted to have code from both sets of libraries coexist.
+     * I tried to do it by adapting example code
+     * normally offered to show how to start a JavaFX-only app.
+     * I succeeded, but the result was definitely a kludge.
+     * 
+     * Since that time I learned how to start the JavaFX runtime 
+     * without involving an Application subclass instance.
+     * This is done by calling startup(.) from startJavaFXAndReturnString(),
+     * which is called from TUDNet.main(.).
+     * 
+     * ///org It should now be possible to eliminate much of the kludginess
+     * in the code that follows, and maybe move all the remaining code into
+     * JavaFXApp, the Application subclass.
+     */
 
-    // Injected dependencies.
+  
+    // Injected dependencies variables.
 
     private Shutdowner theShutdowner;
     private DataNode theRootDataNode;
@@ -56,6 +58,7 @@ public class JavaFXGUI
 
     // Other variables
 
+    // Variable for tracking JavaFX windows.
     private static Map<String,BundleOf2<Window,Alert>> windowMap= 
       new HashMap<String,BundleOf2<Window,Alert>>();
   
@@ -64,23 +67,25 @@ public class JavaFXGUI
     private static volatile JavaFXGUI theJavaFXGUI= null; // Only instance. 
     public static volatile boolean runtimeIsActiveB= false; 
 
-    static { // Used to log when this class is loaded.
-        theAppLog.info("JavaFXGUI loaded.");
+
+    static { // Code to log when this class is loaded.
+        theAppLog.info("JavaFXGUI loading.");
         }
 
 
     // Methods
 
     public static String startRuntimeAndReturnString()
-      /* This method manually starts the JavaFX runtime.  This can be used to 
-       * start the runtime before it would normally be started
-       * when the JavaFX Application class is launched,
-       * or if the app doesn't use the Application class at all.
+      /* This method manually starts the JavaFX runtime.  
        * 
-       * This might be useful, for example,
-       * for reporting with JavaFX dialogs boxes 
-       * errors that might occur early in app startup,
-       * before the normal JavaFX Application GUI is displayed.
+       * This is NOT the full InnerPpp's JavaFX UI.
+       * It's only enough for displaying error dialogs
+       * until InnerApp's full UI is active.
+       * 
+       * This method can be used to start the runtime:
+       * * before it would normally be started
+       *   when the JavaFX Application class is launched, or 
+       * * if the app doesn't use the JavaFX Application class at all.
        * 
        * ///ano Only a few lines of the code in this method 
        * are actually needed to start the JavaFX runtime.
@@ -89,8 +94,8 @@ public class JavaFXGUI
        * Debug logging was added to debug the anomaly,
        * and a timeout was added to mitigate it.  
        * After that code was added, the failures stopped,
-       * but the mitigation code was left in case they returned.
-       * The failures have returned but happened only occasionally.
+       * but the mitigation code was left in case the failures returned.
+       * The failures did return but now happen only occasionally.
        * 
        * The code was originally tested with a breakpoint 
        * to pause execution of the startup(.) Runnable argument
@@ -104,14 +109,13 @@ public class JavaFXGUI
        * * The runtime started but confirmation was not received.
        * Either will be reported as failure.
        * 
+       * Because of the anomaly, there is no guarantee that 
+       * the JavaFX runtime is running when this method returns.
+       * 
        * ///enh Use 2 time-out values instead of only 1:
        * * A value above which is considered a failure.
        * * A value above which this method will not wait.
        *   In this case the runtime might not have started.
-       * 
-       * There is no guarantee that the JavaFX runtime is running
-       * when this method returns.
-       * 
        */
       {
         String resultString= null; ///ano
@@ -165,7 +169,6 @@ public class JavaFXGUI
         return resultString; ///ano
         }
 
-
     public static JavaFXGUI initializeJavaFXGUI(
           DataNode theRootDataNode,
           Shutdowner theShutdowner,
@@ -190,7 +193,7 @@ public class JavaFXGUI
           aJavaFXGUI.theDataRoot= theDataRoot;
           aJavaFXGUI.theSelections= theSelections;
           theJavaFXGUI= aJavaFXGUI; // Finish by storing in static variable.
-          runningLockAndSignal.notifyingV(); // Inform caller of definition.
+          //// runningLockAndSignal.notifyingV(); // Inform caller of definition.
           theAppLog.debug("JavaFXGUILog", "initializeJavaFXGUI(.) "
               + "defining theJavaFXGUI=="+theJavaFXGUI);
           }

@@ -21,15 +21,9 @@ import allClasses.javafx.Selections;
 
 public class AppFactory {  // For App class lifetimes.
 
-  /* This is the factory for all classes with App lifetime.
+  /* This is the factory for all classes with OuterApp lifetime.
     The app has exactly one instance of this factory.
-    It includes classes that are part of the BUI.
     This class wires together the top level of the application.
-    The app has a maximum of one instance of this factory.
-
-    Originally the GUI objects were created 
-    by a different factory, AppGUIFactory, because the GUI isn't always needed.
-    Eventually those classes were moved to here.
 
     ScheduledThreadPoolExecutor is used in this class.
     Unfortunately it appears that ScheduledThreadPoolExecutor disables
@@ -42,6 +36,9 @@ public class AppFactory {  // For App class lifetimes.
     the ThreadPoolExecutor configured for a widely variable number of threads
     to provide a ScheduledThreadPoolExecutor-like class 
     that can provide a potentially large number of timer threads.
+
+    Some of the following code was moved from the old AppGUIFactory class, 
+    which if it still existed, would be called InnerAppFactory.
     */
 
   // Injected dependencies that will still be needed after construction.
@@ -50,9 +47,9 @@ public class AppFactory {  // For App class lifetimes.
 	// Other objects that will be needed later.
 	private PortManager thePortManager;
   private final Shutdowner theShutdowner;
-  private final App theApp;
+  private final OuterApp theOuterApp;
   private final TCPCopier theTCPCopier;
-  private final AppGUI theAppGUI;
+  private final InnerApp theInnerApp;
   
   // Variables moved from AppGUIFactory.
 
@@ -86,7 +83,7 @@ public class AppFactory {  // For App class lifetimes.
   		    inCommandArgs, theShutdowner, thePortManager
       		);
   		theTCPCopier= new TCPCopier( "TCPCopier", thePersistent, thePortManager );
-  		App newApp= new App(
+  		OuterApp newApp= new OuterApp(
         this, // The App gets to know the factory that made it. 
         thePersistent,
         theShutdowner,
@@ -216,26 +213,26 @@ public class AppFactory {  // For App class lifetimes.
           theDataRoot,
           theSelections
           );
-      GUIManager theGUIManager= new GUIManager( 
+      SwingUI theSwingUI= new SwingUI( 
         newAppInstanceManager,
         theDagBrowserPanel,
         this, // GUIBuilderStarter gets to know the factory that made it. 
         theShutdowner,
-        theTracingEventQueue,
-        theJavaFXGUI
+        theTracingEventQueue
         );
-      AppGUI newAppGUI= new AppGUI( 
+      InnerApp newInnerApp= new InnerApp( 
         theConnectionManagerEpiThread,
         theCPUMonitorEpiThread,
         theDataTreeModel,
         theRootDataNode,
-        theGUIManager,
+        theSwingUI,
         theShutdowner,
         theTCPCopier,
         theScheduledThreadPoolExecutor,
         newAppInstanceManager,
         theConnectionManager,
-        theDataRoot
+        theDataRoot,
+        theJavaFXGUI
         );
   		
   		// Save in instance variables injected objects that are needed later.
@@ -244,8 +241,8 @@ public class AppFactory {  // For App class lifetimes.
   	  // Save new objects that will be needed later 
   		// from local variables to instance variables. 
       //% this.theShutdowner= theShutdowner;
-      this.theAppGUI= newAppGUI;
-      this.theApp= newApp;
+      this.theInnerApp= newInnerApp;
+      this.theOuterApp= newApp;
 
       // Following were moved AppGUIFactory.
       
@@ -272,24 +269,25 @@ public class AppFactory {  // For App class lifetimes.
   // There shouldn't be more than one.
   // More than one indicates cyclic dependencies, which are undesirable.
 
-  public AppGUI getAppGUI() // This is the main getter of this factory.
+  public InnerApp getInnerApp() // This is the main getter of this factory.
     { 
-      return Nulls.fastFailNullCheckT( theAppGUI );
+      return Nulls.fastFailNullCheckT( theInnerApp );
       }
 
   // Unconditional singleton getters, allowed because it's for the top level.
-  public App getApp() 
-    { return theApp; }
+  public OuterApp getOuterApp() 
+    { return theOuterApp; }
 
   /* Maker methods which construct a new object each time they are called.
     [ These were imported from AppGUIFactory. ]
 
     These are for classes for which there are 
     multiple instances in space or time.
-    They have lifetimes that are shorter than AppGUI.
+    They have lifetimes that are shorter than InnerApp.
     
     ///org Maybe they should be put into their own factory?
-      This would eliminate the need to pass "this" AppGUIFactory as a parameter.
+      This would eliminate the need to pass 
+      "this" InnerAppFactory as a parameter.
       
     ///opt fastFailNullCheckT(..) might no longer be needed.
      */
@@ -306,11 +304,11 @@ public class AppFactory {  // For App class lifetimes.
   public JFrame makeJFrame( String titleString ) 
     { return new JFrame( titleString ); }
   
-  public AppGUI.InstanceCreationRunnable makeInstanceCreationRunnable( 
+  public InnerApp.InstanceCreationRunnable makeInstanceCreationRunnable( 
       JFrame aJFrame
       )
     // This should be a singleton because aJFrame is always only one??
-    { return theAppGUI.new InstanceCreationRunnable( aJFrame ); }
+    { return theInnerApp.new InstanceCreationRunnable( aJFrame ); }
 
   public EpiThread makeSenderEpiThread( 
       DatagramSocket unconnectedDatagramSocket

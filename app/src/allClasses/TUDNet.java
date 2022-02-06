@@ -28,14 +28,8 @@ import static allClasses.SystemSettings.NL;
   Factory classes are distinguished by the lifetimes of the objects they create. 
   Some important factory classes are:
   * AppFactory: This is the top level factory.
-    It makes all classes with app lifetime.
-    It wires together the first level of the app.
-  * AppGUIFactory: This is the factory for all classes with
-    app GUI lifetime, which is shorter than app lifetime.
-    It wires together the second level of the app.
-    [ Actually, since the addition of the JavaFX GUI,
-    whose runtime is started immediately,
-    this class should probably be called AppSwingGUIFactory. ]
+    It makes all classes with app [OuterApp] lifetime.
+    It wires together the top level of the app.
   * UnicasterFactory: This is the factory for all classes with
     lifetimes of a Unicaster network connection.
 
@@ -70,7 +64,7 @@ class TUDNet
 
 	{ // TUDNet
 
-	  public static void main(String[] argStrings)
+	  public static void main(String[] argStrings) // This is app's entry point.
 
 			/* This method is the app's entry point.  
 			  It does the following actions in the following order:
@@ -170,8 +164,8 @@ class TUDNet
         CommandArgs theCommandArgs= new CommandArgs(argStrings);
         AppSettings.initializeV(TUDNet.class, theCommandArgs);
 	      AppFactory theAppFactory= new AppFactory(theCommandArgs, thePersistent);
-	      App theApp= theAppFactory.getApp();
-	      theApp.runV();  // Run the app until shutdown.
+	      OuterApp theOuterApp= theAppFactory.getOuterApp();
+	      theOuterApp.runV();  // Run the app until shutdown.
 	        // This might not return if a shutdown is initiated by the JVM!
 
 	      // If here then shutdown was requested in App.runV() and it returned.
@@ -184,7 +178,6 @@ class TUDNet
           // while(true) {} ///ano Use this infinite loop to test above line.
 
 	      } // End of the body of main(.).
-
 
 		} // /TUDNet
 

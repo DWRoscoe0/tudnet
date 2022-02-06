@@ -7,28 +7,29 @@ import java.util.Random;
 import static allClasses.AppLog.theAppLog;
 
 
-public class App { // The App, especially pre-GUI stuff.
+public class OuterApp { // The outer part of app, with a very limited UI.
 
   /* 
-   * The name of this class, App, is a little misleading.
-   * It's not the entire app.
-   * It doesn't include the app's entry point and some modules used by it.
-   * The entry point is the app's main(.) method in a different class.
+   * The name of this class is a little misleading.  
+   * It's not the outer-most part of the app.
+   * It doesn't include the factory that made it, or the app's entry point.
+   * Its code does mostly things that can be done without involving the user,
+   * and therefore don't need a large user interface. 
    * 
    * When this class runs, it does one of two things, depending on whether 
    * the running instance of the app is NOT the correct one.
    * 
    * * If the running instance of the app is NOT the correct one, 
    *   then it acts to run the correct one, which might include 
-   *   copying a software update file, terminating this instanced,
+   *   copying a software update file, terminating this instance,
    *   and starting a different one located in a different folder.
    *   There is no interaction with the user,
    *   except possibly to report an error. 
    *   
    * * If the running instance of the app IS the correct one, 
-   *   then it presents the GUI to the user
+   *   then it constructs an instance of InnerApp, which has a complete UI,
    *   and allows the user to interact with app. 
-   *   This is when network operations might also occur.
+   *   InnerApp also does network operations.
    *   If and when the user requests it, the app terminates.
    */
   
@@ -38,7 +39,7 @@ public class App { // The App, especially pre-GUI stuff.
   AppInstanceManager theAppInstanceManager;
   TCPCopier theTCPCopier;
 
-  public App(   // Constructor.  For app creation.
+  public OuterApp(   // Constructor.  For app creation.
       AppFactory theAppFactory,
       Persistent thePersistent,
       Shutdowner theShutdowner,
@@ -62,8 +63,8 @@ public class App { // The App, especially pre-GUI stuff.
       do any final shutdown jobs.
      */
     {
-      // App initialization.
-  		theAppLog.info("App.run() begins.");
+      // OuterApp initialization.
+  		theAppLog.info("OuterApp.run() begins.");
   	  defineRootIdV();
 			theShutdowner.initializeV();
 
@@ -71,15 +72,15 @@ public class App { // The App, especially pre-GUI stuff.
 
 			delegateOrDoV(); // Actually do some work until shutdown requested.
 
-      // App shutdown.
-      theAppLog.info("App.run() shutting down.");
+      // OuterApp shutdown.
+      theAppLog.info("OuterApp.run() shutting down.");
       theAppInstanceManager.finalizeV();
-  		//appLogger.info("App calling Shutdowner.finishV().");
+  		//appLogger.info("OuterApp calling Shutdowner.finishV().");
       theShutdowner.finishAppShutdownV();  // Doing final app shutdown jobs.
         // This might not return if shutdown began in the JVM. 
       theAppLog.setBufferedModeV( 
           true ); // Because finishAppShutdownV() disables it for JVM exit. 
-      theAppLog.info("App.run() ends.");
+      theAppLog.info("OuterApp.run() ends.");
       
       // After this method returns, the main thread of this app should exit.
       } // runV().
@@ -131,11 +132,11 @@ public class App { // The App, especially pre-GUI stuff.
 		  if ( theAppInstanceManager.tryDelegatingToAnotherAppInstanceB() )
 		    ; // Do nothing because delegation succeeded and shutdown is requested.
 		    else
-		    { // Delegation failed.  Presenting GUI to user and interacting.
-		  	  AppGUI theAppGUI= theAppFactory.getAppGUI();
-		      theAppGUI.runV(); // Running main GUI until shutdown is requested.
+		    { // Delegation failed.  Present inner app UI to user and interacting.
+		  	  InnerApp theInnerApp= theAppFactory.getInnerApp();
+		      theInnerApp.runV(); // Running inner app until shutdown is requested.
 		      	// Network operations happen at this time also.
 		      }
 	  	}
 
-  } // class App.
+  } // class OuterApp.
