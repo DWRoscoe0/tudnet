@@ -226,7 +226,7 @@ public class InnerApp
       {
         theAppLog.info("InnerApp.finalizeUIV() called.");
 
-        EDTUtilities.invokeAndWaitV( () -> theSwingUI.finalizeOnEDTV() );
+        theSwingUI.finalizeV();
 
         Platform.runLater( () -> theJavaFXGUI.finalizeV() );
 
@@ -234,8 +234,9 @@ public class InnerApp
         }
   
     private void doPollingJobsWhileWaitingForShutdownV()
-      /* This method polls some things that need to polled until
-       * termination is requested.  Then it returns.
+      /* This method polls and processes 
+       * some things that need to polled until termination is requested.  
+       * Then it returns.
        * The request to terminate might or might not come from a polled job.
        * 
        * ///org Use absolute instead of relative timing in wait.

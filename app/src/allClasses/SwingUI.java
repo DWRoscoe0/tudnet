@@ -56,33 +56,20 @@ class SwingUI
         this.theTracingEventQueue= theTracingEventQueue;
         }
 
-    public void initializeV() /////////
+    public void initializeV()
       /* This method does the GUI initialization that 
         could not be done with constructor dependency injection.
-        It does it for both the Swing and JavaFX GUIs.
-        
-        It initializes JavaFX first, but this is no longer necessary,
-        because the JavaFX runtime was started earlier manually
-        for use in delivering message dialogs to the user.
+        See initializeOnEDTV() for details.
         */
       {
-
-        // Start Swing GUI.
-        EDTUtilities.invokeAndWaitV( // Dispatching on EDT
-            new Runnable() {
-              @Override
-              public void run() { initializeOnEDTV(); }  
-              } );
-
+        // Start Swing GUI by initializing on EDT.
+        EDTUtilities.invokeAndWaitV( () -> { initializeOnEDTV(); } );
         }
-
     
-    // Swing GUI start and stop methods.
-    
-    public void initializeOnEDTV()
+    private void initializeOnEDTV()
       /* This method does initialization of the Swing GUI.  
         It must be run on the EDT. 
-        It builds the app's GUI in a new JFrame and starts it.
+        It builds the app's GUI in a new JFrame and shows it.
         */
       {
         theAppLog.info("SwingUI.initializeOnEDTV() begins.");
@@ -120,9 +107,14 @@ class SwingUI
         theAppLog.info("SwingUI.initializeOnEDTV() ends.");
         }
     
-    public void finalizeOnEDTV()
-      /* This method does finalization.  It must be run on the EDT.
-        */
+    public void finalizeV()
+      /* This method does finalization.  */
+      { 
+        EDTUtilities.invokeAndWaitV( () -> finalizeOnEDTV() );
+        }
+
+    private void finalizeOnEDTV()
+      /* This method does finalization.  It must be run on the EDT.  */
       { 
         theAppLog.debug("SwingUI.finalizeOnEDTV() called.");
 
@@ -151,7 +143,9 @@ class SwingUI
         }
     
     public boolean dispatchKeyEvent(KeyEvent theKeyEvent)
-      // Processes KeyEvent keyboard input before being passed to KeyListeners.
+      /* Processes KeyEvent keyboard input before being passed to KeyListeners.
+       * It only purpose now is to do increasing or decreasing of the font sie.
+       */
       { 
         boolean processedKeyB= true;
         int idI= theKeyEvent.getID();
@@ -209,14 +203,10 @@ class SwingUI
               }
             });
         theAppLog.info("SwingUI.theJFrame.setVisible(true) done.");
-        SwingUtilities.invokeLater(new Runnable() { // Queue GUI event...
-          @Override  
-          public void run() 
-            {  
-              theDagBrowserPanel.restoreFocusV(); // Setting initial focus.
-              }  
-          }); /* Done this way because in Java 8 
-            Compoent.requestFocusInWindow() will cause 
+        SwingUtilities.invokeLater( () -> {
+          theDagBrowserPanel.restoreFocusV(); // Setting initial focus. 
+          } ); /* Done this way because in Java 8 
+            Component.requestFocusInWindow() will cause 
             NullPointerException before the first dispatched message.
             */
         theJFrame.pack();  // Layout all the content's sub-panels, then
@@ -229,9 +219,6 @@ class SwingUI
         theJFrame.setState(Frame.ICONIFIED); // Initially minimize it.
         theJFrame.setVisible(true);  // Make the window visible.
         }
-
-    
-    // JavaFX GUI start and stop methods are in other files.  See JavaFXGUI.
 
 
     static int fontSizeI= 12;  // Initial font size. 
