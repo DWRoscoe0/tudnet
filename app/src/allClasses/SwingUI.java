@@ -216,7 +216,7 @@ class SwingUI
             (int)(screenDimension.getHeight() * 0.75)
             ); // << not working!!!
         theJFrame.setLocationRelativeTo(null);  // center JFrame on screen.
-        theJFrame.setState(Frame.ICONIFIED); // Initially minimize it.
+        //////// theJFrame.setState(Frame.ICONIFIED); // Initially minimize it.
         theJFrame.setVisible(true);  // Make the window visible.
         }
 

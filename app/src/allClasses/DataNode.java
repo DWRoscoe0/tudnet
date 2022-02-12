@@ -81,7 +81,7 @@ public abstract class DataNode
 
     // Constructors and initialization.
 
-    public DataNode() {} // Constructor.
+    public DataNode() {} // 0-argument constructor.
 
 
     // Finalization.
@@ -91,7 +91,7 @@ public abstract class DataNode
        * rooted at this DataNode, meaning this node and its descendants.
        * This method returns the number of DataNodes finalized.
        *
-       * This method has no children, so it returns the value 1.
+       * This version of the method has no children, so it returns the value 1.
        *
        * The main purpose of finalization is
        * to close any resources associated DataNodes.
@@ -223,8 +223,9 @@ public abstract class DataNode
                                 // Requires structure a change event.  The node 
                                 // and [all] its descendants need redisplay.
 
-        SUBTREE_CHANGED,        // This node and some of its descendants 
-                                // have changed and should be redisplayed.
+        SUBTREE_CHANGED,        // This node and possibly some of 
+                                // its descendants have changed 
+                                // and should be redisplayed.
                                 // Requires child checking and change events.
 
         ///opt Other values for possible later optimizations.  Unused.
@@ -246,7 +247,7 @@ public abstract class DataNode
       DataNode hierarchy for later and more efficient display to the UI.
       Nodes are marked when and how they change and
       changes are propagated toward the root until
-      a sufficiently marked DataNode is encountered.
+      a DataNode is encountered that has been sufficiently marked.
 
       Comments on code that calls these methods might indicate 
       that a call is being made to fire change listeners.
@@ -255,7 +256,9 @@ public abstract class DataNode
       Changes are aggregated with other changes, 
       and the listeners are fired later.
 
-      These methods do NOT need to be called on the Event Dispatch Thread (EDT).
+      These methods do NOT need to be called on 
+      the Event Dispatch Thread (EDT) or
+      the JavaFX Application Thread (JAT).
       */
 
     protected void signalChangeOfSelfV()
@@ -423,8 +426,8 @@ public abstract class DataNode
             theDataNode );
     
         TreePath theTreePath= parentTreePath.pathByAddingChild(theDataNode);
-        theDataNode.theDataTreeModel.reportingStructuralChangeB( theTreePath ); // Display by reporting
-          // to the listeners.
+        theDataNode.theDataTreeModel.reportStructuralChangeB( theTreePath );
+          // Display by reporting to the listeners.
         }
 
     static void displayChangedSubtreeV(
@@ -465,7 +468,7 @@ public abstract class DataNode
           }
       
       // Display the subtree root node.
-      subtreeDataNode.theDataTreeModel.reportingChangeB( // Display with Swing.
+      subtreeDataNode.theDataTreeModel.reportChangeB( // Display with Swing.
           parentTreePath, subtreeDataNode );
       Platform.runLater(() -> { // Display with JavaFX.
         ////// theEpiTreeItem.reportingChangeB( // Display root with JavaFX.

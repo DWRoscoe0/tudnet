@@ -788,9 +788,12 @@ public class DagBrowserPanel
         		TreeAware oldTreeAware= // Saving  (alias of) present JComponent. 
         	  		dataTreeAware;
 
-            dataJComponent=   // Calculating new JComponent
-              theDataTreeModel.getDataJComponent( // by having the TreeModel build it
-                inTreePath ); // based on last element of TreePath.
+        		DataNode inDataNode= (DataNode)inTreePath.getLastPathComponent();
+        		dataJComponent=   // Calculating new JComponent
+        		    inDataNode.getDataJComponent(inTreePath, theDataTreeModel);
+            //// dataJComponent=   // Calculating new JComponent
+            ////   theDataTreeModel.getDataJComponent( // by having the TreeModel build it
+            ////     inTreePath ); // based on last element of TreePath.
             dataTreeAware= (TreeAware)dataJComponent; // Calculating its TreeAware alias.
 
             // theAppLog.debug("DagBrowserPanel.replaceRightPanelContentWithV(.):"

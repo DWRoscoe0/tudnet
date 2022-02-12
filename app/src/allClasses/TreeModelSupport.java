@@ -11,29 +11,32 @@ import static allClasses.SystemSettings.NL;
 
 
 public abstract class TreeModelSupport 
-  /* This class acts as a base class for 
-    classes which implement the TreeModel interface.
-    It provides fields and methods which every TreeModel needs,
-    but which can be the same for every TreeModel.
-    These are the fields and methods for 
-    managing a TreeModelListener list
-    and for firing TreeModelEvent-s and
-    sending them to the TreeModelListener-s.
 
-    The TreeModelListeners processed by this interface process
-    changes to the content or structure of a tree being displayed.
-    Compare this with TreePathListener, 
-    which processes changes to the selection 
-    within a tree that is being displayed.
-     
-    ///org Combine this with AbstractTreeModel ??
-
-    */
   {
+    /* This class acts as a base class for implementors of TreeModel.
+     * It is based on the SwingX library file TreeModelSupport.java.
+     * It provides fields and methods which every TreeModel needs for:
+     * * managing a TreeModelListener list and
+     * * firing TreeModelEvent-s to call those TreeModelListeners.
+     * 
+     * The TreeModelListeners process changes to 
+     * the content or structure of a tree being displayed.
+     * Compare this with TreePathListener,
+     * which processes changes to the selection
+     * within a tree that is being displayed.
+     */
+
+
+    // Variables.
+
     private Vector<TreeModelListener> vectorOfTreeModelListener =
       new Vector<TreeModelListener>();   // Listener storage.
-    private int maxListenersI= 0; // 7; // It should never, or rarely, exceed this.
-    
+
+    private int maxListenersI= 0; // 7; // Used to trigger logging.
+
+
+    // Methods that add, remove, and log TreeModelListener.
+
     public void addTreeModelListener( TreeModelListener theTreeModelListener )
       /* ///fix Note, I suspect I have a Listener leak, 
         because I had to increase the vector size limit several times
@@ -48,7 +51,8 @@ public abstract class TreeModelSupport
         */
       {
 	  		// appLogger.debug(
-	    	//		"TreeModelSupport.addTreeModelListener(..) begins with "+theTreeModelListener);
+	    	//		"TreeModelSupport.addTreeModelListener(..) begins with "
+        //    +theTreeModelListener);
         if ( theTreeModelListener != null && 
         	  !vectorOfTreeModelListener.contains( theTreeModelListener ) )
 	        { 
@@ -58,24 +62,28 @@ public abstract class TreeModelSupport
 		      		// 	"TreeModelSupport.addTreeModelListener(..), maxListenersI: "+
 	      		  //   vectorOfTreeModelListener.size()+ NL + "  "+
 	      		  //   theTreeModelListener.getClass().getName() + "@" +
-	      		  //   Integer.toHexString(System.identityHashCode(theTreeModelListener))
+	      		  //   Integer.toHexString(
+		          //     System.identityHashCode(theTreeModelListener))
 		          //   );
 			    		maxListenersI++; // Increment maximum listeners so far.
 			    		}
   	        }
         	else
 	    		theAppLog.debug(
-      			"TreeModelSupport.addTreeModelListener(..) rejecting duplicate listener "+
-      		    NL + "  "+theTreeModelListener
+      			"TreeModelSupport.addTreeModelListener(..) "
+      			+ "rejecting duplicate listener "
+      			+ NL + "  "+theTreeModelListener
             );
 	  		// appLogger.debug(
-	    	//		"TreeModelSupport.addTreeModelListener(..) ends with "+theTreeModelListener);
+	    	//		"TreeModelSupport.addTreeModelListener(..) ends with "
+        //    +theTreeModelListener);
         }
 
     public void removeTreeModelListener(TreeModelListener theTreeModelListener) 
       {
 	  		// appLogger.debug(
-    		// 		"TreeModelSupport.removeTreeModelListener(..) begins with "+theTreeModelListener);
+    		// 		"TreeModelSupport.removeTreeModelListener(..) begins with "
+        //    +theTreeModelListener);
         if ( theTreeModelListener != null )
 	        {
 	          if (vectorOfTreeModelListener.removeElement( theTreeModelListener ))
@@ -90,7 +98,8 @@ public abstract class TreeModelSupport
 	          	;
   	          else
 		  	      theAppLog.info(
-		  	      		"TreeModelSupport.removeTreeModelListener(..), not registered:" + NL + "   "+
+		  	      		"TreeModelSupport.removeTreeModelListener(..), "
+		  	          +"not registered:" + NL + "   "+
 		      		    theTreeModelListener.getClass().getName() + "@" +
 		      		    Integer.toHexString(
 		      		    		System.identityHashCode(theTreeModelListener)
@@ -98,7 +107,8 @@ public abstract class TreeModelSupport
 			            );
 	          }
 		    // appLogger.debug(
-		    // 		"TreeModelSupport.removeTreeModelListener(..) ends with "+theTreeModelListener);
+		    // 		"TreeModelSupport.removeTreeModelListener(..) ends with "
+        //    +theTreeModelListener);
         }
 
     public void logListenersV()
@@ -109,6 +119,12 @@ public abstract class TreeModelSupport
 	  		    vectorOfTreeModelListener.size()
 	  		    );
     	}
+
+
+    /* Methods that fire TreeModelEvents.
+     * If these methods call listener methods in Swing components
+     * then they must be called on the Event Dispatch Thread (EDT). 
+     */
 
     public void fireTreeNodesChanged( TreeModelEvent theTreeModelEvent ) 
       {
@@ -126,7 +142,8 @@ public abstract class TreeModelSupport
             	(TreeModelListener)listeners.nextElement();
             /* 
             System.out.println( 
-                "in TreeModelSupport.fireTreeNodesChanged(...) calling listener.treeNodesChanged( theTreeModelEvent )"
+                "in TreeModelSupport.fireTreeNodesChanged(...) "
+                +"calling listener.treeNodesChanged( theTreeModelEvent )"
                 );
             */
             listener.treeNodesChanged( theTreeModelEvent );
@@ -142,7 +159,8 @@ public abstract class TreeModelSupport
             TreeModelListener theTreeModelListener = 
             	(TreeModelListener)listeners.nextElement();
   	    		//appLogger.info(
-            //		"TreeModelSupport.fireTreeNodesInserted(..) to:" + NL + theTreeModelListener
+            //		"TreeModelSupport.fireTreeNodesInserted(..) to:" + NL 
+            //    + theTreeModelListener
             //    );
             theTreeModelListener.treeNodesInserted( theTreeModelEvent );
             }
