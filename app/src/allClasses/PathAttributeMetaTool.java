@@ -6,30 +6,30 @@ public class PathAttributeMetaTool
 
   extends AttributeMetaTool 
   
-  /* This is an Attribute MetaTool for dealing with MetaNode path attributes. 
-    It was created for managing the selection path using theSelectionPath key,
-    but it could be used for other paths also.
-
-    Values for attributes handled by this class are as follows:
-
-    * "" (blank) : default value, meaning this node was never part of the path, 
-      or was but is the first child of its parent,
-      which is the default selection when going to a child node.  
-      All descendants have the same default value.
-    * "IS": This node is now part of the path.
-    * "WAS": This node is not now part of the path, but it was,
-      and was most recently of all its siblings.
-      When an automatic child selection needs to be done,
-      this marks the child node that will be reselected. 
-    * "OLD": This node is not now part of the path, but it was,
-      but was not most recently of all its siblings.
-      This value exists mainly to indicate that some descendants
-      contain path attributes with value="WAS".
-      
-    This is based on the my InfogoraPathHistoryAttribute notes.
-    */
-  
   {
+    /* This class deals with selection paths represented by MetaNode attributes.
+
+      This class was created for managing the user's Swing GUI selection path,
+      mainly for the JTree component, using attribute key "SelectionPath", 
+      but it can be used for any selection-type path.
+
+      Values for attributes handled by this class are as follows:
+      * "" (blank): default value, meaning this node was never part of the path,
+        or was but is the first child of its parent,
+        which is the default selection when going to a child node.  
+        All descendants have the same default value.
+      * "IS": This node is now part of the path.
+      * "WAS": This node is not now part of the path, but it was,
+        and was the most recently referenced of all its siblings.
+        When an automatic child selection needs to be done,
+        this marks the child node that will be reselected. 
+      * "OLD": This node is not now part of the path, but it was,
+        but was not most recently referenced of all its siblings.
+        This value exists mainly to indicate that some descendants
+        contain path attributes with value="WAS".
+
+      This design was based on  my InfogoraPathHistoryAttribute notes.
+      */
 
     // Constructors.
 

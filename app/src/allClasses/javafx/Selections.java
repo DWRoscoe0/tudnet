@@ -28,16 +28,16 @@ public class Selections
   
     // The following are definitions used to describe path information.
   
-    final String pathKeyString= "SelectionPath"; // Name of path attribute.
-      // Selection path information is stored in this attributes.
-    
+    private final String pathKeyString= "SelectionPath";
+      // Selection path information is stored under this key.
+
     // The following are the 3 values of path attributes.
-    final String pathActiveString= "ACTIVE"; // Value indicating that
+    private final String pathActiveString= "ACTIVE"; // Value indicating that
       // this sibling is part of the active path.
-    final String pathNextString= "NEXT"; // Value indicating that
+    private final String pathNextString= "NEXT"; // Value indicating that
       // this sibling should become ACTIVE if its parent is ACTIVE 
       // if there is a move from there to an unspecified child.
-    final String pathHoldingString= "HOLDING"; // Value indicating that
+    private final String pathHoldingString= "HOLDING"; // Value indicating that
       // this sibling is holding NEXT or HOLDING path attributes in
       // one or more of its children.
 

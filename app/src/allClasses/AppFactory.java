@@ -173,6 +173,8 @@ public class AppFactory {  // For App class lifetimes.
         theConnectionManager,
         testCenterDataNode
         );
+      DataNode.resetChangesInSubtreeV(theRootDataNode); // Clean the tree.
+        // Do this to prevent redundant and erroneous first JTree update.
 
       receiverNetcasterPacketManager=  //? use local? 
           new NetcasterPacketManager( (IPAndPort)null );

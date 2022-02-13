@@ -2,25 +2,32 @@ package allClasses;
 
 import javax.swing.tree.TreePath;
 
-//import static allClasses.Globals.*;  // For appLogger;
 
 public class MetaRoot {
 
-  // This class manages the root of the MetaNode-s structure.  
+  /* This class holds the MetaNode-s tree root, and some Path selection code:
+   * 
+   * * Code which is here and should be here is code for
+   *   managing the MetaNode tree, including holding its root,
+   *   and doing loading and saving of that tree in file storage.
+   *   
+   * * Code which is here but should NOT be here is code for
+   * 
+
+   *   
+   */
 
   // Dependency Injection variables.
-    DataRoot theDataRoot; // Data with which this meta-data is associated.
-    MetaFileManager theMetaFileManager; // For loading and saving meta-data.
+    DataRoot theDataRoot; // Data with which the  meta-data is associated.
+    MetaFileManager theMetaFileManager; // For loading and saving in files.
  
   // Other instance variables. 
-    private MetaNode rootMetaNode;  /* Root of tree which 
-      holds DAG information.  */
+    private MetaNode rootMetaNode;  // Root of MetaNode tree.
     private MetaNode parentOfRootMetaNode;  /* Pseudo-parent of root.
       This is the same tree as rootMetaNode, but can be used as
       a sentinel record to eliminate checking for null during
       MetaPath traversals toward the root.  */
-    private MetaPath parentOfRootMetaPath;  /* MetaPath associated with
-      parentOfRootMetaNode.  */
+    private MetaPath parentOfRootMetaPath;  // Path of pseudo-parent of root.
 
   MetaRoot(  // Constructor.
       DataRoot theDataRoot, 
@@ -39,8 +46,8 @@ public class MetaRoot {
       }
 
   public void initializeV( )
-    /* This method does initialization beyond simple assignment
-      and dependency injection done by constructors.
+    /* This method does initialization beyond 
+      the and dependency injection assignments done by the constructor.
       It loads the MetaRoot data from the external MetaFile(s),
       replacing whatever MetaRoot data is active now.
       It will load at least the root node.
@@ -64,10 +71,10 @@ public class MetaRoot {
           theMetaFileManager.makeMetaNode( // a single MetaNode referencing
             theDataRoot.getRootDataNode( ) // the root DataNode.
             );
-      calculateInnerDependenciesV( );
+      initializeInnerDependenciesV( );
       }
 
-  private void calculateInnerDependenciesV( )
+  private void initializeInnerDependenciesV( )
     /* This method calculates the state that depends on
       the root MetaNode.
       */
@@ -104,7 +111,7 @@ public class MetaRoot {
     public MetaPath getParentOfRootMetaPath( )
       { return parentOfRootMetaPath; }
 
-    /* ?? Maybe add these, though maybe with different names:
+    /* ?? Maybe add these methods, though maybe with different names:
 
       public boolean isRootB( MetaNode )
 
@@ -134,14 +141,15 @@ public class MetaRoot {
           );
         }
 
-  // Code from old Selection class.
 
-    /* This code came from old static Selection class.
-      ?? It should probably not be here and should instead maybe
+
+    /* The following code came from the old static Selection class.
+      ///org  It should probably not be here and should instead
       be in a new class called SelectionAttributeMetaTool.
 
-      These methods help to manage DataNode selections and 
-      the MetaNodes that represent them.
+      This code is used to manage the user's Swing GUI selection path,
+      mainly for the JTree component, using attribute key "SelectionPath".
+      See class AttributeMetaTool for information about attribute encoding.
 
       Selections are identified with TreePath-s of DataNodes.
       Past selections are stored as DataNode meta-data in the MetaNode DAG,
@@ -171,7 +179,27 @@ public class MetaRoot {
 
     // Getter methods.  These read from the MetaNode DAG.
 
-      public TreePath buildAttributeTreePath( String keyString )
+      public TreePath getSelectionPathTreePath( )
+        /* This method returns a TreePath of DataNodes which 
+          identify the user's current DataNode selection.
+          This is the TreePath associated with "SelectionPath".
+          This method always returns a non-null TreePath.
+          It also never returns Dataroot.getParentOfRootTreePath(),
+          which is the sentinel representing the empty TreePath.
+          The TreePath returned always contains at least the root node.
+          */
+        { 
+          TreePath resultTreePath= // Calculating tentative result
+            getAttributeTreePath( // path built from
+              MetaRoot.selectionAttributeString // selection attribute nodes.
+              );
+          if  // Replacing with root path if result path was empty.
+            ( resultTreePath == theDataRoot.getParentOfRootTreePath() )
+            resultTreePath= theDataRoot.getRootTreePath();
+          return resultTreePath;
+          }
+
+      public TreePath getAttributeTreePath( String keyString )
         /* This method returns path information from the MetaNode DAG.
           It returns a TreePath comprised of all the DataNodes
           from the MetaNode's which contain attributes 
@@ -181,7 +209,7 @@ public class MetaRoot {
           because it is an unusable value.
           At least the root must have an "IS" attribute value,
           otherwise it will return Dataroot.getParentOfRootTreePath(),
-          which is a sentinel value which can not for
+          which is a sentinel value which can not used for
           anything but a termination marker.
           
           ?? This probably doesn't belong with the Selection methods
@@ -257,41 +285,19 @@ public class MetaRoot {
           return resultChildDataNode; // return resulting DataNode, or null if none.
           }
 
-    // Static getter methods.  These read from the MetaNode DAG.
+    // Setter methods.  These write to the MetaNode DAG.
 
-      public TreePath buildAttributeTreePath( )
-        /* This method returns a TreePath of DataNodes which 
-          identifies the user's current DataNode selection.
-          The path is built from the sequence of DataNodes
-          associated with the MetaNode's which have attributes 
-          with key == "SelectionPath" and value == "IS",
-          starting at the MetaNode DAG root.
-          This method always returns a non-null TreePath.
-          It also never returns Dataroot.getParentOfRootTreePath(),
-          which is the sentinel representing the empty TreePath.
-          The TreePath returned always contains at least the root node.
-          */
-        { 
-          TreePath resultTreePath= // Calculating tentative result...
-            buildAttributeTreePath( // ...path built...
-              MetaRoot.selectionAttributeString // ...from selection attribute nodes.
-              );
-          if  // Replacing with root path if result path was empty.
-            ( resultTreePath == theDataRoot.getParentOfRootTreePath() )
-            resultTreePath= theDataRoot.getRootTreePath();
-          return resultTreePath;
-          }
-          
       public void set( TreePath inTreePath )
         /* This does the same as putAndReturnDataNode(.) except 
           it doesn't return anything.
-          It exists mainly to help other code be self-documenting.
+          It exists mainly to help method-calling code be self-documenting.
           */
         {
-      	  setAndReturnMetaNode( inTreePath ); // Update with TreePath.
+      	  setSelectionPathAndReturnMetaNode( // Update with TreePath. 
+      	      inTreePath );
           }
 
-      public DataNode setAndReturnDataNode( TreePath inTreePath )
+      public DataNode setSelectionPathAndReturnDataNode( TreePath inTreePath )
         /* Updates the "SelectionPath" attributes of the MetaNode DAG
           starting with the root and ending at 
           the MetaNode specified by inTreePath.
@@ -302,7 +308,7 @@ public class MetaRoot {
           */
         {
           MetaNode endOfPathMetaNode=  // Get last MetaNode in path by...
-            setAndReturnMetaNode(  // ...updating tree with...
+            setSelectionPathAndReturnMetaNode(  // ...updating tree with...
               inTreePath  // ...the provided TreePath.
               );
           DataNode childDataNode=  // Get that last MetaNode's...
@@ -312,7 +318,7 @@ public class MetaRoot {
           return childDataNode;  // Return the resulting child DataNode.
           }
 
-      private MetaNode setAndReturnMetaNode( TreePath inTreePath )
+      private MetaNode setSelectionPathAndReturnMetaNode( TreePath inTreePath )
         /* Updates the "SelectionPath" attributes of the MetaNode DAG
           starting with the root and ending at 
           the MetaNode specified by inTreePath.

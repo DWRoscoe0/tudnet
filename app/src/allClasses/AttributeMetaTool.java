@@ -6,20 +6,19 @@ abstract class AttributeMetaTool
 
   extends MetaTool
 
-  /* This is a MetaTool specialized for dealing with 
-    a MetaNode's attributes. 
-
-    Attribute are name-value pairs.
-    Values for attributes handled by this class are as follows:
-
-    * "" (blank): default value, and all descendants have the same value.
-    * "$MIXED$": default value (same meaning as above) but some descendants 
-      do not have the default value.
-    * (anything else): all other values, with various meanings.
-
-    */
-
   {
+    /* This is a MetaTool specialized for dealing with 
+      a MetaNode's attributes. 
+  
+      Attribute are name-value pairs.
+      Values for attributes handled by this class are as follows:
+  
+      * "" (blank): default value, and all descendants have the same value.
+      * "$MIXED$": default value (same meaning as above) but some descendants 
+        do not have the default value.
+      * (anything else): all other values, with various meanings.
+  
+      */
 
     // Constants.
 

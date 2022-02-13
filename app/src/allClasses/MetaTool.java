@@ -6,39 +6,39 @@ package allClasses;
 import javax.swing.tree.TreePath;
  
 abstract class MetaTool
-
-  /* This tool was created to make operations on 
-    DataNodes and their associated MetaNodes easier.  
-    It maintains two paths:
-
-    * A TreePath which represents a path to a DataNode 
-      in the DataNode DAG.
-    * A MetaPath which represents a path to 
-      the associated MetaNode in the MetaNode DAG.
-
-    The MetaNode DAG stores data about the DataNode DAG.
-    The paths are maintained in sync so that 
-    the two paths always reference equivalent locations 
-    in the different but related DAGs.  When one path changes, 
-    the other is changed to an equivalent value.
-
-    Possible enhancements ??
-
-      Optimize MetaNode space:
-        Eliminate nodes which:
-          * have no children,
-          * have no attributes, and
-          * are not the most recently referenced or 
-            are not the top/default node.
-            
-      Instead of starting the constructor Sync() operation
-      at the roots of the 2 DAGs, 
-      start it from the target of the previous sync, 
-      because operations will often be
-      concentrated in areas far from the roots.
-    */
       
   { // class MetaTool.
+
+    /* This class was created to make operations on 
+      DataNodes and their associated MetaNodes easier.
+
+      It maintains two paths:
+      * A TreePath which represents a path to a DataNode 
+        in the DataNode DAG.
+      * A MetaPath which represents a path to 
+        the associated MetaNode in the MetaNode DAG.
+  
+      The MetaNode DAG stores data about the DataNode DAG.
+      The paths are maintained in sync so that 
+      the two paths always reference equivalent locations 
+      in the different but related DAGs.  When one path changes, 
+      the other is changed to an equivalent value.
+  
+      ///opt  Possible enhancements:
+  
+        Optimize MetaNode space:
+          Eliminate nodes which:
+            * have no children,
+            * have no attributes, and
+            * are not the most recently referenced or 
+              are not the top/default node.
+              
+        Instead of starting the constructor Sync() operation
+        at the roots of the 2 DAGs, 
+        start it from the target of the previous sync, 
+        because operations will often be
+        concentrated in areas far from the roots.
+      */
   
     // Injected dependency variables.
 
@@ -79,9 +79,8 @@ abstract class MetaTool
     // Instance methods.
       
       protected void syncV( TreePath inTreePath )
-        /* This recursive method adjusts the instance variables 
-          so that the locations they represent match
-          the MetaNode associated with inTreePath.
+        /* This recursive method adjusts the 2 tree path variables 
+          so that the locations they represent match inTreePath.
           It does this by comparing inTreePath with instance variable
           theTreePath and if necessary adjusting 
           theTreePath and theMetaPath to match inTreePath.
