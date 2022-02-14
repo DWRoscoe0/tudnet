@@ -376,7 +376,7 @@ public abstract class DataNode
       need not be done again, except for new added children. 
       */
     
-    public static void displayChangedNodesFromV(
+    public static void displayPossiblyChangedNodesFromV(
         TreePath parentTreePath, DataNode theDataNode,EpiTreeItem theEpiTreeItem 
         )
       /* If theDataNode has changed, as indicated by theTreeChange,
@@ -426,11 +426,13 @@ public abstract class DataNode
             theDataNode );
     
         TreePath theTreePath= parentTreePath.pathByAddingChild(theDataNode);
-        theDataNode.theDataTreeModel.reportStructuralChangeB( theTreePath );
-          // Display by reporting to the listeners.
+        EDTUtilities.runOrInvokeAndWaitV( () -> { // Do on Swing EDT thread. 
+          theDataNode.theDataTreeModel.reportStructuralChangeB( theTreePath );
+            // Display by reporting to the listeners.
+          });
         }
 
-    static void displayChangedSubtreeV(
+    private static void displayChangedSubtreeV(
       TreePath parentTreePath, 
       DataNode subtreeDataNode, 
       EpiTreeItem theEpiTreeItem
@@ -462,15 +464,17 @@ public abstract class DataNode
              subtreeDataNode.getChild( childIndexI );
           if ( childDataNode == null )  // Null means no more children.
               break;  // so exit while loop.
-          DataNode.displayChangedNodesFromV( // Recursively display descendants.
+          DataNode.displayPossiblyChangedNodesFromV( // Recursively display descendants.
               theSubtreeTreePath, childDataNode, theEpiTreeItem ); 
           childIndexI++;  // Increment index for processing next child.
           }
       
-      // Display the subtree root node.
-      subtreeDataNode.theDataTreeModel.reportChangeB( // Display with Swing.
-          parentTreePath, subtreeDataNode );
-      Platform.runLater(() -> { // Display with JavaFX.
+      // Display the subtree root node to UIs.
+      EDTUtilities.runOrInvokeAndWaitV( () -> { // Do on Swing EDT thread. 
+        subtreeDataNode.theDataTreeModel.reportChangeB( // Display with Swing.
+            parentTreePath, subtreeDataNode );
+        });
+      Platform.runLater(() -> { // Display with JavaFX Application Thread.
         ////// theEpiTreeItem.reportingChangeB( // Display root with JavaFX.
         //////     parentTreePath, theDataNode );
         // force reference change

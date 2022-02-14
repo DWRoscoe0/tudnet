@@ -14,7 +14,7 @@ import static allClasses.AppLog.theAppLog;  // For appLogger;
  * * InnerApp : inner app sequencer.
  *   * InstanceCreationRunnable : Listener for signals about other
  *     app instances
- *     //////org Simplify this, and maybe eliminate class.
+ *     //////org Simplify this, and maybe eliminate this nested class.
  * 
  * The following were eliminated:
  * * PlatformUI : contains [Swing] font control, merged into SwingUI.
@@ -270,16 +270,13 @@ public class InnerApp
       {
         toReturn: {
           try { // Display state changes that affect the Swing UI.
-              EDTUtilities.runOrInvokeAndWaitV( () -> { // Do on EDT thread. 
-                DataNode.displayChangedNodesFromV( // Display from...
-                  theDataRoot.getParentOfRootTreePath( ), 
-                  theDataRoot.getRootDataNode( ),
-                  theDataRoot.getRootEpiTreeItem()
-                  );
-                });
+              DataNode.displayPossiblyChangedNodesFromV( // Display from...
+                theDataRoot.getParentOfRootTreePath( ), 
+                theDataRoot.getRootDataNode( ),
+                theDataRoot.getRootEpiTreeItem()
+                );
             } catch (Exception theException) {
-              theAppLog.info("InnerApp.doSomePollingJobsV().");
-              
+              theAppLog.exception("InnerApp.doSomePollingJobsV()",theException);
             }
           if (theAppInstanceManager.tryToStartUpdateB())
             break toReturn; // Exit immediately to continue the update.
