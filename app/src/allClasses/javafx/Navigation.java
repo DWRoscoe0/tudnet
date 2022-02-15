@@ -90,7 +90,7 @@ public class Navigation extends EpiStage
       /* This method initializes and starts the Navigation Stage, then returns.
        * The Stage then alternates between 2 Scenes:
        * * one which displays a TreeView of the hierarchy, and
-       * * one which displays a single DataNode and its descendants.
+       * * one which displays a single DataNode and its children.
        * Each Scene has a button to switch to the other Scene.
        * 
        * ///opt Simplify by using theDataRoot.getRootEpiTreeItem().
@@ -192,7 +192,7 @@ public class Navigation extends EpiStage
     private void displayTreeOrDataNodeV()
       /* Depending on the contents of Persistent storage,
        * this methods displays the tree or it displays a DataNode.
-       * The selection also comes from Persistent storage.
+       * The selection is controlled from Persistent storage.
        */
       {
         DataNode spreviouslySelectedDataNode= 

@@ -104,6 +104,8 @@ public class INamedList
           if (this == otherObject) // Exit if references equal.
             break goReturn; 
           resultB= false; // Assume not equal.
+          if (null == otherObject) // Exit if otherObject is null.
+            break goReturn;
           if // Exit if classes not equal.
             (this.getClass() != otherObject.getClass()) 
             break goReturn; 

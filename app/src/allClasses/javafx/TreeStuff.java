@@ -10,53 +10,63 @@ import javafx.scene.control.TreeItem;
 
 
 public class TreeStuff 
-  /* This class does several things.
-   * * It stores information about 
-   *   a location in the hierarchy for JavaFX Node viewers.
-   *   * It stores the location of the subject DataNode.
-   *   * It stores the location of the selection DataNode, if any, 
-   *     within the subject DataNode.
-   * An instance of this class should be updated by 
-   * the selection model of the Node's associated viewer.
-   * It may be interrogated for location information.
-   * 
-   * Location is stored both locally, and in the Selections class.
-   * 
-   * Location is usually represented by 
-   * the DataNode of interest at that location.
-   * Location can also be represented by the TreePath
-   * from the root DataNode to the DataNode of interest,
-   * though this is not being done now.
-   * 
-   * ///org Representing location with a TreePath might be necessary 
-   * when and if TUDNet supports DataNode DAGs instead of trees.
-   */
 
   {
-    // Injected variables.
-    // Some of these are circular parameters used in factory methods only,
+    /* This class does several things.
+     * * It stores information about 
+     *   a location in the hierarchy for JavaFX Node viewers.
+     *   * It stores the location of the subject DataNode.
+     *   * It stores the location of the selection DataNode, if any, 
+     *     within the subject DataNode.  null means there is no selection.
+     * This class may be interrogated for location information.
+     * An instance of this class should be updated by 
+     * the selection model of the Node's associated viewer.
+     * 
+     * Location is stored both locally, and in the Selections class.
+     * 
+     * Location is represented by the DataNode of interest at that location.
+     * Location can also be represented by the TreePath
+     * from the root DataNode to the DataNode of interest,
+     * though this is not being done now.
+     * 
+     * ///org Representing location with a TreePath might be necessary 
+     * when and if TUDNet supports DataNode DAGs instead of trees.
+     */
+
+  
+    // Variables injected by constructor.
+  
+    ///opt? Some of these are circular parameters used in factory methods only,
     // and may eventually be deleted.
   
-    // Initialized by constructor injection.
     private DataNode theSubjectDataNode= null;
       // This is the whole DataNode being displayed by a viewer.
       // It should be the parent of the selected DataNode, if any.
+
     private DataNode selectedDataNode= null;
       // This should be the selected child DataNode of the subject DataNode.
       // This may be null if there is no selection.
       ///org Maybe bind this to viewer instead of assigning it.
-    private Persistent thePersistent;
-    private DataRoot theDataRoot;
-    private EpiTreeItem theRootEpiTreeItem;
-    private Selections theSelections;
-    
-    // Initialized by setter injection.
-    private Node theGuiNode= null;
-      // This should be the JavaFX Node used to display the DataNode. 
 
+    private Persistent thePersistent;
+
+    private DataRoot theDataRoot;
+
+    private EpiTreeItem theRootEpiTreeItem;
+
+    private Selections theSelections;
+
+
+    // Variables initialized by setter injection.
+
+    private Node theUINode= null; // This is the JavaFX Node that displays the DataNode. 
+
+
+    // Methods.
 
     public TreeItem<DataNode> toTreeItem(DataNode targetDataNode) 
-      /* This method is equivalent to toTreeItem(targetDataNode, ancestorTreeItem)
+      /* This method is equivalent to 
+       *   toTreeItem(targetDataNode, ancestorTreeItem)
        * with ancestorTreeItem set to the root of the TreeItem tree.
        */
       {
@@ -181,7 +191,7 @@ public class TreeStuff
        * the subject DataNode. 
        */
       {
-        return theGuiNode;
+        return theUINode;
         }
 
     public void setSelectedDataNodeV(DataNode theDataNode)
@@ -213,7 +223,7 @@ public class TreeStuff
           // We now have the non-null subject node.
 
           resultDataNode= resultDataNode.getTreeParentNamedList();
-          // We now have a the possibly null parent of the subject node.
+          // We now have the possibly null parent of the subject node.
 
         } // goReturn:
         
@@ -299,12 +309,13 @@ public class TreeStuff
         return theTreeStuff;
         }
           
-    public void initializeV(Node theNode)
+    public void initializeV(Node theUINode)
       /* This does the bit of dependency injection 
-       * that can not be done by the constructor. 
+       * that can not be done by the constructor,
+       * in this case storing the JavaFX UI Node. 
        */
       { 
-        this.theGuiNode= theNode;
+        this.theUINode= theUINode;
         }
 
     private TreeStuff( // Constructor.

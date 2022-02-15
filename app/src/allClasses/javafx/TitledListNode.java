@@ -14,18 +14,28 @@ import allClasses.DataRoot;
 import allClasses.Persistent;
 
 public class TitledListNode 
+
   extends BorderPane
-  
-  /* This class is used for displaying Nodes that
-   * can be displayed as lists.
-   */
 
   {
+    
+    /* This class is a JavaFX Node that is used for 
+     * displaying DataNodes that can be displayed as lists.
+     * It includes a title, which is the name of the DataNode,
+     * and a list of other DataNodes, 
+     * which are the children of the main DataNode.
+     */
 
-    ListView<DataNode> theListView= // List view GUI Node. 
-        new ListView<DataNode>();
+
+    // Variables.
+
+    private ListView<DataNode> theListView= // List view GUI Node. 
+        new ListView<DataNode>(); // It is initially empty.
 
     private TreeStuff theTreeStuff;
+
+
+    // Methods.
     
     public TreeStuff getTreeStuff()
       { 
@@ -40,8 +50,12 @@ public class TitledListNode
                 Persistent thePersistent,
                 Selections theSelections
                 )
+    /* This method makes and returns
+     * a TreeStuff appropriate for a TitledListNode.
+     */
     { 
-      TreeStuff theTreeStuff= TreeStuff.makeWithAutoCompleteTreeStuff(
+      TreeStuff theTreeStuff= // Construct the appropriate TreeStuff. 
+        TreeStuff.makeWithAutoCompleteTreeStuff(
           subjectDataNode,
           selectedDataNode,
           thePersistent,
@@ -49,15 +63,30 @@ public class TitledListNode
           theRootEpiTreeItem,
           theSelections
           );
-      TitledListNode theTitledListNode= new TitledListNode( 
-        subjectDataNode,
-        theTreeStuff
-        );
-      theTreeStuff.initializeV(theTitledListNode);
+      TitledListNode theTitledListNode= // Calculate the UI Node to use.
+          new TitledListNode(subjectDataNode,theTreeStuff);
+      theTreeStuff.initializeV(theTitledListNode); // Store the UI Node.
       return theTreeStuff;
       }
 
-    public TitledListNode( 
+    private void setEventHandlersV()
+      {
+        MultipleSelectionModel<DataNode> theMultipleSelectionModel=
+            theListView.getSelectionModel();
+        ReadOnlyObjectProperty<DataNode> selectedItemProperty=
+            theMultipleSelectionModel.selectedItemProperty();
+        selectedItemProperty.addListener(
+          (observableValueOfDataNode,oldDataNode,newDataNode) 
+          -> 
+          { 
+            DataNode newSelectedDataNode= selectedItemProperty.get();
+            getTreeStuff().setSelectedDataNodeV(newSelectedDataNode);
+            }
+          );
+
+        }
+
+    public TitledListNode( // Constructor.
         DataNode subjectDataNode,
         TreeStuff theTreeStuff
         )
@@ -76,23 +105,6 @@ public class TitledListNode
         setEventHandlersV(); // Needed for initial selection which follows.
         theListView.getSelectionModel().
           select(theTreeStuff.getSelectionDataNode());
-        }
-
-    private void setEventHandlersV()
-      {
-        MultipleSelectionModel<DataNode> theMultipleSelectionModel=
-            theListView.getSelectionModel();
-        ReadOnlyObjectProperty<DataNode> selectedItemProperty=
-            theMultipleSelectionModel.selectedItemProperty();
-        selectedItemProperty.addListener(
-          (observableValueOfDataNode,oldDataNode,newDataNode) 
-          -> 
-          { 
-            DataNode newSelectedDataNode= selectedItemProperty.get();
-            getTreeStuff().setSelectedDataNodeV(newSelectedDataNode);
-            }
-          );
-
         }
 
     }
