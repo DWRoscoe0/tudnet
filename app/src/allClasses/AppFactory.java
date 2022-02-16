@@ -166,7 +166,7 @@ public class AppFactory {  // For App class lifetimes.
           new Infinitree( null, 0 )
           );
       IRoots theIRoot= new IRoots(); 
-      DataNode theRootDataNode= new TUDNetRoot( // Building DataNode tree.
+      DataNode theRootDataNode= new TUDNetHome( // Building DataNode tree.
         theIRoot,
         new Outline( 0 ),
         theSystemsMonitor,
