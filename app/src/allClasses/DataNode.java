@@ -21,6 +21,9 @@ import allClasses.multilink.ElementMultiLink;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.Event;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeItem.TreeModificationEvent;
 
 public abstract class DataNode
 
@@ -69,8 +72,8 @@ public abstract class DataNode
 
     // Some sources of useful DataNodes.
 
-    private static NamedLeaf dummyDataNode=
-        NamedLeaf.makeNamedLeaf( "DUMMY-DataNode" );
+    //// private static NamedLeaf dummyDataNode=
+    ////     NamedLeaf.makeNamedLeaf( "DUMMY-DataNode" );
 
     static DataNode[] makeEmptyArrayOfDataNodes()
       // This method returns a new empty DataNode array.
@@ -430,6 +433,8 @@ public abstract class DataNode
           theDataNode.theDataTreeModel.reportStructuralChangeB( theTreePath );
             // Display by reporting to the listeners.
           });
+        
+        ///fix  Need to add JavaFX display.
         }
 
     private static void displayChangedSubtreeV(
@@ -462,10 +467,15 @@ public abstract class DataNode
         { // Process one descendant subtree.
           DataNode childDataNode=  // Get the child, the descendant root.
              subtreeDataNode.getChild( childIndexI );
-          if ( childDataNode == null )  // Null means no more children.
+          if ( childDataNode == null )  // No more DataNode children.
               break;  // so exit while loop.
-          DataNode.displayPossiblyChangedNodesFromV( // Recursively display descendants.
-              theSubtreeTreePath, childDataNode, theEpiTreeItem ); 
+          EpiTreeItem childEpiTreeItem= // Get the child, the descendant root.
+            (EpiTreeItem)theEpiTreeItem.getChildren().get(childIndexI);
+          if ( childEpiTreeItem == null )  // No more EpiTreeItem children.
+              break;  // so exit while loop.
+          DataNode.displayPossiblyChangedNodesFromV( // Display descendants.
+              //// theSubtreeTreePath, childDataNode, theEpiTreeItem ); 
+              theSubtreeTreePath, childDataNode, childEpiTreeItem );
           childIndexI++;  // Increment index for processing next child.
           }
       
@@ -475,11 +485,18 @@ public abstract class DataNode
             parentTreePath, subtreeDataNode );
         });
       Platform.runLater(() -> { // Display with JavaFX Application Thread.
+        TreeModificationEvent<DataNode> theTreeModificationEvent= 
+            new TreeModificationEvent<>(
+                TreeItem.valueChangedEvent(), theEpiTreeItem);
+                //// TreeItem.treeNotificationEvent(), theEpiTreeItem);
+        System.out.print(theEpiTreeItem+",");
+        Event.fireEvent(theEpiTreeItem, theTreeModificationEvent);
+
         ////// theEpiTreeItem.reportingChangeB( // Display root with JavaFX.
         //////     parentTreePath, theDataNode );
         // force reference change
         //// theEpiTreeItem.setValue(null);
-        theEpiTreeItem.setValue(dummyDataNode);
+        //////// theEpiTreeItem.setValue(dummyDataNode);
         // theEpiTreeItem.setValue(theDataNode);
         //// System.out.println(
         ////  "DataNode.displayChangedSubtreeV(.) "+theDataNode+", "+theEpiTreeItem);

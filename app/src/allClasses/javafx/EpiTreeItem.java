@@ -10,28 +10,27 @@ public class EpiTreeItem
 
   extends TreeItem<DataNode>
 
-  /* The EpiTreeItems class acts as a bridge between 
-   * the JavaFX user interface and DataNodes.
-   * each instance contains a reference to a value DataNode and
-   * a list of child EpiTreeItems.
-   * 
-   * The reference to the value DataNode does not change,
-   * but the DataNode content might not be fully evaluated at first.
-   * And after being evaluated, the content of the DataNode might change.
-   * 
-   * The reference to the list of child EpiTreeItems does not change.
-   * The contents of the list is lazily evaluated, triggered when it is gotten.
-   * Before evaluation the list is empty.
-   * After evaluation it might or might not be empty.
-   *
-   * ///org I was going to try to make this class generic,
-   * and remove the dependency on the DataNode class,
-   * but some tree node functionality is needed,
-   * so I might need to define a tree interface and extend that for 
-   * the type parameter.
-   */
-
   {
+    /* The EpiTreeItems class acts as a bridge between 
+     * the JavaFX user interface and DataNodes.
+     * each instance contains a reference to a value DataNode and
+     * a list of child EpiTreeItems.
+     * 
+     * The reference to the value DataNode does not change,
+     * but the DataNode content might not be fully evaluated at first.
+     * And after being evaluated, the content of the DataNode might change.
+     * 
+     * The reference to the list of child EpiTreeItems does not change.
+     * The contents of the list is lazily evaluated, triggered when it is gotten.
+     * Before evaluation the list is empty.
+     * After evaluation it might or might not be empty.
+     *
+     * ///org I was going to try to make this class generic,
+     * and remove the dependency on the DataNode class,
+     * but some tree node functionality is needed,
+     * so I might need to define a tree interface and extend that for 
+     * the type parameter.
+     */
 
     boolean childCacheLoadedB= false; // Whether TreeItem children are defined.
 
@@ -92,5 +91,5 @@ public class EpiTreeItem
             }
         return super.getChildren();
         }
-        
+
     }

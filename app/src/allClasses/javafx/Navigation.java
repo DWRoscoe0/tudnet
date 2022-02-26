@@ -1,13 +1,16 @@
 package allClasses.javafx;
 
+import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TreeItem;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.FlowPane;
 
 import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
@@ -15,6 +18,7 @@ import static allClasses.SystemSettings.NL;
 import allClasses.DataNode;
 import allClasses.DataRoot;
 import allClasses.Dialogger;
+import allClasses.EpiThread;
 import allClasses.Persistent;
 import allClasses.Shutdowner;
 import allClasses.epinode.MapEpiNode;
@@ -53,6 +57,7 @@ public class Navigation extends EpiStage
     private Scene theTreeScene;
     private BorderPane treeContentBorderPane;
     private Button theTreeShowItemButton;
+    private Label tickerLabel= new Label(" label-");
     private TreeStuff treeTreeStuff;
 
     // Variables related to the DataNode view Scene.
@@ -66,6 +71,8 @@ public class Navigation extends EpiStage
     private EpiTreeItem theRootEpiTreeItem;
     private MapEpiNode persistentMapEpiNode; // Root of Persistent data.
 
+    private FlowPane savedBottomFlowPane; ////////// debug
+        
     // Construction.
 
     public Navigation( // Constructor.
@@ -114,9 +121,21 @@ public class Navigation extends EpiStage
               theShutdowner.requestAppShutdownV();
               });
 
-        buildTreeSceneV(theRootDataNode);
+        tickerLabel= new Label(" TICKER");
+        (new Thread(() -> { // Create thread that updates tickerLabel.
+          int tickInteger=0;
+          while(true) {
+            EpiThread.interruptibleSleepB(1000); // Sleep for 1 second.
+            tickInteger++;
+            final int finalTickI= tickInteger;
+            Platform.runLater(() -> { // Use JavaFX Application Thread.
+              tickerLabel.setText(" tick-"+finalTickI); // Update ticker.
+              }); 
+            }
+          })).start();;
 
         buildDataNodeSceneV();
+        buildTreeSceneV();
 
         displayTreeOrDataNodeV();
 
@@ -160,12 +179,15 @@ public class Navigation extends EpiStage
        */
       {
         /// System.out.println("doDataNodeShowTreeButtonActionV() called.");
-        persistentMapEpiNode.putTrueOrRemoveB( // Record in Persistent storage
-            "DisplayAsTree", true); // to display as tree.
+        persistentMapEpiNode.putTrueOrRemoveB( // Set in Persistent storage
+            "DisplayAsTree", true); // value to display as tree.
+        /*  ////
         DataNode parentOfSelectedDataNode= 
             theDataNodeTreeStuff.getSubjectDataNode();
         setTreeContentFromDataNodeV(parentOfSelectedDataNode);//
         setScene(theTreeScene); // Switch [back] to tree scene.
+        */  ////
+        displayTreeOrDataNodeV();
         }
 
     private void doTreeShowDataNodeButtonActionV()
@@ -176,8 +198,9 @@ public class Navigation extends EpiStage
        * from the Tree scene to the DataNode Scene.
        */
       {
-        persistentMapEpiNode.putTrueOrRemoveB( // Record in Persistent storage
-            "DisplayAsTree", false); // to display as DataNode.
+        persistentMapEpiNode.putTrueOrRemoveB( // Set in Persistent storage
+            "DisplayAsTree", false); // value to display as DataNode.
+        /*  ////
         TreeItem<DataNode> selectedTreeItemOfDataNode=
           treeTreeStuff.toTreeItem(
               treeTreeStuff.getSelectionDataNode());
@@ -186,8 +209,9 @@ public class Navigation extends EpiStage
           setDataNodeContentFromDataNodeV(theDataNode);
           }
         setScene(theDataNodeScene); // Switch Scene to DataNode Scene.
+        */  ////
+        displayTreeOrDataNodeV();
         }
-
 
     private void displayTreeOrDataNodeV()
       /* Depending on the contents of Persistent storage,
@@ -195,30 +219,43 @@ public class Navigation extends EpiStage
        * The selection is controlled from Persistent storage.
        */
       {
-        DataNode spreviouslySelectedDataNode= 
+        DataNode previouslySelectedDataNode= 
             theSelections.getPreviousSelectedDataNode();
         boolean displayTreeB= persistentMapEpiNode.isTrueB("DisplayAsTree");
         theAppLog.debug(
             "Navigation.displayTreeOrDataNodeV() tree= "+displayTreeB);
         if (displayTreeB)
-          { setTreeContentFromDataNodeV(spreviouslySelectedDataNode);
+          { 
+            buildTreeSceneV(); // Rebuild to resolve tickerLabel.
+            setTreeContentFromDataNodeV(previouslySelectedDataNode);
             setScene(theTreeScene); // Use tree scene as first one displayed.
             }
           else
-          { setDataNodeContentFromDataNodeV(spreviouslySelectedDataNode);
+          { 
+            buildDataNodeSceneV(); // Rebuild to resolve tickerLabel.
+            setDataNodeContentFromDataNodeV(previouslySelectedDataNode);
             setScene(theDataNodeScene); // Use item scene as first one displayed.
             }
+        theAppLog.debug( ////
+            "Navigation.displayTreeOrDataNodeV() end");
         }
+
 
     // Tree scene methods.
 
-    private void buildTreeSceneV(DataNode rootDataNode)
+    private void buildTreeSceneV()
       /* This method builds the Scene to be used when
        * the user wants to display DataNodes as a tree. 
        */ 
       {
         treeContentBorderPane= new BorderPane();
-        treeContentBorderPane.setBottom(theTreeShowItemButton);
+        FlowPane bottomFlowPane= new FlowPane();
+        bottomFlowPane.getChildren().add(new Label("Tree-Begin "));
+        bottomFlowPane.getChildren().add(theTreeShowItemButton);
+        bottomFlowPane.getChildren().add(tickerLabel);
+        bottomFlowPane.getChildren().add(new Label(" Tree-End"));
+        savedBottomFlowPane= bottomFlowPane;
+        treeContentBorderPane.setBottom(bottomFlowPane);
         treeContentBorderPane.setCenter( // This will be replaced later.
             new TextArea("UNDEFINED")); 
         theTreeScene= new Scene(treeContentBorderPane);
@@ -256,7 +293,13 @@ public class Navigation extends EpiStage
        */
       {
         theDataNodeContentBorderPane= new BorderPane();
-        theDataNodeContentBorderPane.setBottom(theDataNodeShowTreeButton);
+        FlowPane bottomFlowPane= new FlowPane();
+        bottomFlowPane.getChildren().add(new Label("Item-Begin "));
+        bottomFlowPane.getChildren().add(theDataNodeShowTreeButton);
+        bottomFlowPane.getChildren().add(tickerLabel);
+        bottomFlowPane.getChildren().add(new Label(" Item-End"));
+        savedBottomFlowPane= bottomFlowPane;
+        theDataNodeContentBorderPane.setBottom(bottomFlowPane);
         theDataNodeContentBorderPane.addEventFilter( // or addEventHandler(
           KeyEvent.KEY_PRESSED, 
           (theKeyEvent) -> handleDataNodeKeyPressV(theKeyEvent)
