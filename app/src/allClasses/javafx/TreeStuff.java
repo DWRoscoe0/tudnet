@@ -12,23 +12,27 @@ import javafx.scene.control.TreeItem;
 public class TreeStuff 
 
   {
-    /* This class does several things.
+    /* This class is the JavaFX equivalent of 
+     * the class TreeHelper which is used with Swing.
+     *
+     * This class does several things.
      * * It stores information about 
      *   a location in the hierarchy for JavaFX Node viewers.
-     *   * It stores the location of the subject DataNode.
-     *   * It stores the location of the selection DataNode, if any, 
+     *   * It stores the location of the parent subject DataNode.
+     *   * It stores the location of the child selection DataNode, if any, 
      *     within the subject DataNode.  null means there is no selection.
      * This class may be interrogated for location information.
      * An instance of this class should be updated by 
      * the selection model of the Node's associated viewer.
      * 
-     * Location is stored both locally, and in the Selections class.
-     * 
+     * Location information is stored both locally
+     * and in the Selections class.
+     *
      * Location is represented by the DataNode of interest at that location.
+     *
      * Location can also be represented by the TreePath
      * from the root DataNode to the DataNode of interest,
      * though this is not being done now.
-     * 
      * ///org Representing location with a TreePath might be necessary 
      * when and if TUDNet supports DataNode DAGs instead of trees.
      */
@@ -48,18 +52,18 @@ public class TreeStuff
       // This may be null if there is no selection.
       ///org Maybe bind this to viewer instead of assigning it.
 
-    private Persistent thePersistent;
+    private Persistent thePersistent; // Persistent data storage.
 
-    private DataRoot theDataRoot;
+    private DataRoot theDataRoot; // Root of DataNode hierarchy.
 
-    private EpiTreeItem theRootEpiTreeItem;
+    private EpiTreeItem theRootEpiTreeItem; // The root of TreeItem tree.
 
-    private Selections theSelections;
+    private Selections theSelections; // Other DataNode selections and history. 
 
 
     // Variables initialized by setter injection.
 
-    private Node theUINode= null; // This is the JavaFX Node that displays the DataNode. 
+    private Node theUINode= null; // JavaFX Node that displays subjectDataNode. 
 
 
     // Methods.

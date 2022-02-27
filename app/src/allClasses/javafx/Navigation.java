@@ -356,9 +356,15 @@ public class Navigation extends EpiStage
         theAppLog.debug("Navigation.setDataNodeContentFromDataNodeV() "
             + "theDataNode= "+theDataNode);
         if (null != theDataNode) { // Process DataNode if present.
-          theDataNodeTreeStuff= // Make
-            theDataNode.makeTreeStuff( // TreeStuff appropriate for DataNode.
-              (DataNode)null, // No child selection specified.
+          DataNode selectionDataNode= null;
+          DataNode subjectDataNode= theDataNode;
+          if (! theDataNode.isRootB()) { // Move to parent DataNode if present.
+            selectionDataNode= subjectDataNode;
+            subjectDataNode= theDataNode.getTreeParentNamedList();
+            }
+          theDataNodeTreeStuff= // Make TreeStuff appropriate for DataNode.
+            subjectDataNode.makeTreeStuff(
+              selectionDataNode, //// (DataNode)null, // No child selection specified.
               thePersistent,
               theDataRoot,
               theRootEpiTreeItem,
