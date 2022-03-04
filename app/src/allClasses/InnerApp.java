@@ -259,7 +259,8 @@ public class InnerApp
     private void doSomePollingJobsV()
       /* This method tries to do various polling jobs during each call.
        * It does at least one job, then exits.
-       * It always displays changes that affect the Swing UI.
+       * It always displays changes that affect the user interface,
+       * both Swing and JavaFX.
        * It may then do one additional job that is ready to be done,
        * the first job that is ready from the following list:
        * * a executable file update using the AppInstanceManager
@@ -269,8 +270,8 @@ public class InnerApp
        */
       {
         toReturn: {
-          try { // Display state changes that affect the Swing UI.
-              DataNode.displayPossiblyChangedNodesFromV( // Display from...
+          try { // Display state changes that affect the UI.
+              DataNode.displayPossiblyChangedNodesFromV(
                 theDataRoot.getParentOfRootTreePath( ), 
                 theDataRoot.getRootDataNode( ),
                 theDataRoot.getRootEpiTreeItem()

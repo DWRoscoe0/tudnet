@@ -453,6 +453,9 @@ public abstract class DataNode
       
       ///Fix : theEpiTreeItem is used for displaying to the JavaFX GUI.
       This code is not working yet.
+      
+      ///enh : Calculate childEpiTreeItem using DataNode search instead of
+      an indexed get(.).  It's safer.
       */
     {
       theAppLog.trace( "DataTreeModel.displayChangedSubtreeV() "
@@ -490,7 +493,12 @@ public abstract class DataNode
                 TreeItem.valueChangedEvent(), theEpiTreeItem);
                 //// TreeItem.treeNotificationEvent(), theEpiTreeItem);
         System.out.print(theEpiTreeItem+",");
+        DataNode savedDataNode= theEpiTreeItem.getValue();  
+        theEpiTreeItem.setValue(null);
         Event.fireEvent(theEpiTreeItem, theTreeModificationEvent);
+        theEpiTreeItem.setValue(savedDataNode);
+        Event.fireEvent(theEpiTreeItem, theTreeModificationEvent);
+        
 
         ////// theEpiTreeItem.reportingChangeB( // Display root with JavaFX.
         //////     parentTreePath, theDataNode );
