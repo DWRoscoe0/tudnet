@@ -523,8 +523,8 @@ public class Selections
               // Forces root to be in selection path history.
         loop: while(true) { // Loop to follow selection history path to its end.
           // At this point, we  have a valid [partial] selection.
-          theAppLog.debug(
-              "Selections.getPreviousSelectedDataNode() at: " + scanDataNode);
+          theAppLog.debug("Selections.getPreviousSelectedDataNode() "
+              + "scanning at: " + scanDataNode);
           MapEpiNode childrenAttributeMapEpiNode= // Get Children attribute map. 
             getOrMakeChildrenMapEpiNode(scanMapEpiNode);
           String childString= // Get name of next-level candidate selection.
@@ -532,7 +532,6 @@ public class Selections
           theAppLog.appendToFileV("[s0]");
           if (null == childString) break loop; // No name, no selection, exit.
           theAppLog.appendToFileV("[s1 "+childString+"]");
-          theAppLog.appendToFileV(childString);
           DataNode childDataNode= // Try getting same-name child DataNode. 
             scanDataNode.getNamedChildDataNode(childString);
           if (null == childDataNode) break loop; // No child DataNode, exit.
@@ -545,7 +544,7 @@ public class Selections
           scanDataNode= childDataNode;
           scanMapEpiNode= childMapEpiNode;
         } // loop:
-          theAppLog.debug("Selections.getPreviousSelectedDataNode() " 
+          theAppLog.debug("Selections.getPreviousSelectedDataNode() ends: " 
                   + scanDataNode.getLoggingNodePathString() );
           return scanDataNode; // Return last valid DataNode, the selection.
         }

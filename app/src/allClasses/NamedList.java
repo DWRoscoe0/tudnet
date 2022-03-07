@@ -237,12 +237,17 @@ public class NamedList
 	     * The EDT thread might not be involved at all.
 	     */
 	    {
+        theAppLog.debug("NamedList.addB(int,DataNode) to "
+            + this + " at index "+requestedIndexI+" node "+childDataNode);
 	  		final boolean successB; 
 	  		final DataNode parentDataNode= this; // Because vars must be final.
 	  	  int searchIndexI=  // Searching for child by getting its index. 
 		    	  getIndexOfChild( childDataNode );
-    	  if ( searchIndexI != -1) // Child already in list.
-    	  	successB= false; // Returning add failure.
+    	  if ( searchIndexI != -1) // Add child if not already in list.
+    	    { // Not in list.
+            theAppLog.debug("NamedList.addB(int,DataNode): FAIL");
+    	      successB= false; // Returning add failure.
+    	      }
     	  	else // Child was not found in list.
 	    	  { // Adding to List because it's not there yet.
             childDataNode.propagateTreeModelIntoSubtreeV( theDataTreeModel );
@@ -255,6 +260,7 @@ public class NamedList
                 actualIndexI, childDataNode );
             DataNode.signalInsertionV( // Notify interested listeners about add.
                 parentDataNode, actualIndexI, childDataNode );
+            theAppLog.debug("NamedList.addB(int,DataNode): success");
             successB= true; // Returning add success.
     	  	  }
 	  		return successB; // Returning whether add succeeded.

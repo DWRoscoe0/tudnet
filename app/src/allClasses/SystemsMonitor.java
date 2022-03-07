@@ -85,6 +85,8 @@ public class SystemsMonitor
           );
       	this.toConnectionManagerNotifyingQueueOfStrings= 
       	    toConnectionManagerNotifyingQueueOfStrings;
+  
+        createAndAddChildrenV(); // Do non-dependency-injection initialization.
         }
 
     public void run()
@@ -99,8 +101,6 @@ public class SystemsMonitor
        */
       {
     		theAppLog.info( "run() begins." );
-  
-    		createAndAddChildrenV(); // Do non-dependency-injection initialization.
   
   		  measurementTimeMsL= // Setting time to do first measurement... 
   		  		System.currentTimeMillis(); //  to be immediately.

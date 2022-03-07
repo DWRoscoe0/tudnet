@@ -994,7 +994,7 @@ public abstract class DataNode
                   break;  // Exiting loop.
                   }
               String childNameString= childDataNode.getNameString();
-              theAppLog.appendToFileV(NL+"[DataNode.getIndexOfNamedChild(.):"
+              theAppLog.debug("[DataNode.getIndexOfNamedChild(.):"
                 +this+","+inString+","+childDataNode+","
                 +childNameString+","+childIndexI+"]");
               if  // Handling child with matching name.
@@ -1018,7 +1018,7 @@ public abstract class DataNode
         DataNode childDataNode= // Translate index to DataNode.
           getChild( childIndexI );
 
-        theAppLog.appendToFileV(NL+"[DataNode.getNamedChildDataNode(.):"
+        theAppLog.debug("[DataNode.getNamedChildDataNode(.):"
           +this+","+inNameString+","+childIndexI+","+childDataNode+"]");
 
         if (null == childDataNode)
