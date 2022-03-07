@@ -492,7 +492,7 @@ public abstract class DataNode
             new TreeModificationEvent<>(
                 TreeItem.valueChangedEvent(), theEpiTreeItem);
                 //// TreeItem.treeNotificationEvent(), theEpiTreeItem);
-        System.out.print(theEpiTreeItem+",");
+        //////// System.out.print(theEpiTreeItem+",");
         DataNode savedDataNode= theEpiTreeItem.getValue();  
         theEpiTreeItem.setValue(null);
         Event.fireEvent(theEpiTreeItem, theTreeModificationEvent);
@@ -660,7 +660,7 @@ public abstract class DataNode
       The meaning of each method should be preserved in the overrides.
       */
 
-    protected String getLoggingNodePathString()
+    public String getLoggingNodePathString()
       /* Recursively calculates and returns a display-able path to this node.
         The path is a comma-separated list of node names
         from the root of the hierarchy to this node.
@@ -993,8 +993,12 @@ public abstract class DataNode
                   childIndexI= -1;  // Setting index to indicate failure.
                   break;  // Exiting loop.
                   }
+              String childNameString= childDataNode.getNameString();
+              theAppLog.appendToFileV(NL+"[DataNode.getIndexOfNamedChild(.):"
+                +this+","+inString+","+childDataNode+","
+                +childNameString+","+childIndexI+"]");
               if  // Handling child with matching name.
-                ( inString.equals( childDataNode.getNameString() ) )
+                ( inString.equals( childNameString ) )
                 break;  // Exiting while loop.
               }
 
@@ -1014,6 +1018,11 @@ public abstract class DataNode
         DataNode childDataNode= // Translate index to DataNode.
           getChild( childIndexI );
 
+        theAppLog.appendToFileV(NL+"[DataNode.getNamedChildDataNode(.):"
+          +this+","+inNameString+","+childIndexI+","+childDataNode+"]");
+
+        if (null == childDataNode)
+          theAppLog.appendToFileV(" [get FAILED!]");
         return childDataNode;  // Return DataNode.
         }
 

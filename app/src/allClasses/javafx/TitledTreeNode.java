@@ -1,6 +1,5 @@
 package allClasses.javafx;
 
-import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.geometry.Pos;
 import javafx.scene.control.TreeView;
@@ -10,6 +9,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.control.TreeItem;
 import javafx.scene.layout.BorderPane;
+
+import static allClasses.AppLog.theAppLog;
 
 import allClasses.DataNode;
 import allClasses.DataRoot;
@@ -81,14 +82,17 @@ public class TitledTreeNode
           );
         setSelectionEventHandlerV();
 
-        Platform.runLater( () -> {
-          selectV(selectionDataNode);
-          theTreeView.requestFocus();
-          } );
+        //// Platform.runLater(
+        JavaFXGUI.runLaterV( 
+            "TitledTreeNode Constructor",
+            () -> {
+              selectV(selectionDataNode);
+              theTreeView.requestFocus();
+              } );
         }
 
     private void keyEventHandlerV(KeyEvent theKeyEvent)
-      /* This method sets a handler for the right arrow key
+      /* This method handles KeyEvents so that right arrow key is processed
        * so that the best child Node selection is made.
        */
       {
@@ -102,9 +106,11 @@ public class TitledTreeNode
           default: keyProcessedB= false; break; // Being here means no key processed.
           }
         if (keyProcessedB) theKeyEvent.consume();
-        Platform.runLater( () -> { // After or later key processing done
-          scrollToSelectionV(); // scroll selection into view. 
-          });
+        //// Platform.runLater( 
+        JavaFXGUI.runLaterV( "keyEventHandlerV(KeyEvent theKeyEvent)",
+          () -> { // After or later key processing done
+            scrollToSelectionV(); // scroll selection into view. 
+            });
         }
 
     private void tryGoingRightV()
@@ -129,19 +135,29 @@ public class TitledTreeNode
         }
 
     private void selectV(DataNode theDataNode)
+      /* This method selects theDataNode in the TreeView.
+       * It also records the position in Selections.
+       * 
+       * This is all done on the JavaFX Application Thread.
+       */
       {
-        Platform.runLater( () -> {
-          TreeItem<DataNode> theTreeItem= 
-              theTreeStuff.toTreeItem(theDataNode);
-          theTreeView.getSelectionModel().select( // Select the child.
-              theTreeItem);
-          int selectedI= // Get its index. 
-              theTreeView.getSelectionModel().getSelectedIndex();
-          theTreeView.scrollTo(selectedI); // Bring into view.
-            /// might not be needed.
-          /// layout(); // kludge said to fix scrollTo(.) bug, doesn't.
-          System.out.println("TitledTreeNode.selectV(.) "+selectedI);
-          } );
+        //// Platform.runLater(
+        JavaFXGUI.runLaterV( 
+          "TitledTreeNode.selectV("+theDataNode+")",
+          () -> {
+            TreeItem<DataNode> theTreeItem= 
+                theTreeStuff.toTreeItem(theDataNode);
+            theTreeView.getSelectionModel().select( // Select the child.
+                theTreeItem);
+            int selectedI= // Get its index. 
+                theTreeView.getSelectionModel().getSelectedIndex();
+            theTreeView.scrollTo(selectedI); // Bring into view.
+              /// might not be needed.
+            /// layout(); // kludge said to fix scrollTo(.) bug, doesn't.
+            //// System.out.println(
+            theAppLog.debug("TitledTreeNode.selectV(.) "
+              +theDataNode+" "+selectedI+" "+theTreeItem);
+            } );
         }
 
     private void scrollToSelectionV()
@@ -150,7 +166,8 @@ public class TitledTreeNode
         int selectedI= // Get its index. 
             theTreeView.getSelectionModel().getSelectedIndex();
         theTreeView.scrollTo(selectedI);
-        System.out.println("TitledTreeNode.scrollToSelectionV() "+selectedI);
+        //// System.out.println
+        theAppLog.debug("TitledTreeNode.scrollToSelectionV() "+selectedI);
         }
 
     private void setSelectionEventHandlerV()

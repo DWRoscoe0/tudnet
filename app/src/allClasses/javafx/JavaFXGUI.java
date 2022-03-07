@@ -15,6 +15,7 @@ import allClasses.Persistent;
 import allClasses.Shutdowner;
 import allClasses.bundles.BundleOf2;
 import allClasses.LockAndSignal.Input;
+import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.stage.Window;
@@ -378,4 +379,29 @@ public class JavaFXGUI
         return resultAlert; 
         }
 
+
+    // JavaFX utility and debug methods.
+
+    public static void runLaterV(
+        String descriptionString, Runnable theRunnable)
+      /* This method executes
+       *   Platform.runLater(() -> theRunnable.run() );
+       * enclosed by debug logging statements tagged
+       * by the String descriptionString.
+        
+       */
+      {
+        theAppLog.debug( 
+            "JavaFXGUI.runLaterV(.) in "+descriptionString+" queuing begins.");
+        Platform.runLater(() -> {
+          theAppLog.debug( 
+              "JavaFXGUI.runLaterV(.) in "+descriptionString+" run begins.");
+          theRunnable.run(); // Execute Runnable from caller of this method.
+          theAppLog.debug( 
+              "JavaFXGUI.runLaterV(.) in "+descriptionString+" run ends.");
+          });
+        theAppLog.debug( 
+          "JavaFXGUI.runLaterV(.) in "+descriptionString+" queuing ends.");
+        }
+      
     }

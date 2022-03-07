@@ -274,6 +274,8 @@ public class Selections
                   parentsChildrenMapEpiNode.getMapEpiNode(subjectsNameKeyString);
               deactivatePathFrom1V(subjectsAttributesMapEpiNode);
               }
+            theAppLog.debug("Selections.adjustForNewSelectionV(.) " 
+                  + subjectDataNode.getLoggingNodePathString() );
             thePersistent.signalDataChangeV(); // Cause save of selection state.
             }
         }
@@ -527,17 +529,24 @@ public class Selections
             getOrMakeChildrenMapEpiNode(scanMapEpiNode);
           String childString= // Get name of next-level candidate selection.
             getChildSelectionCandidateString(childrenAttributeMapEpiNode);
+          theAppLog.appendToFileV("[s0]");
           if (null == childString) break loop; // No name, no selection, exit.
+          theAppLog.appendToFileV("[s1 "+childString+"]");
+          theAppLog.appendToFileV(childString);
           DataNode childDataNode= // Try getting same-name child DataNode. 
             scanDataNode.getNamedChildDataNode(childString);
           if (null == childDataNode) break loop; // No child DataNode, exit.
+          theAppLog.appendToFileV("[s2]");
           MapEpiNode childMapEpiNode= // Try getting next-level child map. 
             childrenAttributeMapEpiNode.getMapEpiNode(childString);
           if (null == childMapEpiNode) break loop; // No next level map, exit.
+          theAppLog.appendToFileV("[sd]");
           // At this point, we have all data needed to go to next level.  Do it.
           scanDataNode= childDataNode;
           scanMapEpiNode= childMapEpiNode;
-        } // loop: 
+        } // loop:
+          theAppLog.debug("Selections.getPreviousSelectedDataNode() " 
+                  + scanDataNode.getLoggingNodePathString() );
           return scanDataNode; // Return last valid DataNode, the selection.
         }
 

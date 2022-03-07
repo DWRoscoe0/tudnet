@@ -1,12 +1,10 @@
 package allClasses.javafx;
 
-import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
-import javafx.scene.control.TreeItem;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
@@ -71,7 +69,6 @@ public class Navigation extends EpiStage
     private EpiTreeItem theRootEpiTreeItem;
     private MapEpiNode persistentMapEpiNode; // Root of Persistent data.
 
-    private FlowPane savedBottomFlowPane; ////////// debug
         
     // Construction.
 
@@ -128,9 +125,12 @@ public class Navigation extends EpiStage
             EpiThread.interruptibleSleepB(1000); // Sleep for 1 second.
             tickInteger++;
             final int finalTickI= tickInteger;
-            Platform.runLater(() -> { // Use JavaFX Application Thread.
-              tickerLabel.setText(" tick-"+finalTickI); // Update ticker.
-              }); 
+            //// Platform.runLater(() -> { // Use JavaFX Application Thread.
+            JavaFXGUI.runLaterV(
+              "TICKER",
+              () -> { // Use JavaFX Application Thread.
+                tickerLabel.setText(" tick-"+finalTickI); // Update ticker.
+                }); 
             }
           })).start();;
 
@@ -254,7 +254,6 @@ public class Navigation extends EpiStage
         bottomFlowPane.getChildren().add(theTreeShowItemButton);
         bottomFlowPane.getChildren().add(tickerLabel);
         bottomFlowPane.getChildren().add(new Label(" Tree-End"));
-        savedBottomFlowPane= bottomFlowPane;
         treeContentBorderPane.setBottom(bottomFlowPane);
         treeContentBorderPane.setCenter( // This will be replaced later.
             new TextArea("UNDEFINED")); 
@@ -298,7 +297,6 @@ public class Navigation extends EpiStage
         bottomFlowPane.getChildren().add(theDataNodeShowTreeButton);
         bottomFlowPane.getChildren().add(tickerLabel);
         bottomFlowPane.getChildren().add(new Label(" Item-End"));
-        savedBottomFlowPane= bottomFlowPane;
         theDataNodeContentBorderPane.setBottom(bottomFlowPane);
         theDataNodeContentBorderPane.addEventFilter( // or addEventHandler(
           KeyEvent.KEY_PRESSED, 
