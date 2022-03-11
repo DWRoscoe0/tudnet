@@ -1,5 +1,6 @@
 package allClasses.javafx;
 
+import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -124,10 +125,11 @@ public class Navigation extends EpiStage
           while(true) {
             EpiThread.interruptibleSleepB(1000); // Sleep for 1 second.
             tickInteger++;
+            theAppLog.appendToFileV("[t]");
             final int finalTickI= tickInteger;
-            //// Platform.runLater(() -> { // Use JavaFX Application Thread.
-            JavaFXGUI.runLaterV(
-              "TICKER",
+            Platform.runLater( // Use JavaFX Application Thread.
+            // JavaFXGUI.runLaterV(
+            //  "TICKER",
               () -> { // Use JavaFX Application Thread.
                 tickerLabel.setText(" tick-"+finalTickI); // Update ticker.
                 }); 
@@ -181,12 +183,6 @@ public class Navigation extends EpiStage
         /// System.out.println("doDataNodeShowTreeButtonActionV() called.");
         persistentMapEpiNode.putTrueOrRemoveB( // Set in Persistent storage
             "DisplayAsTree", true); // value to display as tree.
-        /*  ////
-        DataNode parentOfSelectedDataNode= 
-            theDataNodeTreeStuff.getSubjectDataNode();
-        setTreeContentFromDataNodeV(parentOfSelectedDataNode);//
-        setScene(theTreeScene); // Switch [back] to tree scene.
-        */  ////
         displayTreeOrDataNodeV();
         }
 
@@ -200,16 +196,6 @@ public class Navigation extends EpiStage
       {
         persistentMapEpiNode.putTrueOrRemoveB( // Set in Persistent storage
             "DisplayAsTree", false); // value to display as DataNode.
-        /*  ////
-        TreeItem<DataNode> selectedTreeItemOfDataNode=
-          treeTreeStuff.toTreeItem(
-              treeTreeStuff.getSelectionDataNode());
-        if (null != selectedTreeItemOfDataNode) { // Set selection if present.
-          DataNode theDataNode= selectedTreeItemOfDataNode.getValue();
-          setDataNodeContentFromDataNodeV(theDataNode);
-          }
-        setScene(theDataNodeScene); // Switch Scene to DataNode Scene.
-        */  ////
         displayTreeOrDataNodeV();
         }
 
@@ -236,7 +222,7 @@ public class Navigation extends EpiStage
             setDataNodeContentFromDataNodeV(previouslySelectedDataNode);
             setScene(theDataNodeScene); // Use item scene as first one displayed.
             }
-        theAppLog.debug( ////
+        theAppLog.debug(
             "Navigation.displayTreeOrDataNodeV() end");
         }
 
@@ -362,7 +348,7 @@ public class Navigation extends EpiStage
             }
           theDataNodeTreeStuff= // Make TreeStuff appropriate for DataNode.
             subjectDataNode.makeTreeStuff(
-              selectionDataNode, //// (DataNode)null, // No child selection specified.
+              selectionDataNode,
               thePersistent,
               theDataRoot,
               theRootEpiTreeItem,

@@ -9,7 +9,6 @@ import com.sun.javafx.application.PlatformImpl;
 
 import allClasses.DataNode;
 import allClasses.DataRoot;
-//// import allClasses.EpiThread;
 import allClasses.LockAndSignal;
 import allClasses.Persistent;
 import allClasses.Shutdowner;
@@ -194,7 +193,6 @@ public class JavaFXGUI
           aJavaFXGUI.theDataRoot= theDataRoot;
           aJavaFXGUI.theSelections= theSelections;
           theJavaFXGUI= aJavaFXGUI; // Finish by storing in static variable.
-          //// runningLockAndSignal.notifyingV(); // Inform caller of definition.
           theAppLog.debug("JavaFXGUILog", "initializeJavaFXGUI(.) "
               + "defining theJavaFXGUI=="+theJavaFXGUI);
           }
@@ -381,6 +379,15 @@ public class JavaFXGUI
 
 
     // JavaFX utility and debug methods.
+
+    public static void runLaterQuietV(
+        String descriptionString, Runnable theRunnable)
+      /* This method works like runLaterQuietV(.) but without logging  */
+      {
+        Platform.runLater(() -> {
+          theRunnable.run(); // Execute Runnable from caller of this method.
+          });
+        }
 
     public static void runLaterV(
         String descriptionString, Runnable theRunnable)

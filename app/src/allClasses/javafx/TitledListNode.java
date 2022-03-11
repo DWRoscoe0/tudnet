@@ -100,8 +100,7 @@ public class TitledListNode
             subjectDataNode.getChildrenAsObservableListOfDataNodes();
         theListView.setItems(childObservableList);
         setCenter(theListView);
-        //// Platform.runLater( 
-        JavaFXGUI.runLaterV( "TitledListNode( // Constructor.",
+        JavaFXGUI.runLaterQuietV( "TitledListNode( // Constructor.",
             () -> theListView.requestFocus() );
         setEventHandlersV(); // Needed for initial selection which follows.
         theListView.getSelectionModel().

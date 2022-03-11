@@ -72,9 +72,6 @@ public abstract class DataNode
 
     // Some sources of useful DataNodes.
 
-    //// private static NamedLeaf dummyDataNode=
-    ////     NamedLeaf.makeNamedLeaf( "DUMMY-DataNode" );
-
     static DataNode[] makeEmptyArrayOfDataNodes()
       // This method returns a new empty DataNode array.
       { 
@@ -477,7 +474,6 @@ public abstract class DataNode
           if ( childEpiTreeItem == null )  // No more EpiTreeItem children.
               break;  // so exit while loop.
           DataNode.displayPossiblyChangedNodesFromV( // Display descendants.
-              //// theSubtreeTreePath, childDataNode, theEpiTreeItem ); 
               theSubtreeTreePath, childDataNode, childEpiTreeItem );
           childIndexI++;  // Increment index for processing next child.
           }
@@ -491,23 +487,18 @@ public abstract class DataNode
         TreeModificationEvent<DataNode> theTreeModificationEvent= 
             new TreeModificationEvent<>(
                 TreeItem.valueChangedEvent(), theEpiTreeItem);
-                //// TreeItem.treeNotificationEvent(), theEpiTreeItem);
         //////// System.out.print(theEpiTreeItem+",");
         DataNode savedDataNode= theEpiTreeItem.getValue();  
-        theEpiTreeItem.setValue(null);
+        theEpiTreeItem.setValue(null); // Force reference change.
         Event.fireEvent(theEpiTreeItem, theTreeModificationEvent);
-        theEpiTreeItem.setValue(savedDataNode);
+        theEpiTreeItem.setValue(savedDataNode); // Restore reference.
         Event.fireEvent(theEpiTreeItem, theTreeModificationEvent);
         
 
         ////// theEpiTreeItem.reportingChangeB( // Display root with JavaFX.
         //////     parentTreePath, theDataNode );
-        // force reference change
-        //// theEpiTreeItem.setValue(null);
+        ////// theEpiTreeItem.setValue(null);
         //////// theEpiTreeItem.setValue(dummyDataNode);
-        // theEpiTreeItem.setValue(theDataNode);
-        //// System.out.println(
-        ////  "DataNode.displayChangedSubtreeV(.) "+theDataNode+", "+theEpiTreeItem);
         }); 
       }
 
@@ -994,9 +985,9 @@ public abstract class DataNode
                   break;  // Exiting loop.
                   }
               String childNameString= childDataNode.getNameString();
-              theAppLog.debug("[DataNode.getIndexOfNamedChild(.):"
-                +this+","+inString+","+childDataNode+","
-                +childNameString+","+childIndexI+"]");
+              // theAppLog.debug("[DataNode.getIndexOfNamedChild(.):"
+              //   +this+","+inString+","+childDataNode+","
+              //   +childNameString+","+childIndexI+"]");
               if  // Handling child with matching name.
                 ( inString.equals( childNameString ) )
                 break;  // Exiting while loop.

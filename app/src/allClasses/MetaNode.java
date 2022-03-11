@@ -122,11 +122,12 @@ public class MetaNode extends IDNumber
 
     // Methods for Read/Write from/to meta-data state files.
 
-      public void rw( MetaFile inMetaFile, DataNode parentDataNode )
+      public void rw( MetaFile inMetaFile, int idI, DataNode parentDataNode )
         throws IOException
         /* This rw-processes all fields of an existing MetaNode
           using MetaFile inMetaFile.
           Empty fields are read.  Non-empty fields are written.
+          The should be all empty or all non-empty.
           If ( MetaFile.TheRwStructure == MetaFile.RwStructure.FLAT )
           then it processes the MetaChildren as IDNumber stubs only.
           If ( MetaFile.TheRwStructure == MetaFile.RwStructure.NESTED )
@@ -139,6 +140,11 @@ public class MetaNode extends IDNumber
           inMetaFile.rwListBegin( );  // RW the beginning of the list.
           IDNumber.rwIDNumber( inMetaFile, this );  // Rw this node's ID #.
           inMetaFile.rwIndentedLiteral( "MetaNode" ); // Label as MetaNode list.
+          if ((0 == idI) || // If any ID# is acceptable or
+              (this.getTheI() == idI)) // the gotten ID# is the desired one
+            ; // then do nothing so DataNode lookup happens
+            else // otherwise
+            parentDataNode= null; // disable DataNode lookup.
           theDataNode= DataRw.rwDataNode(  // Rw...
             inMetaFile,  // ...with MetaFile inMetaFile...
             theDataNode,  // ...theDataNode using...

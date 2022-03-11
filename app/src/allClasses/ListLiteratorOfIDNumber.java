@@ -67,27 +67,29 @@ public class ListLiteratorOfIDNumber
     // Method that does the node checking and loading.
 
     private IDNumber tryLoadingIDNumber( IDNumber inIDNumber )
-      /* This helper method tries to replace inIDNumber with 
-        a lazy-loaded MetaNode equivalent.
-        If it succeeds then it returns the loaded replacement value,
-        otherwise it returns the original inIDNumber value.
-        It handles IOExceptions as load failures and returns
-        the original IDNumber.
-        */
+      /* This helper method tries to lazy-load from the flat.txt file
+       * a MetaNode whose ID number is the same as the one in inIDNumber.
+       * 
+       * If it succeeds in finding and loading the desired MetaNode then 
+       * it returns a reference to the loaded node cast to an IDNumber.
+       * 
+       * If it fails then it returns the original inIDNumber reference
+       * Any IOExceptions are treated as load failures.
+       */
       {
     	  IDNumber resultIDNumber;
         try {
-          resultIDNumber=  // ...MetaNode equivalent...
+          resultIDNumber=  // Try lazy-loading MetaNode
               theMetaFileManager.getLazyLoadMetaFile().
-              	readAndConvertIDNumber(  // ...
-              		inIDNumber,  // ...of IDNumber using...
-                  theParentDataNode  // ...provided parent for lookup.
+              	readAndConvertIDNumber(
+              		inIDNumber, // with this ID number
+                  theParentDataNode // using this for parent-child name lookup.
                   );
           }
         catch ( IOException theIOException ) {
           theAppLog.error(
           	"ListLiteratorOfIDNumber.tryLoadingIDNumber().", theIOException);
-      	  resultIDNumber= inIDNumber;
+      	  resultIDNumber= inIDNumber; // Treat exception as failure.
           };
       return resultIDNumber;
       }

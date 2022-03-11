@@ -82,8 +82,7 @@ public class TitledTreeNode
           );
         setSelectionEventHandlerV();
 
-        //// Platform.runLater(
-        JavaFXGUI.runLaterV( 
+        JavaFXGUI.runLaterQuietV( 
             "TitledTreeNode Constructor",
             () -> {
               selectV(selectionDataNode);
@@ -106,8 +105,7 @@ public class TitledTreeNode
           default: keyProcessedB= false; break; // Being here means no key processed.
           }
         if (keyProcessedB) theKeyEvent.consume();
-        //// Platform.runLater( 
-        JavaFXGUI.runLaterV( "keyEventHandlerV(KeyEvent theKeyEvent)",
+        JavaFXGUI.runLaterQuietV( "keyEventHandlerV(KeyEvent theKeyEvent)",
           () -> { // After or later key processing done
             scrollToSelectionV(); // scroll selection into view. 
             });
@@ -141,7 +139,6 @@ public class TitledTreeNode
        * This is all done on the JavaFX Application Thread.
        */
       {
-        //// Platform.runLater(
         JavaFXGUI.runLaterV( 
           "TitledTreeNode.selectV("+theDataNode+")",
           () -> {
@@ -154,7 +151,6 @@ public class TitledTreeNode
             theTreeView.scrollTo(selectedI); // Bring into view.
               /// might not be needed.
             /// layout(); // kludge said to fix scrollTo(.) bug, doesn't.
-            //// System.out.println(
             theAppLog.debug("TitledTreeNode.selectV(.) "
               +theDataNode+" "+selectedI+" "+theTreeItem);
             } );
@@ -166,7 +162,6 @@ public class TitledTreeNode
         int selectedI= // Get its index. 
             theTreeView.getSelectionModel().getSelectedIndex();
         theTreeView.scrollTo(selectedI);
-        //// System.out.println
         theAppLog.debug("TitledTreeNode.scrollToSelectionV() "+selectedI);
         }
 

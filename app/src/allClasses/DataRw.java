@@ -35,16 +35,21 @@ public class DataRw
           } // rwDataNode( DataNode theDataNode )
 
       private static DataNode readDataNode( 
-          MetaFile inMetaFile, DataNode parentDataNode
+          MetaFile inMetaFile, 
+          DataNode parentDataNode
           )
-        /* This method reads a name string from inMetaFile and
-          returns a DataNode that best matches that name.
-          If first tries to find a child DataNode of parentDataNode
-          with the name.  If it finds none then it returns
-          an UnknownDataNode instance with that name.
-          It never returns a null.
-          */
+        /* This method tries to read a name string from inMetaFile 
+         * and return a DataNode based on that name.
+         * First it tries to read a name string from the file.
+         * If parentDataNode is not null then it tries
+         * to find a child DataNode of parentDataNode with the name.
+         *
+         * This method returns the appropriate DataNode if everything succeeds.
+         * If anything fails then it returns an UnknownDataNode instance.
+         * This method never returns a null.
+         */
         { // readDataNode(..)
+          DataNode resultDataNode= null;
           String nameString=  // Get name of DataNode...
             inMetaFile.readTokenString( );  // ...by reading a String
           { // Prevent troublesome values for name.
@@ -55,13 +60,14 @@ public class DataRw
             else
               ; // Okay as is.
             } // Prevent troublesome values for name.
-          DataNode theDataNode =  // Set DataNode to be...
-            parentDataNode.getNamedChildDataNode(  // ...the child...
-              nameString  // ...with that name.
-              );
-          if ( theDataNode == null )  // replace with error object if null.
-            theDataNode= new UnknownDataNode( nameString );
-          return theDataNode;
+          if (null != parentDataNode) // Lookup DataNode if parent given.
+            resultDataNode =  // Set DataNode to be
+              parentDataNode.getNamedChildDataNode(  // the parent's child
+                nameString  // with that name.
+                );
+          if ( resultDataNode == null ) // Replace with error object if null.
+            resultDataNode= new UnknownDataNode( nameString );
+          return resultDataNode;
           } // readDataNode(..)
 
     } // class DataRw 

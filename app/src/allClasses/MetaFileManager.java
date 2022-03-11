@@ -413,26 +413,32 @@ public class MetaFileManager {
       { return lazyLoadMetaFile; }
 
     private MetaNode rwMetaNode( 
-        MetaFile inMetaFile, MetaNode inMetaNode, DataNode parentDataNode 
+        MetaFile inMetaFile, MetaNode inMetaNode, int idI, DataNode parentDataNode 
         )
       throws IOException
       /* This rw-processes the node inMetaNode and its MetaNode children.  
         If ( inMetaNode == null ) then it creates an empty MetaNode
         and reads values into it.
-        If ( inMetaNode != null ) then it writes the fields.
+        If ( inMetaNode != null ) then it writes the fields in that node.
         If ( MetaFile.TheRwStructure == MetaFile.RwStructure.FLAT )
         then it expects the children to be IDNumber stubs only.
         If ( MetaFile.TheRwStructure == MetaFile.RwStructure.NESTED )
-        then it expects nested children.
-        In the case of Reading, parentDataNode is used for name lookup.
+        then it expects nested child MetaNodes.
+        In the case of Reading, 
+        parentDataNode is used finding associated DataNodes.
         parentDataNode is ignored during Writing.
-        It returns the MetaNode processed.
+        If idI == 0 then the call  is for a MetaNode with any ID number,
+        otherwise the call is for a MetaNode with only a particular ID number.
+        
+        This method returns the MetaNode loaded.
+        It might be, or it might not be the desired one.
+        It might, or it might not have non ID number stub children attached.
         */
       {
         if ( inMetaNode == null ) // If there is no MetaNode then...
           inMetaNode= makeMetaNode( ); // ...create one to be filled.
 
-        inMetaNode.rw( inMetaFile, parentDataNode );  // rw-process fields.
+        inMetaNode.rw( inMetaFile, idI, parentDataNode );  // rw-process fields.
 
         return inMetaNode;  // Return the new or the original MetaNode.
         }
@@ -454,7 +460,7 @@ public class MetaFileManager {
         */
       {
         inMetaNode=  // Process possibly nested first/root MetaNode.
-          rwMetaNode( inMetaFile, inMetaNode, parentDataNode );
+          rwMetaNode( inMetaFile, inMetaNode, 0, parentDataNode );
         if  // Reprocess child MetaNodes if these conditions are true.
           ( 
             ( inMetaFile.getRwStructure() == MetaFileManager.RwStructure.FLAT ) &&
@@ -488,15 +494,15 @@ public class MetaFileManager {
         If the following condition is met:
         * The MetaNode's IDNumber is equal to inIDNumber, and
         * ( inMetaFile.getMode() != MetaFileManager.Mode.LAZY_LOADING )
-        then it reads and attaches all its associated descendants.
+        then it reads and attaches all its descendant MetaNodes.
 
         It returns the first MetaNode it read,
 
-        parentDataNode is used for name lookup.
+        parentDataNode is used finding associated DataNodes.
         */
       {
         MetaNode resultMetaNode=  // Read one MetaNode.
-          rwMetaNode( inMetaFile, null, parentDataNode );
+          rwMetaNode( inMetaFile, null, inIDNumber.getTheI(), parentDataNode );
         if  // Read and attach descendants if it satisfies 2 conditions.
           ( ( inIDNumber.getTheI() == resultMetaNode.getTheI() ) &&
             ( inMetaFile.getMode() != MetaFileManager.Mode.LAZY_LOADING )

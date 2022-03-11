@@ -112,46 +112,43 @@ public class MetaFile { // For app's meta-data files.
         IDNumber inIDNumber, DataNode parentDataNode
         )
       throws IOException
-      /* This method is used in the loading of flat meta files,
-        for both lazy loading and greedy loading.
-        It tries to convert the inIDNumber node into an equivalent MetaNode,
-        a MetaNode with the same ID number, 
-        by looking up the ID number in the FLAT text file
-        and building a MetaNode from the text it finds there.
-        It should be called only if ( theRwStructure == RwStructure.FLAT ).
-
-        It is called by special iterators that do lazy loading by replacing 
-        references to IDNumber List elements by returned MetaNodes references.
-        It is also called by other load routines that do greedy loading.
-
-        If doing lazy loading then only one MetaNode is returned
-        with only children that are IDNumber objects.
-        If doing greedy loading then the MetaNode is returned
-        with all its children and other descendants which are also MetaNodes.
-
-        A RepeatDetector instance is used to prevent infinite loops
-        while searching for MetaNode text for particular ID numbers,
-        because the node reader wraps around to the beginning of the MetaFile
-        if it reaches the end before finding the text for the desired node.
-        A detected repeat indicates a corrupted file is considered an error.
-
-        parentDataNode is used for DataNode name lookup.
-        
-        Returns 
-        * a reference to a MetaNode with the same ID number as inIDNumber
-          if one was found in the text file.  
-          One or more descendants might be IDNodes instead of MetaNodes,
-          depending on loading type and loading errors.
-        * the original inIDNumber node if the ID number
-          could not be found in the text file.
-          This is considered a loading error. 
-
-        */
+      /* This method searches for and loads a MetaNode whose ID number
+       * is the same as the node referred to by inIDNumber.
+       * This method works by searching the FLAT meta data text file
+       * for text that represents a MetaNode with the same ID number.
+       * parentDataNode is searched for the associated, same-named DataNode.
+       * 
+       * This method should be called only if loading from a FLAT file,
+       * but it may be used for either lazy loading and greedy loading.
+       * Loading can be fast if the load order matches the save order,
+       * either Inorder, Preorder or Postorder.  
+       * This app uses Preorder saving and loading.
+       * 
+       * If doing lazy loading then the returned MetaNode
+       * has only children that are place-holder IDNumber objects
+       * which can be evaluated later.
+       * If doing greedy loading then the returned MetaNode 
+       * has all its descendant MetaNodes loaded, evaluated and attached.
+       * 
+       * This method will search the entire FLAT metadata text file 
+       * for desired MetaNodes.  The search wraps around to 
+       * the beginning of the file if necessary.
+       * A RepeatDetector class instance is used 
+       * to limit the search to one complete scan of the file per MetaNode.
+       * 
+       * This method returns:
+       * * a reference to a MetaNode with the same ID number as inIDNumber
+       *   if one was found in the text file.
+       *   One or more descendants might be IDNodes instead of MetaNodes,
+       *   depending on loading type and loading errors.
+       * * a reference to the original inIDNumber node, not a MetaNode, 
+       *   if the ID number could not be found in the file.
+       *   This is considered a loading error.
+       */
       {
-	        RepeatDetector theRepeatDetector=  // Preparing repeat detector.
-	          new RepeatDetector();
+	        RepeatDetector theRepeatDetector= new RepeatDetector();
 	        IDNumber resultIDNumber= null;
-	        int desiredI= inIDNumber.getTheI();
+	        int desiredI= inIDNumber.getTheI(); // Cache the ID #.
 	        //Misc.DbgOut( "MetaFile.readAndConvertIDNumber("+desiredI+") begin");  // Debug.
         goReturn: {
         goFail: {
@@ -163,7 +160,7 @@ public class MetaFile { // For app's meta-data files.
 	          if  // Exiting if node with desired ID number found.
 	            ( desiredI == resultIDNumber.getTheI() )
               break goReturn;
-	          if  // Exiting if every node in file was checked at least once. 
+	          if  // Exiting if every node in file was checked once. 
 	            ( theRepeatDetector.repeatedB( resultIDNumber.getTheI() ) )
 		          { theAppLog.error(
 		          		"MetaFile.readAndConvertIDNumber(.) repeat detected.");
@@ -179,32 +176,32 @@ public class MetaFile { // For app's meta-data files.
     private IDNumber readFlatWithWrapMetaNode( 
         IDNumber inIDNumber, DataNode parentDataNode
         )
-      /* This is like rwMetaNode(..) except:
-        * It must read from a FLAT file,
-        * but if reading fails because an an end-of-file is encountered
-          then it rewinds the file to the beginning of the MetaNodes
-          and tries one more time.
-        It returns a reference to the MetaNode that it read,
-        or null if it was unable to read one.
-        parentDataNode is used for DataNode name lookup.
-        */
+      /* This method tries to one MetaNode from a FLAT metadata file,
+       * if reading fails because an end-of-file is encountered
+       * then it rewinds the file to the beginning and tries one more time.
+       * inIDNumber contains the ID number of the MetaNode that is expected
+
+         * parentDataNode is searched for the associated, same-named DataNode.
+       * This method returns a reference to the MetaNode that it read,
+       * or null if it was unable to read one.
+       */
       throws IOException
       {
         //Misc.DbgOut( "MetaFile.readWithWrapFlatMetaNode(..) begin");  // Debug.
         IDNumber resultIDNumber= null;  // Set default result of not gotten.
         try {
-          resultIDNumber=  // Try to...
-            theMetaFileManager.readParticularFlatMetaNode( // ...read flat MetaNode(s).
+          resultIDNumber=  // Try to read MetaNode.
+            theMetaFileManager.readParticularFlatMetaNode( 
               this, inIDNumber, parentDataNode
               );
           }
-        catch ( Exception theException ) {  // Wrap if end of file.
+        catch ( Exception theException ) { // Handle end of file.
           //Misc.DbgOut( "MetaFile.readWithWrapFlatMetaNode(..) wrapping" );
           restoreStreamStateV( );  // Rewind stream to beginning of MetaNodes.
-          resultIDNumber=  // Try again to...
-            theMetaFileManager.readParticularFlatMetaNode( // ...read flat MetaNode(s).
+          resultIDNumber=  // Try again to read same MetaNode.
+            theMetaFileManager.readParticularFlatMetaNode(
               this, inIDNumber, parentDataNode
-              );
+              ); // This is assumed to succeed.
           }
         //Misc.DbgOut( "MetaFile.readWithWrapFlatMetaNode(..) end");  // Debug.
         return resultIDNumber;
