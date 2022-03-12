@@ -120,21 +120,25 @@ public class Navigation extends EpiStage
               });
 
         tickerLabel= new Label(" TICKER");
-        (new Thread(() -> { // Create thread that updates tickerLabel.
-          int tickInteger=0;
-          while(true) {
-            EpiThread.interruptibleSleepB(1000); // Sleep for 1 second.
-            tickInteger++;
-            theAppLog.appendToFileV("[t]");
-            final int finalTickI= tickInteger;
-            Platform.runLater( // Use JavaFX Application Thread.
-            // JavaFXGUI.runLaterV(
-            //  "TICKER",
-              () -> { // Use JavaFX Application Thread.
-                tickerLabel.setText(" tick-"+finalTickI); // Update ticker.
-                }); 
-            }
-          })).start();;
+        Runnable tickerRunnable= // Create Runnable that updates tickerLabel.
+          (() -> {
+            int tickInteger=0;
+            while(true) {
+              EpiThread.interruptibleSleepB(1000); // Sleep for 1 second.
+              tickInteger++;
+              theAppLog.appendToFileV("[t]");
+              final int finalTickI= tickInteger;
+              Platform.runLater( // Use JavaFX Application Thread.
+              // JavaFXGUI.runLaterV(
+              //  "TICKER",
+                () -> { // Use JavaFX Application Thread.
+                  tickerLabel.setText(" tick-"+finalTickI); // Update ticker.
+                  }); 
+              }
+            });
+        Thread tickerThread= new Thread(tickerRunnable);
+        tickerThread.setDaemon( true ); // Make thread this daemon type. 
+        tickerThread.start();
 
         buildDataNodeSceneV();
         buildTreeSceneV();
