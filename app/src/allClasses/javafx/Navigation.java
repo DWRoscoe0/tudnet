@@ -1,5 +1,6 @@
 package allClasses.javafx;
 
+import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -56,7 +57,11 @@ public class Navigation extends EpiStage
     private Scene theTreeScene;
     private BorderPane treeContentBorderPane;
     private Button theTreeShowItemButton;
-    private Label tickerLabel= new Label(" label-");
+    private static boolean tickerB= true; // Enable at first.
+    private static Label tickerLabel= new Label(" label-");
+    private static int tickInteger=0;
+    private Label frameLabel= new Label(" frame#");
+    private AnimationTimer frameAnimationTimer= null;
     private TreeStuff treeTreeStuff;
 
     // Variables related to the DataNode view Scene.
@@ -122,15 +127,15 @@ public class Navigation extends EpiStage
         tickerLabel= new Label(" TICKER");
         Runnable tickerRunnable= // Create Runnable that updates tickerLabel.
           (() -> {
-            int tickInteger=0;
+            tickInteger=0;
             while(true) {
               EpiThread.interruptibleSleepB(1000); // Sleep for 1 second.
+              if (! tickerB) continue; // End loop if ticker not enabled.
+              //  tickerB= false; // Disable later ticks.
               tickInteger++;
               theAppLog.appendToFileV("[t]");
               final int finalTickI= tickInteger;
-              Platform.runLater( // Use JavaFX Application Thread.
-              // JavaFXGUI.runLaterV(
-              //  "TICKER",
+              Platform.runLater(
                 () -> { // Use JavaFX Application Thread.
                   tickerLabel.setText(" tick-"+finalTickI); // Update ticker.
                   }); 
@@ -140,13 +145,24 @@ public class Navigation extends EpiStage
         tickerThread.setDaemon( true ); // Make thread this daemon type. 
         tickerThread.start();
 
+        frameLabel= new Label(" FRAME#");
+
         buildDataNodeSceneV();
         buildTreeSceneV();
 
         displayTreeOrDataNodeV();
 
         finishStateInitAndStartV("TUDNet JavaFX Navigation UI");
-        
+
+        frameAnimationTimer = new AnimationTimer() {
+          int frameI=0;
+          @Override
+          public void handle(long now) {
+            frameLabel.setText(" FRAME#"+frameI++); // Update frame number.
+            }
+          };
+        frameAnimationTimer.start();
+
         showCommandHelpV();
         }
 
@@ -244,6 +260,8 @@ public class Navigation extends EpiStage
         bottomFlowPane.getChildren().add(theTreeShowItemButton);
         bottomFlowPane.getChildren().add(tickerLabel);
         bottomFlowPane.getChildren().add(new Label(" Tree-End"));
+        bottomFlowPane.getChildren().add(frameLabel);
+        
         treeContentBorderPane.setBottom(bottomFlowPane);
         treeContentBorderPane.setCenter( // This will be replaced later.
             new TextArea("UNDEFINED")); 
