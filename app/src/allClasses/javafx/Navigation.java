@@ -24,6 +24,7 @@ import allClasses.DataNode;
 import allClasses.DataRoot;
 import allClasses.Dialogger;
 import allClasses.EpiThread;
+import allClasses.NamedLeaf;
 import allClasses.Persistent;
 import allClasses.Shutdowner;
 import allClasses.epinode.MapEpiNode;
@@ -397,29 +398,29 @@ public class Navigation extends EpiStage
         }
 
     
-    ////////////////////////////////////////////  test tree stuff.
+    //// Temporary dynamic TreeView troubleshooting code. 
     
     private int countI= 0;
 
-    private TreeItem<IndirectString> child2TreeItem;
-    private TreeView<IndirectString> testTreeView;
+    private TreeItem<DataNode> child2TreeItem;
+    private TreeView<DataNode> testTreeView;
 
 
     public void createTestTreeViewV() 
       {
-        TreeItem<IndirectString> rootItem = 
-            new TreeItem<IndirectString> (
-                new IndirectString("Inbox"), null);
+        TreeItem<DataNode> rootItem = 
+            new TreeItem<DataNode> (
+                NamedLeaf.makeNamedLeaf("TestRoot"));
         rootItem.setExpanded(true);
         for (int i = 1; i < 6; i++) {
-            TreeItem<IndirectString> item= 
-                new TreeItem<IndirectString> (
-                    new IndirectString("Message" + i));
+            TreeItem<DataNode> item= 
+                new TreeItem<DataNode> (
+                    NamedLeaf.makeNamedLeaf("TestChild" + i));
             rootItem.getChildren().add(item);
         }
         child2TreeItem= rootItem.getChildren().get(2); // Get child # 2.
         testTreeView= 
-            new TreeView<IndirectString> (rootItem);        
+            new TreeView<DataNode> (rootItem);        
         StackPane root = new StackPane();
         root.getChildren().add(testTreeView);
 
@@ -429,10 +430,12 @@ public class Navigation extends EpiStage
             while(true) {
               EpiThread.interruptibleSleepB(1000); // Sleep for 1 second.
               Platform.runLater(() -> {
-                IndirectString child2IndirectString= child2TreeItem.getValue();
-                child2IndirectString.setV("NEW-VALUE-"+countI++);
+                DataNode child2DataNode= child2TreeItem.getValue();
+                //// child2DataNode.setV("NEW-VALUE-"+countI++);
+                ((NamedLeaf)child2DataNode).setNameV("NEW-VALUE-"+countI++);
                 child2TreeItem.setValue(null);
-                child2TreeItem.setValue(child2IndirectString);
+                child2TreeItem.setValue(child2DataNode);
+                System.out.print("[tti]");
                 });
               }
             });
@@ -443,7 +446,6 @@ public class Navigation extends EpiStage
     
     }
 
-    
 
 class IndirectString extends Object {
   
@@ -459,3 +461,4 @@ class IndirectString extends Object {
   
   public String toString() {return theString.toString(); }
   }
+    

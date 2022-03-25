@@ -506,11 +506,12 @@ public abstract class DataNode
         ///     new TreeModificationEvent<>(
         ///         TreeItem.valueChangedEvent(), theEpiTreeItem);
         /// theEpiTreeItem.setValue(dummyDataNode); // Force reference change.
-        /// DataNode savedDataNode= theEpiTreeItem.getValue();
-        /// theEpiTreeItem.setValue(null); // Force reference change.
-        /// theEpiTreeItem.setValue(savedDataNode); // Restore original reference.
+        DataNode savedDataNode= theEpiTreeItem.getValue();
+        theEpiTreeItem.setValue(null); // Force reference change.
+        theEpiTreeItem.setValue(savedDataNode); // Restore original reference.
         /// Event.fireEvent(theEpiTreeItem, theTreeModificationEvent);
-        System.out.print(theEpiTreeItem+",");
+        /// System.out.print(theEpiTreeItem+",");
+        System.out.print("[dnti]");
         
         }); 
       }
@@ -532,7 +533,7 @@ public abstract class DataNode
 
           default: // Status is NOT reset.
             int childIndexI= 0;  // Initialize child scan index.
-            while ( true ) // Recursively reset appropriate descendants.
+               while ( true ) // Recursively reset appropriate descendants.
               { // Process one child subtree.
                 DataNode childDataNode=  // Get the child.
                    (DataNode)theDataNode.getChild(childIndexI);
