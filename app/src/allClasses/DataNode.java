@@ -21,9 +21,6 @@ import allClasses.multilink.ElementMultiLink;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.Event;
-import javafx.scene.control.TreeItem;
-import javafx.scene.control.TreeItem.TreeModificationEvent;
 
 public abstract class DataNode
 
@@ -72,12 +69,14 @@ public abstract class DataNode
 
     // Some sources of useful DataNodes.
 
-    static DataNode[] makeEmptyArrayOfDataNodes()
+    protected static DataNode[] makeEmptyArrayOfDataNodes()
       // This method returns a new empty DataNode array.
       { 
         return new DataNode[]{}; 
         }
 
+    static DataNode dummyDataNode= 
+        NamedLeaf.makeNamedLeaf( "DUMMY-DATA-NODE");
 
     // Constructors and initialization.
 
@@ -158,26 +157,31 @@ public abstract class DataNode
      * 
      * !!!!!!!!!!!!!!!!!!!! BEING REWRITTEN.
      
-      This is part of a system that does aggregating and processing 
-      of DataNode change notifications from multiple threads,
-      and eventually displaying changed nodes to the GUI.
+      This is part of a system that aggregates and processes 
+      DataNode change notifications from multiple threads,
+      and eventually outputs changed nodes to the GUI.
       
       Communication happens through shared memory consisting of
-      variables named "theTreeChange" in each DataNode.
-      Threads that report and aggregate node changes write
-      values other than TreeChange.NONE to the variables and
-      propagates these changes toward the root.
-      The thread that processes and displays nodes to the GUI
-      writes the value TreeChange.NONE to the variables
-      and propagate those changes toward the leaves.
+      a Node variable named "theTreeChange" in each DataNode instance.
       A change to any node means that it and all its ancestors
       might need to be redisplayed to the GUI.
       This is an example of restricted value multitasking communication. 
       No locks are used.
+      * Threads that report and aggregate node changes write
+        values other than TreeChange.NONE to the variables and
+        propagates these changes toward the DataNode root.
+      * The thread that processes and outputs node changes to the GUI
+        writes the value TreeChange.NONE to the variables
+        and propagate those changes toward the leaves.
 
       In the Java Swing UI, this system is used for deciding when to repaint
       cells representing DataNodes in JTrees and JLists.
-      ///enh Make it work with JavaFX also.
+
+      In the JavaFX UI, changes output to the JavaFX UI 
+      are not immediately displayed.  Changes are aggregated in
+      JavaFX's own aggregation system, in Nodes and TreeItems.
+      Display doesn't actually happen until JavaFX's next Pulse-time.
+      ///enh Make it work with the JavaFX UI also.  This is work in progress.
 
       */
 
@@ -362,7 +366,20 @@ public abstract class DataNode
         }
 
 
-    /* DataNode hierarchy change notification system, output part. */
+    /* DataNode hierarchy change notification system, output part. 
+     *
+     * These methods are used to output aggregated DataNode changes
+     * to the Swing UI and the JavaFX UI.
+     * 
+     * Changes output to the Swing UI are displayed immediately.
+     *  
+     * Changes output to the JavaFX UI are NOT displayed immediately.
+     * Changes are aggregated in JavaFX's own aggregation system, 
+     * in Nodes and TreeItems.
+     * Display doesn't actually happen until JavaFX's next Pulse-time.
+     * ///fox Not working yet.
+     * 
+     * */
 
     protected DataTreeModel theDataTreeModel; /* Receives change notifications.
 
@@ -376,12 +393,13 @@ public abstract class DataNode
       need not be done again, except for new added children. 
       */
     
-    public static void displayPossiblyChangedNodesFromV(
+    public static void outputPossiblyChangedNodesFromV(
         TreePath parentTreePath, DataNode theDataNode,EpiTreeItem theEpiTreeItem 
         )
       /* If theDataNode has changed, as indicated by theTreeChange,
-        then it is displayed and repeats this for any children.
-        The TreePath of its parent is parentTreePath.
+        then this method outputs the change and
+        it repeats this for any children.
+        The TreePath of theDataNode's parent is parentTreePath.
 
         theEpiTreeItem is ignored, but will be used for JavaFX TreeView display.
         */
@@ -397,24 +415,24 @@ public abstract class DataNode
               ; // So display nothing.
               break;
             case STRUCTURE_CHANGED: // Structure of this subtree changed.
-              displayStructuralChangeV( parentTreePath, theDataNode );
+              outputStructuralChangeV( parentTreePath, theDataNode );
               break;
             case SUBTREE_CHANGED: // Something else in this subtree changed.
-              displayChangedSubtreeV( 
+              outputChangedSubtreeV( 
                   parentTreePath, theDataNode, theEpiTreeItem );
               break;
             }
           }
       }
 
-    private static void displayStructuralChangeV(
+    private static void outputStructuralChangeV(
         TreePath parentTreePath, DataNode theDataNode 
         )
       /* This method displays a structural change of
         a subtree rooted at theDataNode.
         The TreePath of its parent is parentTreePath.
     
-        ///fix?  It is presently assumed that displaying a structural change
+        ///dnh?  It is presently assumed that displaying a structural change
         will be handled by displaying the entire subtree.
         If this is not true then it might be necessary
         to report which nodes have changed also,
@@ -424,7 +442,7 @@ public abstract class DataNode
       {
         resetChangesInSubtreeV( // Do this now so late changes are recorded.
             theDataNode );
-    
+
         TreePath theTreePath= parentTreePath.pathByAddingChild(theDataNode);
         EDTUtilities.runOrInvokeAndWaitV( () -> { // Do on Swing EDT thread. 
           theDataNode.theDataTreeModel.reportStructuralChangeB( theTreePath );
@@ -434,7 +452,7 @@ public abstract class DataNode
         ///fix  Need to add JavaFX display.
         }
 
-    private static void displayChangedSubtreeV(
+    private static void outputChangedSubtreeV(
       TreePath parentTreePath, 
       DataNode subtreeDataNode, 
       EpiTreeItem theEpiTreeItem
@@ -473,7 +491,7 @@ public abstract class DataNode
             (EpiTreeItem)theEpiTreeItem.getChildren().get(childIndexI);
           if ( childEpiTreeItem == null )  // No more EpiTreeItem children.
               break;  // so exit while loop.
-          DataNode.displayPossiblyChangedNodesFromV( // Display descendants.
+          DataNode.outputPossiblyChangedNodesFromV( // Display descendants.
               theSubtreeTreePath, childDataNode, childEpiTreeItem );
           childIndexI++;  // Increment index for processing next child.
           }
@@ -484,21 +502,16 @@ public abstract class DataNode
             parentTreePath, subtreeDataNode );
         });
       Platform.runLater(() -> { // Display with JavaFX Application Thread.
-        TreeModificationEvent<DataNode> theTreeModificationEvent= 
-            new TreeModificationEvent<>(
-                TreeItem.valueChangedEvent(), theEpiTreeItem);
-        //////// System.out.print(theEpiTreeItem+",");
-        DataNode savedDataNode= theEpiTreeItem.getValue();  
-        theEpiTreeItem.setValue(null); // Force reference change.
-        Event.fireEvent(theEpiTreeItem, theTreeModificationEvent);
-        theEpiTreeItem.setValue(savedDataNode); // Restore reference.
-        Event.fireEvent(theEpiTreeItem, theTreeModificationEvent);
+        /// TreeModificationEvent<DataNode> theTreeModificationEvent= 
+        ///     new TreeModificationEvent<>(
+        ///         TreeItem.valueChangedEvent(), theEpiTreeItem);
+        /// theEpiTreeItem.setValue(dummyDataNode); // Force reference change.
+        /// DataNode savedDataNode= theEpiTreeItem.getValue();
+        /// theEpiTreeItem.setValue(null); // Force reference change.
+        /// theEpiTreeItem.setValue(savedDataNode); // Restore original reference.
+        /// Event.fireEvent(theEpiTreeItem, theTreeModificationEvent);
+        System.out.print(theEpiTreeItem+",");
         
-
-        ////// theEpiTreeItem.reportingChangeB( // Display root with JavaFX.
-        //////     parentTreePath, theDataNode );
-        ////// theEpiTreeItem.setValue(null);
-        //////// theEpiTreeItem.setValue(dummyDataNode);
         }); 
       }
 

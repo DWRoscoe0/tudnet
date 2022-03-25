@@ -20,7 +20,7 @@ public class TitledTreeNode
 
   extends BorderPane
   
-  /* This class is used for displaying Nodes inn the form of a tree.
+  /* This class is used for displaying Nodes in the form of a tree.
    * It uses the TreeView class.
    */
 

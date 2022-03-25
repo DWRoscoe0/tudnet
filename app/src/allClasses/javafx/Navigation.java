@@ -7,10 +7,15 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+
 
 import static allClasses.AppLog.theAppLog;
 import static allClasses.SystemSettings.NL;
@@ -25,27 +30,27 @@ import allClasses.epinode.MapEpiNode;
 
 public class Navigation extends EpiStage
 
-  /* This class is, or eventually will be,
-   * for navigation of the TUDNet DataNode hierarchy.
-   * It displays the hierarchy in 1 of 2 ways:
-   * * showing the hierarchy as a navigable tree using a TreeView, or 
-   * * showing a particular DataNode and possibly some of its descendants,
-   *   often but not always as a simple list of text lines.
-   * At startup it displays the DataNode that was being displayed at shutdown.
-   * 
-   * ///ano Sometimes at startup this window fails to display.
-   *   This has happened when trying to display an empty directory as a node.
-   *   Switching to tree display mode before startup enabled display,
-   *   and then the window could be switched back and forth between modes.
-   *   After that, it could start in either mode and display correctly.
-   *    
-   * 
-   * ///fix To prevent Listener leak, in Finalization,
-   *   remove ConsoleNode Document change listener from ConsoleBase 
-   *   
-   */
-
   {
+
+    /* This class is, or eventually will be,
+     * for navigation of the TUDNet DataNode hierarchy.
+     * It displays the hierarchy in 1 of 2 ways:
+     * * showing the hierarchy as a navigable tree using a TreeView, or 
+     * * showing a particular DataNode and possibly some of its descendants,
+     *   often but not always as a simple list of text lines.
+     * At startup it displays the DataNode that was being displayed at shutdown.
+     * 
+     * ///ano Sometimes at startup this window fails to display.
+     *   This has happened when trying to display an empty directory as a node.
+     *   Switching to tree display mode before startup enabled display,
+     *   and then the window could be switched back and forth between modes.
+     *   After that, it could start in either mode and display correctly.
+     *    
+     * 
+     * ///fix To prevent Listener leak, in Finalization,
+     *   remove ConsoleNode Document change listener from ConsoleBase 
+     *   
+     */
 
     // Injected dependencies.
     private final DataNode theRootDataNode;
@@ -59,10 +64,10 @@ public class Navigation extends EpiStage
     private Button theTreeShowItemButton;
     private static boolean tickerB= true; // Enable at first.
     private static Label tickerLabel= new Label(" label-");
-    private static int tickInteger=0;
+    private static int tickInteger=0; ///
     private Label frameLabel= new Label(" frame#");
     private AnimationTimer frameAnimationTimer= null;
-    private TreeStuff treeTreeStuff;
+    private TreeStuff theTreeTreeStuff;
 
     // Variables related to the DataNode view Scene.
     private Scene theDataNodeScene;
@@ -75,10 +80,10 @@ public class Navigation extends EpiStage
     private EpiTreeItem theRootEpiTreeItem;
     private MapEpiNode persistentMapEpiNode; // Root of Persistent data.
 
-        
-    // Construction.
 
-    public Navigation( // Constructor.
+    // Construction and initialization.
+
+    public Navigation( // Simple object constructor.
         JavaFXGUI theJavaFXGUI, 
         DataNode theRootDataNode,
         Persistent thePersistent,
@@ -95,7 +100,7 @@ public class Navigation extends EpiStage
         
         persistentMapEpiNode= thePersistent.getRootMapEpiNode();
         }
-    
+
     public void initializeAndStartV()
       /* This method initializes and starts the Navigation Stage, then returns.
        * The Stage then alternates between 2 Scenes:
@@ -107,7 +112,7 @@ public class Navigation extends EpiStage
        */
       {
         theRootEpiTreeItem= new EpiTreeItem(theRootDataNode);
-        theRootEpiTreeItem.setExpanded(true); // Show 1st and 2nd levels.
+        theRootEpiTreeItem.setExpanded(true); // Show only 1st and 2nd levels.
 
         theTreeShowItemButton= new Button("Show Node");
         theTreeShowItemButton.setOnAction(
@@ -145,6 +150,8 @@ public class Navigation extends EpiStage
         tickerThread.setDaemon( true ); // Make thread this daemon type. 
         tickerThread.start();
 
+        createTestTreeViewV();
+
         frameLabel= new Label(" FRAME#");
 
         buildDataNodeSceneV();
@@ -162,7 +169,7 @@ public class Navigation extends EpiStage
             }
           };
         frameAnimationTimer.start();
-
+        
         showCommandHelpV();
         }
 
@@ -254,7 +261,6 @@ public class Navigation extends EpiStage
        * the user wants to display DataNodes as a tree. 
        */ 
       {
-        treeContentBorderPane= new BorderPane();
         FlowPane bottomFlowPane= new FlowPane();
         bottomFlowPane.getChildren().add(new Label("Tree-Begin "));
         bottomFlowPane.getChildren().add(theTreeShowItemButton);
@@ -262,6 +268,7 @@ public class Navigation extends EpiStage
         bottomFlowPane.getChildren().add(new Label(" Tree-End"));
         bottomFlowPane.getChildren().add(frameLabel);
         
+        treeContentBorderPane= new BorderPane();
         treeContentBorderPane.setBottom(bottomFlowPane);
         treeContentBorderPane.setCenter( // This will be replaced later.
             new TextArea("UNDEFINED")); 
@@ -277,7 +284,7 @@ public class Navigation extends EpiStage
        * so that theDataNode will be displayed.
        */
       {
-        treeTreeStuff= TitledTreeNode.makeTreeStuff(
+        theTreeTreeStuff= TitledTreeNode.makeTreeStuff(
                 (DataNode)null,
                 selectedDataNode,
                 theDataRoot,
@@ -285,9 +292,15 @@ public class Navigation extends EpiStage
                 thePersistent,
                 theSelections
                 );
-        Node guiNode= treeTreeStuff.getGuiNode();
-        treeContentBorderPane.setCenter(guiNode);
+        Node guiNode= theTreeTreeStuff.getGuiNode();
+        VBox theVBox= new VBox();
+        theVBox.getChildren().add(guiNode);
+        {  
+          theVBox.getChildren().add(testTreeView); 
+          }
+        treeContentBorderPane.setCenter(theVBox); // Store for display.
         }
+         
 
 
     // DataNode scene methods.
@@ -383,4 +396,66 @@ public class Navigation extends EpiStage
           }
         }
 
+    
+    ////////////////////////////////////////////  test tree stuff.
+    
+    private int countI= 0;
+
+    private TreeItem<IndirectString> child2TreeItem;
+    private TreeView<IndirectString> testTreeView;
+
+
+    public void createTestTreeViewV() 
+      {
+        TreeItem<IndirectString> rootItem = 
+            new TreeItem<IndirectString> (
+                new IndirectString("Inbox"), null);
+        rootItem.setExpanded(true);
+        for (int i = 1; i < 6; i++) {
+            TreeItem<IndirectString> item= 
+                new TreeItem<IndirectString> (
+                    new IndirectString("Message" + i));
+            rootItem.getChildren().add(item);
+        }
+        child2TreeItem= rootItem.getChildren().get(2); // Get child # 2.
+        testTreeView= 
+            new TreeView<IndirectString> (rootItem);        
+        StackPane root = new StackPane();
+        root.getChildren().add(testTreeView);
+
+        Runnable updateRunnable= // Create Runnable that updates child.
+          (() -> {
+            countI=0;
+            while(true) {
+              EpiThread.interruptibleSleepB(1000); // Sleep for 1 second.
+              Platform.runLater(() -> {
+                IndirectString child2IndirectString= child2TreeItem.getValue();
+                child2IndirectString.setV("NEW-VALUE-"+countI++);
+                child2TreeItem.setValue(null);
+                child2TreeItem.setValue(child2IndirectString);
+                });
+              }
+            });
+        Thread updateThread= new Thread(updateRunnable);
+        updateThread.setDaemon( true ); // Make thread this daemon type. 
+        updateThread.start();
     }
+    
+    }
+
+    
+
+class IndirectString extends Object {
+  
+  String theString;
+  
+  public IndirectString(String theString) {
+    this.theString= theString;
+    }
+  
+  public void setV(String theString) {
+    this.theString= theString;
+    }
+  
+  public String toString() {return theString.toString(); }
+  }

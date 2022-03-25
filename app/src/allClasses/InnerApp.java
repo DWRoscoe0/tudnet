@@ -14,7 +14,7 @@ import static allClasses.AppLog.theAppLog;  // For appLogger;
  * * InnerApp : inner app sequencer.
  *   * InstanceCreationRunnable : Listener for signals about other
  *     app instances
- *     //////org Simplify this, and maybe eliminate this nested class.
+ *     ///org Simplify this, and maybe eliminate this nested class.
  * 
  * The following were eliminated:
  * * PlatformUI : contains [Swing] font control, merged into SwingUI.
@@ -271,11 +271,12 @@ public class InnerApp
       {
         toReturn: {
           try { // Display state changes that affect the UI.
-              DataNode.displayPossiblyChangedNodesFromV(
+              DataNode.outputPossiblyChangedNodesFromV(
                 theDataRoot.getParentOfRootTreePath( ), 
                 theDataRoot.getRootDataNode( ),
                 theDataRoot.getRootEpiTreeItem()
                 );
+              theDataRoot.getRootEpiTreeItem().setValue(DataNode.dummyDataNode);
             } catch (Exception theException) {
               theAppLog.exception("InnerApp.doSomePollingJobsV()",theException);
             }

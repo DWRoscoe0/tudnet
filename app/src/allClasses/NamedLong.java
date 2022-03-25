@@ -17,6 +17,13 @@ public class NamedLong extends NamedLeaf implements LongLike
     return Long.toString(getValueL());
   }
 
+  public String toString() // NamedLong breakpoint hook method.
+  {
+    String resultString= super.toString();
+    /// System.out.print("NamedLong:"+resultString+";"); 
+    return resultString;
+  }
+
   public synchronized long getValueL() {
     return theL;
   }

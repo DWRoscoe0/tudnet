@@ -11,18 +11,24 @@ public class EpiTreeItem
   extends TreeItem<DataNode>
 
   {
-    /* The EpiTreeItems class acts as a bridge between 
-     * the JavaFX user interface and DataNodes.
-     * each instance contains a reference to a value DataNode and
-     * a list of child EpiTreeItems.
+    /* This class, EpiTreeItem, extends the JavaFX class TreeItem
+     * when the value of the TreeItem being a DataNode.
+     * A TreeItem acts as a node-at-a-time replacement for
+     * tree class TreeModel used with the Swing user interface.  
      * 
-     * The reference to the value DataNode does not change,
-     * but the DataNode content might not be fully evaluated at first.
-     * And after being evaluated, the content of the DataNode might change.
+     * The EpiTreeItem class acts as a bridge between 
+     * the JavaFX user interface and the app's DataNodes.x
+     * Each EpiTreeItem instance contains a reference to 
+     * the associated value DataNode.
+     * The reference to the value DataNode normally does not change,
+     * but the DataNode content might change.
+     * Getting JavaFX to recognize this change and 
+     * update its display to show has proved to be difficult.  
+     * ///fix
      * 
      * The reference to the list of child EpiTreeItems does not change.
-     * The contents of the list is lazily evaluated, triggered when it is gotten.
-     * Before evaluation the list is empty.
+     * The contents of the list is lazily evaluated, 
+     * triggered when it is gotten.  Before evaluation the list is empty.
      * After evaluation it might or might not be empty.
      *
      * ///org I was going to try to make this class generic,
