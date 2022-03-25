@@ -12,12 +12,12 @@ public class EpiTreeItem
 
   {
     /* This class, EpiTreeItem, extends the JavaFX class TreeItem
-     * when the value of the TreeItem being a DataNode.
+     * with the value of the TreeItem being a DataNode.
      * A TreeItem acts as a node-at-a-time replacement for
      * tree class TreeModel used with the Swing user interface.  
      * 
      * The EpiTreeItem class acts as a bridge between 
-     * the JavaFX user interface and the app's DataNodes.x
+     * the JavaFX user interface and the app's DataNodes.
      * Each EpiTreeItem instance contains a reference to 
      * the associated value DataNode.
      * The reference to the value DataNode normally does not change,

@@ -56,13 +56,27 @@ public class NamedList
      * 
      * An instance of this class can be created by either
      * 
-     * * using constructor NamedList(String nameString,DataNode... childDataNodes).
-     *   This is the preferred way.
-     *   It is simpler for this class and its subclasses.
-     *   
-     * * using constructor NamedList() followed by calling
-     *   initializeV(String nameString,DataNode... childDataNodes).
+     * * using constructor 
+     *     NamedList(String nameString,DataNode... childDataNodes)
+     *   or constructor
+     *     NamedList(String nameString)
+     *   which uses an empty list for childDataNodes,
+     *   or by using the 2-step constructor-initializer sequence
+     *     NamedList()
+     *     initializeV(String nameString,DataNode... childDataNodes)
+     *
      */
+
+    
+    // Constructors.
+    
+    public NamedList(String nameString)
+      {
+        this(
+            nameString,
+            new DataNode[0] // Supply empty child array.
+            );
+        }
 
     public NamedList( String nameString, DataNode... childDataNodes )
       {
@@ -77,6 +91,9 @@ public class NamedList
        */
       { 
         }
+
+
+    // Initialization.
     
     public void initializeV(String nameString,DataNode... childDataNodes)
     /* This method initializes this NamedList instance.

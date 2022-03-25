@@ -25,6 +25,7 @@ import allClasses.DataRoot;
 import allClasses.Dialogger;
 import allClasses.EpiThread;
 import allClasses.NamedLeaf;
+import allClasses.NamedList;
 import allClasses.Persistent;
 import allClasses.Shutdowner;
 import allClasses.epinode.MapEpiNode;
@@ -408,9 +409,9 @@ public class Navigation extends EpiStage
 
     public void createTestTreeViewV() 
       {
-        TreeItem<DataNode> rootItem = 
-            new TreeItem<DataNode> (
-                NamedLeaf.makeNamedLeaf("TestRoot"));
+        EpiTreeItem rootItem = 
+            new EpiTreeItem(
+                new NamedList("TestRoot"));
         rootItem.setExpanded(true);
         for (int i = 1; i < 6; i++) {
             TreeItem<DataNode> item= 
@@ -431,7 +432,6 @@ public class Navigation extends EpiStage
               EpiThread.interruptibleSleepB(1000); // Sleep for 1 second.
               Platform.runLater(() -> {
                 DataNode child2DataNode= child2TreeItem.getValue();
-                //// child2DataNode.setV("NEW-VALUE-"+countI++);
                 ((NamedLeaf)child2DataNode).setNameV("NEW-VALUE-"+countI++);
                 child2TreeItem.setValue(null);
                 child2TreeItem.setValue(child2DataNode);
