@@ -25,13 +25,12 @@ public class TreeStuff
      * An instance of this class should be updated by 
      * the selection model of the Node's associated viewer.
      * 
-     * Location information is stored both locally
-     * and in the Selections class.
+     * Location information is duplicated in the Selections class object.
      *
      * Location is represented by the DataNode of interest at that location.
      *
      * Location can also be represented by the TreePath
-     * from the root DataNode to the DataNode of interest,
+     * from the root DataNode to the DataNode at the location of interest,
      * though this is not being done now.
      * ///org Representing location with a TreePath might be necessary 
      * when and if TUDNet supports DataNode DAGs instead of trees.
@@ -61,17 +60,17 @@ public class TreeStuff
     private Selections theSelections; // Other DataNode selections and history. 
 
 
-    // Variables initialized by setter injection.
+    // Variables initialized by setter injection after construction.
 
-    private Node theUINode= null; // JavaFX Node that displays subjectDataNode. 
+    private Node theUINode= null; // JavaFX Node that displays subjectDataNode.
 
 
     // Methods.
 
     public TreeItem<DataNode> toTreeItem(DataNode targetDataNode) 
       /* This method is equivalent to 
-       *   toTreeItem(targetDataNode, ancestorTreeItem)
-       * with ancestorTreeItem set to the root of the TreeItem tree.
+       *   toTreeItem(targetDataNode, subtreeTreeItem)
+       * with subtreeTreeItem set to the root of the TreeItem tree.
        */
       {
         return TreeStuff.toTreeItem(
@@ -81,27 +80,33 @@ public class TreeStuff
         }
 
     public static TreeItem<DataNode> toTreeItem(
-        DataNode targetDataNode, TreeItem<DataNode> ancestorTreeItem) 
-      /* This translates targetDataNode to the TreeItem that references it
-       * by searching for the ancestor DataNode referenced by ancestorTreeItem,
-       * then tracing TreeItems back to the target DataNode.
-       * This is done recursively to simplify path tracking.  
-       * Usually ancestorTreeItem is the root TreeItem.
-       * This method returns the target TreeItem or null if translation fails.
-       * The returned TreeItem and some of its immediate ancestors
-       * might be created if they do not exist before this method is called.
+        DataNode targetDataNode, TreeItem<DataNode> subtreeTreeItem) 
+      /* This recursive method translates targetDataNode to 
+       * the TreeItem that references it as its value.
+       * 
+       * This method works by searching ancestor DataNodes until it finds 
+       * the one that is the value DataNode of subtreeTreeItem,
+       * then tracing simultaneously the DataNode tree
+       * and the TreeItems tree back to targetDataNode.
+       * Usually subtreeTreeItem is the root TreeItem.
+       * 
+       * This method creates new TreeItems in the TreeItem tree
+       * if they did not exist before this method is called.
+       * 
+       * This method returns the TreeItem whose value is targetDataNode,
+       * or null if the translation fails for any reason.
        */
       {
           TreeItem<DataNode> resultTreeItem;
         main: {
           if // Root TreeItem references target DataNode.
-            (ancestorTreeItem.getValue() == targetDataNode)
-            { resultTreeItem= ancestorTreeItem; break main; } // Exit with root.
+            (subtreeTreeItem.getValue() == targetDataNode)
+            { resultTreeItem= subtreeTreeItem; break main; } // Exit with root.
           if (null == targetDataNode) // Target is null.
             { resultTreeItem= null; break main; } // Indicate failure with null.
           TreeItem<DataNode> parentTreeItem= // Recursively translate parent. 
               toTreeItem(
-                  targetDataNode.getTreeParentNamedList(), ancestorTreeItem);
+                  targetDataNode.getTreeParentNamedList(), subtreeTreeItem);
           if (null == parentTreeItem) // Parent translation failed.
             { resultTreeItem= null; break main; } // Indicate failure with null.
           for // Search for target DataNode in translated parent's children.
