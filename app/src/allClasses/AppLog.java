@@ -17,212 +17,295 @@ import allClasses.epinode.MapEpiNode;
 import static allClasses.AppLog.LogLevel.*;
 import static allClasses.SystemSettings.NL;
 
-public class AppLog extends EpiThread
+public class AppLog 
 
-  /* The purpose of this class to log information from application programs.
-   
-    A logger is one of the most important components of an application.
-    It is an almost indispensable tool for debugging.
-    Because of this, it tends to be one of 
-    the first components of an app to be constructed and initialized,
-    and one of the last to be finalized and destroyed. 
-    
-    This logger was designed to provide the following features:
-    * Logs strings provided by the application.
-    * It is thread-safe so any app thread may log.
-      Log entries by all threads are appended to the same file.
-      The log entries from different threads are interleaved.
-      Each entry contains the name of the thread that logged it.
-    ? It is process-safe so multiple app process instances may log.
-      Log entries by all processes are appended to the same file.
-      The log entries from different processes are interleaved.
-      Each entry contains a session number,
-      which should be unique for each logging process.
-      Process-safety has not been completely tested.
-    * Log entries are stamped with the relative times since
-      the previous entry of the same process session.
-
-    Thread-safety is achieved using synchronized Java code.
-    Process-safety is achieved using file locking.
-    ///tst : process safety needs to be [better] tested.
-    
-		If any errors occur during logging then they will be reported:
-		* As an Exception occurrence reported to the err stream
-		* As an error count later to the log, if possible.
-
-    Executing logging-intensive parts of the app can cause
-    the app to run slowly because of:
-    * Anti-malware Service Executable  
-    * Microsoft Windows Search Indexer
-    * File io.
-    The app can run much slower when the log file is long.
-    This might be because of the above-mentioned processes.
-    Apparently they scan the log.txt file after every file close.
-    When the file is short it causes little delay,
-    but if file is big it slows progress of the program.
-    This has been fixed some by the use of buffered mode,
-    which doesn't close the log file after every log entry
-    but buffered mode is still a bit of a kludge.
-
-    Note, to output several lines iteratively to this log's PrintWriter
-    in a way that will not be interrupted by output from other threads,
-    use the method getPrintWriter() to get the PrintWriter,
-    and put all of the code inside a block synchronized on this log object.
-    Like all synchronized code, this code should complete quickly.
-    See the method TUDNet.logThreadsV() for an example of doing this.
-
-    ///enh: Transition to a logger that can be changed and dependency-injected.
-     * Allow both static and injected-non-static, at least for a while.
-     * Divide logger into modifiable settings part, and the data engine part.
-     * Have methods which 
-       * return a new cloned  settings logger 
-       * do settings changes
-
-    ///fix  Sometimes when the app is terminated from 
-      the Windows Task Manager, the log file is truncated,
-      though judging from Console output, the app exits normally.
-
-    ///tst? MakeMultiprocessSafe:  Ready for testing, with TUDNetStarter. 
-	    ///fix: When the presently kludgy buffered mode is enabled,
-	      interleaving of log entries might not work correctly
-	      when there are two running instances on the same computer,
-	      as during updates, etc.  Might need to use separate files
-	      which are combined and interleaved later.
-	    ///fix? It might fail if multiple app instances try to log simultaneously.
-	      Make log file be share-able in case two app instances
-	      try to write to it at the same time.  See createOrAppendToFileV(..).
-
-    ///enh: Eliminate thread blocking caused by pausing after closing file.
-      This presently allows other processes to open the log file
-      and log if they are quick enough.
-      It might be necessary to use alternating temporary output files 
-      to receive logging data to prevent blocking.
-
-    ///enh: To make method calls more self-documenting and less ambigious, 
-      replace toConsoleB and similar simple-type flags with enums, 
-      like LogLevel.
-      
-		///enh: Make the logging routines more orthogonal, in the following
-		  dimensions:
-		  * label on output: info/debug/error/exception
-		  * output includes/does-not-include exception
-		  * copy log file output to console, or not, except time-stamp
-		  * re-throw exception and return vs. not returning
-		 
-		///enh: To limit unwanted logging, it might make sense to have 
-			logging methods associated with classes of interest whose purpose is 
-			to limit logging associated with those classes by instance.
-			Some support code would be required in this class,
-			but much of it would be in the target classes themselves.  For example:
-			* DataNode: done.
-			  logging is controlled by a DataNode LogLevel variable
-			  in ancestor DataNode Lit instances.  
-			  Methods are in DataNode and subclass NamedList.
-			* EpiThread: 
-			  * If logging is only for EpiThreads then 
-			    it can be controlled by an EpiThread variable.
-			  * If logging is to work for any Threads then 
-			    it the control variables must be in a table or map,
-			    probably in this class.
- 
-    */
+  extends EpiThread
+  
 
   {
-    public static AppLog theAppLog; // Variable through which classes can access logger.
 
-    public boolean clearLogFileB= false;  // true;
-      // If this is set, the log file is cleared on first output.
+    /* The purpose of this class to log information from application programs.
 
-    File appDirectoryFile;
+      A logger is one of the most important components of an application.
+      It is an almost indispensable tool for debugging.  
+      Because of this, it tends to be 
+      one of the first components of an app to be constructed and initialized,
+      and one of the last components to be finalized and destroyed. 
 
-    public AppLog(File appDirectoryFile)  // Constructor.
-      {
-    	  super( "AppLog"); // Set Thread name. 
-    	  this.appDirectoryFile= appDirectoryFile;
-      	}
+      This logger was designed to provide the following features:
+      * Logs strings provided by the application.
+      * It is thread-safe so any app thread may log.
+        Log entries by all threads are appended to the same file.
+      * The log entries from different threads are interleaved by time.
+      * Each entry contains the name of the thread that logged it.
+      ? It is process-safe so multiple app process instances may log.
+        Log entries by all processes are appended to the same file.
+      * The log entries from different processes are interleaved by time.
+      * Each entry contains a session number, which is unique for each process.
+        Process-safety has not been completely tested.
+      * Log entries are stamped with the relative times since
+        the previous entry of the same process session.
+  
+      Thread-safety is achieved using synchronized Java code.
+      Process-safety is achieved using file locking.
+      ///tst : process safety needs to be [better] tested.
       
-    // Variables.
-    	
-    	// Logging levels.
+  		If any errors occur during logging then they will be reported:
+  		* As an Exception occurrence reported to the err stream
+  		* As an error count later to the log, if possible.
+  
+      Executing logging-intensive parts of the app can cause
+      the app to run slowly because of:
+      * Microsoft Anti-malware Service Executable  
+      * Microsoft Windows Search Indexer
+      * File io.
+      The app can run much slower when the log file is long.
+      This might be because of the above-mentioned processes.
+      Apparently they scan the log.txt file after every file close.
+      When the file is short it causes little delay,
+      but if file is big it slows progress of the program.
+      This has been fixed some by the use of buffered mode,
+      which doesn't close the log file after every log entry
+      but buffered mode is still a bit of a kludge.
+  
+      Note, to output several lines iteratively to this log's PrintWriter
+      in a way that will not be interrupted by output from other threads,
+      use the method getPrintWriter() to get the PrintWriter,
+      and put all of the code inside a block synchronized on this log object.
+      Like all synchronized code, this code should complete quickly.
+      See the method TUDNet.logThreadsV() for an example of doing this.
+  
+      ///enh: Transition to a logger that can be 
+       changed and dependency-injected.
+       * Allow both static and injected-non-static, at least for a while.
+       * Divide logger into modifiable settings part, and the data engine part.
+       * Have methods which 
+         * return a new cloned settings logger 
+         * do settings changes
+  
+      ///fix  Sometimes when the app is terminated from 
+        the Windows Task Manager, the log file is truncated,
+        though judging from Console output, the app exits normally.
+  
+      ///tst? MakeMultiprocessSafe:  Ready for testing, with TUDNetStarter. 
+  	    ///fix: When the presently kludgy buffered mode is enabled,
+  	      interleaving of log entries might not work correctly
+  	      when there are two running instances on the same computer,
+  	      as during updates, etc.  Might need to use separate files
+  	      which are combined and interleaved later.
+  	    ///fix? It might fail if multiple app instances 
+  	      try to log simultaneously.
+  	      Make log file be share-able in case two app instances
+  	      try to write to it at the same time.  See createOrAppendToFileV(..).
+  
+      ///enh: Eliminate thread blocking caused by pausing after closing file.
+        This presently allows other processes to open the log file
+        and log if they are quick enough.
+        It might be necessary to use alternating temporary output files 
+        to receive logging data to prevent blocking.
+  
+      ///enh: To make method calls more self-documenting and less ambigious, 
+        replace toConsoleB and similar simple-type flags with enums, 
+        like LogLevel.
+        
+  		///enh: Make the logging routines more orthogonal, in the following
+  		  dimensions:
+  		  * label on output: info/debug/error/exception
+  		  * output includes/does-not-include exception
+  		  * copy log file output to console, or not, except time-stamp
+  		  * re-throw exception and return vs. not returning
+  		 
+  		///enh: To limit unwanted logging, it might make sense to have 
+  			logging methods associated with classes of interest whose purpose is 
+  			to limit logging associated with those classes by instance.
+  			Some support code would be required in this class,
+  			but much of it would be in the target classes themselves.  For example:
+  			* DataNode: done.
+  			  logging is controlled by a DataNode LogLevel variable
+  			  in ancestor DataNode Lit instances.  
+  			  Methods are in DataNode and subclass NamedList.
+  			* EpiThread: 
+  			  * If logging is only for EpiThreads then 
+  			    it can be controlled by an EpiThread variable.
+  			  * If logging is to work for any Threads then 
+  			    it the control variables must be in a table or map,
+  			    probably in this class.
+   
+      */
 
-      public enum LogLevel {
-      	UNDEFINED,
-	    	OFF,
-	    	FATAL,
-	    	ERROR, ///ano
-	    	WARNING, ///ano
-	    	INFO,
-	    	DEBUG,
-	    	TRACE
-	  		}	
 
-      public static final LogLevel defaultMaxLogLevel= DEBUG; // For testing.
-      // public static final LogLevel defaultMaxLogLevel= INFO;  // For production.
-      
-    	private static LogLevel maxLogLevel= defaultMaxLogLevel;
-    	  // The app may create and use their own maximum variables,
-    	  // or set this variable and call methods which use it.
-    	  // Calls to those methods must use this level or less for log output.
-    	
-      private boolean initializationStartedB= false;
-    	private LockAndSignal theLockAndSignal= new LockAndSignal();
-    	
-    	private File logFile;  // Name of log file.
-      private int theSessionI= -1;  // App session counter.
-      private long lastMillisL= 0; // Last time measured.
-      private PrintWriter thePrintWriter = null; // non-null means file open.
-        // Open means buffered mode enabled.
-        // Closed means buffered mode disabled.
-      private FileLock theLogFileLock= null; // For locking while file is open.
-        // This facilitates multiple processes logging to the same file.
-      private long openedAtMsL; // Time file was last opened.
-      private long appendedAtMsL; // Time file received its last output.
+    // Variable through WHICH other classes can access this logger.
+    public static AppLog theAppLog;
 
-      private boolean bufferedModeB= true; // Initially buffering.
-      private int openSleepDelayMsI= 0;
-      private String processIDString= "";
+
+    // Dependency injection variables.
+
+    private File appDirectoryFile; // Directory which contains the log file.
+      // This is normally the app's directory.
+
+    private String processIDString= ""; // Helpful for IDing app processes.
+      // This isn't used much now.
+
+
+    // Other variables.
+
+    private boolean initializationStartedB= false; // Prevents re-entry.
+
+    // File variables.
+    private File logFile;  // Name of log file.
+    private PrintWriter thePrintWriter = null; // non-null means file open.
+      // Open means buffered mode enabled.
+      // Closed means buffered mode disabled.
+    private boolean clearLogFileB= false;  // true;
+      // If this is set, the log file is cleared when a new session is started.
+
+
+    // Logging level control variables.
+
+    // Logging levels, from least logging to most logging.
+    public enum LogLevel {
+    	UNDEFINED,
+    	OFF,
+    	FATAL,
+    	ERROR, ///ano
+    	WARNING, ///ano
+    	INFO,
+    	DEBUG,
+    	TRACE
+  		}	
+
+    public static final LogLevel defaultMaxLogLevel= 
+        DEBUG; // For testing.
+        // INFO;  // For production.
+    
+  	private static LogLevel maxLogLevel= defaultMaxLogLevel; /*
+  	  The app may create and use their own maximum variables,
+  	  or set this variable and call methods which use it.
+  	  Calls to those methods must use this level or less for log output.
+  	  */
+
+
+  	// Auto-close thread variables.
+    private LockAndSignal theLockAndSignal= // For use by auto-closer thread. 
+  	    new LockAndSignal();
+    private long openedAtMsL; // Time file was last opened.
+    private long appendedAtMsL; // Time file received its last output.
+    private boolean bufferedModeB= true; // Initially buffering.
+    private int openSleepDelayMsI= 0;
+
+
+    // Session variables.
+  	private int theSessionI= -1;  // App session counter.
+    private long lastMillisL= 0; // Last time measured.
+
+
+    // Multiple process variables.
+    private FileLock theLogFileLock= null; // For locking while file is open.
+      // This facilitates multiple processes logging to the same file.
+
 
     /* Debug Flags.  These are added or removed as needed during debugging
-      when calls to logging methods should be called in 
-      only very limited conditions.  //? 
-     	*/
-      public static boolean testingForPingB= false;
-      private boolean consoleCopyModeB= false; // When true, logging goes to 
-        // console as well as log file.
-        ///enh change to Enum for generality and better self-documentation.
-      private boolean closeLoggingB= false;
+    when calls to logging methods should be called in 
+    only very limited conditions.  //? 
+   	*/
+    public static boolean testingForPingB= false;
+    private boolean consoleCopyModeB= false; // When true, logging goes to 
+      // console as well as log file.
+      ///enh change to Enum for generality and better self-documentation.
+    private boolean closeLoggingB= false;
 
-    public void setIDProcessV( String processIDString )
-    { this.processIDString= processIDString; }
 
+    // Construction, dependency injection, and initialization.
+
+    public AppLog(File appDirectoryFile)  // Constructor injector.
+      {
+        super( "AppLog"); // Set auto-closer Thread name. 
+        this.appDirectoryFile= appDirectoryFile;
+        }
+
+    public void setIDProcessV( String processIDString ) // Setter injector.
+      // This is used much now.
+      { 
+        this.processIDString= processIDString; 
+        }
+
+    private synchronized void initializeIfNeededV()
+      /* This method does initialization, 
+        but only if it hasn't been done yet.
+        */
+      { 
+        if (! initializationStartedB) 
+          { 
+            initializationStartedB= true; // Prevent re-initialization. 
+            initializeV(); // Do actual initialization. 
+            }
+        }
+    
+    private void initializeV()
+      /* This method does initialization, unconditionally.
+        It should be called only once.  It includes the following:
+        * Determining the session number.
+        * Starting this the auto-closer thread.
+        */
+      {
+        logFile=  // Identify log file name.
+            new File(appDirectoryFile, "log.txt" );
+
+        theSessionI= getSessionI();  // Get app session number.
+        if (theSessionI == 0)  // If this is session 0...
+          { // Reset various stuff.
+            closeFileAndSleepIfOpenV(); // Be certain log file is closed.
+            logFile.delete();  //...then empty log file by deleting it.
+            logV(
+              "=== THIS LOGGER WAS RECENTLY RESET FOR DEBUGGING PURPOSES ===");
+            lastMillisL= 0; // Do this so absolute time is displayed first.
+            }
+
+        { // Initialize auto-closer thread.
+          setDaemon( true ); // Make thread the daemon type. 
+          start();  // Start the associated thread. 
+          }
+
+        // openFileWithRetryDelayIfClosedV(); // Open file for use.
+        logHeaderLinesV(); // Append the session header lines.
+
+        }
+
+
+    // Auto-closer thread
+    
     public void run() // Auto-closer thread code.
       /* This method closes the log file at times appropriate for
-        achieving the following goals:
-        * keeping the file mostly open when the app is producing log entries,
-        * closing it if not being used,
-        * not leaving it open too long, so other apps can access log file.
-        It does this with the following approximate delays:
-        * 1 ms between open file retries.  See openWithDelayFileWriter().
-        * 10 ms minimum time file is closed after 
-          it is closed for any reason.  See closeFileAndDelayV().
-        * 200 ms maximum time file is open with no output.
-        * 300 ms maximum time file is open with or without output.
-
+       * achieving the following goals:
+       * 
+       * * keeping the file mostly open while the app is producing log entries,
+       * * closing the file if the app is NOT producing log entries,
+       * * not leaving the log file open too long, so other apps can access it.
+       * 
+       * It does the above with the following approximate delays:
+       * 
+       * * 300 ms maximum time file is open with or without output.
+       * * 200 ms maximum time file is open while there is no output.
+       * * 10 ms minimum time file is closed after
+       *   it is closed for any reason.  See closeFileAndDelayV().
+       * * 1 ms between file open retries.  See openWithDelayFileWriter().
+       *
        	*/
     	{
-        // closedAtNsL= 
+        // Do pre-loop initialization.
         openedAtMsL= appendedAtMsL= System.currentTimeMillis();
         LockAndSignal.Input theInput= Input.NONE;
         long delayMsL= 0; // Time to next time-out.
+
     	  loop: while (true) {
       	  decodeInput: synchronized (this) { // Must be fast.
-            if ( theInput == Input.INTERRUPTION ) // Signal to terminate.
-              break loop; // Exit thread loop.
-            delayMsL= Long.MAX_VALUE; // Set maximum/infinite wait time.
-            if (! bufferedModeB) { // Not buffering.
-              break decodeInput; } // Go do maximum wait.
-            if  (thePrintWriter == null) { // Log file closed
-              break decodeInput; } // Go do maximum wait.
+            if ( theInput == Input.INTERRUPTION ) // If termination requested
+              break loop; // exit thread loop.
+            delayMsL= Long.MAX_VALUE; // Assume maximum/infinite wait time.
+            if (! bufferedModeB) { // If not buffering.
+              break decodeInput; } // go do maximum wait.
+            if  (thePrintWriter == null) { // If the log file is closed
+              break decodeInput; } // go do maximum wait.
             long nowMsL= System.currentTimeMillis(); // Measure present time.
             long timeFromLastOutputTimeOutMsL= 
                 Config.LOG_PAUSE_TIMEOUT - (nowMsL - appendedAtMsL);
@@ -244,9 +327,12 @@ public class AppLog extends EpiThread
               delayMsL);
           } // loop:
     		} // run()
-    
+
+
+    // Other methods.
+
     public boolean getAndEnableConsoleModeB()
-	    { 
+	    {    
         System.out.println("AppLog.getAndEnableConsoleModeB(..) begins.");
 	    	boolean tmpB= consoleCopyModeB;
 		    consoleCopyModeB= true;
@@ -262,6 +348,8 @@ public class AppLog extends EpiThread
     public synchronized void enableCloseLoggingV( boolean enabledB ) 
       /* This method controls whether 
         the closing of the log file will be logged.
+        If enabledB is true, log file closes will be logged.
+        If enabledB is false, they will not.
         */
       {
         info("enableCloseLoggingV(" + enabledB + ")");
@@ -269,16 +357,18 @@ public class AppLog extends EpiThread
         }
     
     public synchronized void setBufferedModeV( boolean desiredBufferedModeB ) 
-    	/* This method opens the file for buffered mode,
-    	  and closes it for non-buffered mode.
-        File-open means buffering will happen on any output.
-        File-closed means any buffer has been flushed.
-        File closing is followed by a brief sleep 
-        to allow output by other processes.
-        There isn't much need to change this, because of
-        the creation of the run() thread which auto-closes.
-        ///opt Eliminate outside callers of this?
-    	  */
+      /* If buffered mode is true then it means that the log file is open and
+       * it will not be immediately closed after a log entry is written.
+       * 
+       * If buffered mode is false then it means that the log file is closed and
+       * if a log entry is written, the log file will first be opened,
+       * next the entry will be written, and next 
+       * the file will be immediately closed.
+       * 
+       * File closing is followed by a brief sleep
+       * to allow output by other processes.
+       * ///opt Eliminate outside callers of this?
+    	 */
 	    {
         initializeIfNeededV();
         String bufferedModeLogString= "AppLog.setBufferedModeV(..), ";
@@ -298,47 +388,8 @@ public class AppLog extends EpiThread
 		    	  closeFileAndSleepIfOpenV();
 		      	}
 	    	bufferedModeB= desiredBufferedModeB;
-	    	theLockAndSignal.notifyingV(); 
+	    	theLockAndSignal.notifyingV(); // Notify auto-closer thread. 
 	    	}
-    
-    private synchronized void initializeIfNeededV()
-      /* This method does initialization, 
-        but only if it hasn't been done yet.
-        */
-      { 
-        if (! initializationStartedB) 
-          { 
-            initializationStartedB= true; // Prevent re-initialization. 
-            initializeV(); // Do actual initialization. 
-            }
-        }
-    
-    private void initializeV()
-      /* This method does initialization, unconditionally.
-        It should be called only once.  It includes the following:
-        * Determining the session number.
-        * Starting this classes thread.
-        */
-      {
-        logFile=  // Identify log file name.
-            new File(appDirectoryFile, "log.txt" );
-        theSessionI= getSessionI();  // Get app session number.
-        if (theSessionI == 0)  // If this is session 0...
-          { // Reset various stuff.
-            closeFileAndSleepIfOpenV(); // Be certain log file is closed.
-            logFile.delete();  //...then empty log file by deleting it.
-            logV(
-              "=== THIS LOGGER WAS RECENTLY RESET FOR DEBUGGING PURPOSES ===");
-            lastMillisL= 0; // Do this so absolute time is displayed first.
-            }
-
-        setDaemon( true ); // Make thread the daemon type. 
-        start();  // Start the associated thread. 
-
-        // openFileWithRetryDelayIfClosedV(); // Open file for use.
-        logHeaderLinesV(); // Append the session header lines.
-
-        }
 
     private void logHeaderLinesV()
       /* This initialization helper method is used to output header lines 
@@ -387,12 +438,13 @@ public class AppLog extends EpiThread
       // This method is used to override the default log level at run time.
     	{ maxLogLevel= limitLogLevel; }
 
-    
+
+
     // Delegating logging methods.
 
 
     // Special conditional log methods.
-    
+
     public boolean testAndLogDisabledB(boolean disabledB, String logString)
       /* This method is used to log a special message about disabled code.
         If disabledB is true then it logs a DEBUG message that
@@ -997,7 +1049,7 @@ public class AppLog extends EpiThread
       { 
         thePrintWriter.print( inString );  // Append inString to file.
         appendedAtMsL= System.currentTimeMillis(); // Record time of append.
-        theLockAndSignal.notifyingV(); 
+        theLockAndSignal.notifyingV(); // Inform auto-closer thread. 
         }
 
     private synchronized void openFileWithRetryDelayIfClosedV()
