@@ -19,8 +19,7 @@ import static allClasses.SystemSettings.NL;
 
 public class AppLog 
 
-  extends EpiThread
-  
+  extends Thread
 
   {
 
@@ -28,21 +27,21 @@ public class AppLog
 
       A logger is one of the most important components of an application.
       It is an almost indispensable tool for debugging.  
-      Because of this, it tends to be 
-      one of the first components of an app to be constructed and initialized,
-      and one of the last components to be finalized and destroyed. 
+      Because of this, it tends to be one of the first components of an app 
+      to be constructed and initialized, and 
+      one of the last components to be finalized and destroyed. 
 
       This logger was designed to provide the following features:
       * Logs strings provided by the application.
       * It is thread-safe so any app thread may log.
-        Log entries by all threads are appended to the same file.
+      * Log entries by all threads are appended to the same file.
       * The log entries from different threads are interleaved by time.
       * Each entry contains the name of the thread that logged it.
-      ? It is process-safe so multiple app process instances may log.
+      * It is process-safe so multiple app process instances may log.
         Log entries by all processes are appended to the same file.
+        Process-safety has not been completely tested.
       * The log entries from different processes are interleaved by time.
       * Each entry contains a session number, which is unique for each process.
-        Process-safety has not been completely tested.
       * Log entries are stamped with the relative times since
         the previous entry of the same process session.
   
@@ -74,7 +73,51 @@ public class AppLog
       and put all of the code inside a block synchronized on this log object.
       Like all synchronized code, this code should complete quickly.
       See the method TUDNet.logThreadsV() for an example of doing this.
-  
+
+      ///ano: On 2022-03-25 an anomaly occurred in which
+        the TUDnet app failed during startup with a NullPointerException.
+        It happened in the JavaFXApp class while trying to execute the code:
+          static { // Added to log when this class is loaded.
+              theAppLog.info("JavaFXApp loaded.");
+              }
+        indicating that the JavaFXApp class was being loaded
+        before AppLog.theAppLog had been initialized.
+  !     It appeared that classes were being loaded in the wrong order.
+        Statement ordering in TUDNet.main(.) should have prevented this.
+        
+        Troubleshooting was interrupted when a dialog appeared displaying
+          Eclipse Update
+            Requirements Update
+              The installation does not satisfy the requirements list below.
+          ...
+        This appeared to be a large, mandatory update to the Eclipse IDE.
+        The update could not be skipped and was allowed to proceed.
+        Eventually it finished, but the anomaly remained.
+
+        The NullPointerException was reproduced reliably many times, 
+        and seemed permanent.
+
+        AppLog initialization was then single-stepped to try find the cause 
+        of the problem, but was completed without triggering the problem.
+        When app execution was resumed at normal speed, it worked perfectly.  
+        Further, the app was restarted and the NullPointerException 
+        no longer occurred.  The problem was gone.
+
+        Some changes were made to remove potential uses of AppLog
+        before its initialization was complete,
+        uses found during the above-mentioned single-stepping,
+        but these seemed unrelated to the use by JavaFXApp
+        which had caused the NullPointerException.
+        
+      ///enh Make more modular around the following logging destinations:
+       * log file, the normal destination of log entries
+       * console, used if the user requests it,
+         or if the log file has permanently failed 
+       * anomaly dialogs, used for events needing immediate user attention,
+         and which presently require the JavaFX runtime for output
+       * heap memory, used for temporary storage when 
+         the log file or anomaly dialogs are temporarily unavailable
+
       ///enh: Transition to a logger that can be 
        changed and dependency-injected.
        * Allow both static and injected-non-static, at least for a while.
@@ -97,13 +140,13 @@ public class AppLog
   	      try to log simultaneously.
   	      Make log file be share-able in case two app instances
   	      try to write to it at the same time.  See createOrAppendToFileV(..).
-  
+
       ///enh: Eliminate thread blocking caused by pausing after closing file.
         This presently allows other processes to open the log file
         and log if they are quick enough.
-        It might be necessary to use alternating temporary output files 
-        to receive logging data to prevent blocking.
-  
+        It might be necessary to use alternating temporary output files,
+        double buffering, to prevent blocking.
+
       ///enh: To make method calls more self-documenting and less ambigious, 
         replace toConsoleB and similar simple-type flags with enums, 
         like LogLevel.
@@ -134,7 +177,7 @@ public class AppLog
       */
 
 
-    // Variable through WHICH other classes can access this logger.
+    // Variable through which other classes can access this logger.
     public static AppLog theAppLog;
 
 
@@ -145,6 +188,9 @@ public class AppLog
 
     private String processIDString= ""; // Helpful for IDing app processes.
       // This isn't used much now.
+
+    private MapEpiNode persistentLogMapEpiNode= null;
+      // For Persistent log conditions.
 
 
     // Other variables.
@@ -227,6 +273,16 @@ public class AppLog
       // This is used much now.
       { 
         this.processIDString= processIDString; 
+        }
+
+    public synchronized void setPersistentV( // Setter injector.
+        Persistent thePersistent)
+      /* Used to define the MapEpiNode which stores log conditions. 
+       * This is gotten from thePersistent.
+       */
+      {
+        this.persistentLogMapEpiNode= 
+          thePersistent.getRootMapEpiNode().getMapEpiNode("Logging");
         }
 
     private synchronized void initializeIfNeededV()
@@ -330,6 +386,21 @@ public class AppLog
 
 
     // Other methods.
+    
+    public synchronized boolean isEnabledForLoggingB(String conditionString)
+      /* Returns true if the logger condition in Persistent storage
+       * specified by conditionString is true.
+       * Returns false otherwise.
+       * All conditions are considered false if 
+       * thePersistent has not yet been injected.
+       */
+      { 
+        boolean resultB= false; // Assume default result of logging disabled.
+        if (null != persistentLogMapEpiNode) // If conditions map is defined
+          resultB= // override result with value from map. 
+            persistentLogMapEpiNode.isTrueB(conditionString);
+        return resultB; // Return condition. 
+        }
 
     public boolean getAndEnableConsoleModeB()
 	    {    
@@ -785,35 +856,6 @@ public class AppLog
         logV( null, null, wholeString, null, debugB );  // Send one copy to log. 
         }
 
-
-    // Log condition in Persistent storage.
-
-    private MapEpiNode logMapEpiNode= null;
-    
-    public synchronized void setPersistentV(Persistent thePersistent)
-      /* Used to define the MapEpiNode which stores log conditions. 
-       * This is gotten from thePersistent.
-       */
-      {
-        this.logMapEpiNode= 
-          thePersistent.getRootMapEpiNode().getMapEpiNode("Logging");
-        }
-    
-    public synchronized boolean isEnabledForLoggingB(String conditionString)
-      /* Returns true if the log condition specified by conditionString 
-       * is true.
-       * Returns false otherwise.
-       * All conditions are considered false if 
-       * thePersistent has not yet been injected.
-       */
-      { 
-        boolean resultB= false; // Assume default result of logging disabled.
-        if (null != logMapEpiNode) // If logging conditions map defined
-          resultB= // override result with value from map. 
-            logMapEpiNode.isTrueB(conditionString);
-        return resultB; // Return condition. 
-        }
-
     
     /* LogB(..) and logV(..) family methods.
 
@@ -1121,7 +1163,7 @@ public class AppLog
                 if (theLogFileLock!=null) theLogFileLock.release();
                 Closeables.closeWithoutErrorLoggingB(theFileChannel);
                 Closeables.closeWithoutErrorLoggingB(theFileOutputStream);
-                uninterruptibleSleepB( 1 ); // Pause 1 ms.
+                interruptibleSleepB( 1 ); // Pause 1 ms.
                 openSleepDelayMsI++; //* Count the pause and the time.
                 }
             }
@@ -1129,6 +1171,35 @@ public class AppLog
         if ( interruptedB ) // If an interruption happened
           Thread.currentThread().interrupt(); // reestablish interrupt status.
         return resultWriter;
+        }
+
+    public static boolean interruptibleSleepB( long msL )
+      /* This method works like Thread.sleep( msI ),
+        causing the current thread to sleep for msI milliseconds,
+        except that it does not throw an InterruptedException 
+        if it was interrupted while sleeping.
+        Also if msL is less than 0 it returns immediately
+        instead of producing an illegal argument exception.
+        Instead, if that happens then the method returns immediately with
+        the thread's interrupt status set and the sleep delay incomplete.
+        The interrupt status can be sensed and processed by the caller.
+        Also it returns true if the sleep was interrupted, false otherwise,
+        but because the interrupt status can be sensed,
+        this is probably not very useful.
+        */
+      {
+        boolean interruptedB= false;
+        
+        try {
+          if ( msL >= 0 ) // Skip if less than 0.
+            Thread.sleep( msL ); // Try to sleep for desired time.
+          } 
+        catch( InterruptedException ex ) { // Handling interruption.
+          Thread.currentThread().interrupt(); // Reestablish interrupted.
+          interruptedB= true; // Changing return value to indicate it.
+          }
+        
+        return interruptedB;
         }
 
     public synchronized void closeFileAndSleepIfOpenV()
@@ -1170,7 +1241,7 @@ public class AppLog
         It is called after some log file closings. 
          */
       {
-        uninterruptibleSleepB(Config.LOG_MIN_CLOSE_TIME); // Block and pause.
+        interruptibleSleepB(Config.LOG_MIN_CLOSE_TIME); // Block and pause.
         }
 
     private synchronized void closeFileV()
@@ -1194,4 +1265,4 @@ public class AppLog
         }
       
 
-   }  
+    }  
