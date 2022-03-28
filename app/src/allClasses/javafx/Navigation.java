@@ -296,10 +296,8 @@ public class Navigation extends EpiStage
                 );
         Node guiNode= theTreeTreeStuff.getGuiNode();
         VBox theVBox= new VBox();
-        theVBox.getChildren().add(guiNode);
-        {  
-          theVBox.getChildren().add(testTreeView); 
-          }
+        theVBox.getChildren().add(testTreeView); // Add test TreeView. 
+        theVBox.getChildren().add(guiNode); // Add regular app TreeView.
         treeContentBorderPane.setCenter(theVBox); // Store for display.
         }
          
@@ -431,11 +429,14 @@ public class Navigation extends EpiStage
             while(true) {
               EpiThread.interruptibleSleepB(1000); // Sleep for 1 second.
               Platform.runLater(() -> {
+
+                theAppLog.debug("Navigation.createTestTreeViewV() updating TreeView.");
+                System.out.print("[tti]");
                 DataNode child2DataNode= child2TreeItem.getValue();
                 ((NamedLeaf)child2DataNode).setNameV("NEW-VALUE-"+countI++);
                 child2TreeItem.setValue(null);
                 child2TreeItem.setValue(child2DataNode);
-                System.out.print("[tti]");
+
                 });
               }
             });

@@ -502,16 +502,19 @@ public abstract class DataNode
             parentTreePath, subtreeDataNode );
         });
       Platform.runLater(() -> { // Display with JavaFX Application Thread.
+
+        theAppLog.debug("DataNode.outputChangedSubtreeV() updating TreeView.");
+        System.out.print("[dnti]");
+        DataNode savedDataNode= theEpiTreeItem.getValue();
+        theEpiTreeItem.setValue(null); // Force reference change.
+        theEpiTreeItem.setValue(savedDataNode); // Restore original reference.
+
         /// TreeModificationEvent<DataNode> theTreeModificationEvent= 
         ///     new TreeModificationEvent<>(
         ///         TreeItem.valueChangedEvent(), theEpiTreeItem);
         /// theEpiTreeItem.setValue(dummyDataNode); // Force reference change.
-        DataNode savedDataNode= theEpiTreeItem.getValue();
-        theEpiTreeItem.setValue(null); // Force reference change.
-        theEpiTreeItem.setValue(savedDataNode); // Restore original reference.
         /// Event.fireEvent(theEpiTreeItem, theTreeModificationEvent);
         /// System.out.print(theEpiTreeItem+",");
-        System.out.print("[dnti]");
         
         }); 
       }

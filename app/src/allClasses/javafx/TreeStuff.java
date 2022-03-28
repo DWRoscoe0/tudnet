@@ -4,6 +4,7 @@ import static allClasses.AppLog.theAppLog;
 
 import allClasses.DataNode;
 import allClasses.DataRoot;
+import allClasses.Nulls;
 import allClasses.Persistent;
 import javafx.scene.Node;
 import javafx.scene.control.TreeItem;
@@ -119,6 +120,7 @@ public class TreeStuff
           // If here then no child referenced the target DataNode.
           resultTreeItem= null; // Indicate failure with null.
         } // main:
+          Nulls.testAndLogIfNullB(resultTreeItem);
           return resultTreeItem;
         }
 
