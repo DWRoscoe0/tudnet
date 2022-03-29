@@ -60,9 +60,9 @@ abstract class AttributeMetaTool
       { 
         Object valueObject= getRaw(); // Getting raw attribute value.
         if (valueObject == PlaceHolderValueString)
-        	valueObject= "";  // Replace with default value.
+          valueObject= "";  // Replace with default value.
         return valueObject; // Returning the attribute value.
-      	}
+        }
 
       protected Object getRaw( )
       /* This is like a normal get(..), from the keyString entry
@@ -76,7 +76,7 @@ abstract class AttributeMetaTool
         Object valueObject=  // Getting present attribute value.
            theMetaNode.get( keyString );
         return valueObject; // Returning the attribute value.
-      	}
+        }
 
       protected Object put( Object inValueObject )
         /* This is like a normal put(..) to the keyString entry

@@ -30,8 +30,8 @@ class BooleanAttributeMetaTool
           )
         {
           super( // Superclass does all. 
-          		theMetaRoot, inTreePath, inKeyString 
-          		);
+              theMetaRoot, inTreePath, inKeyString 
+              );
           }
 
     // Static methods.

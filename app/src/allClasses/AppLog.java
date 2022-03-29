@@ -49,9 +49,9 @@ public class AppLog
       Process-safety is achieved using file locking.
       ///tst : process safety needs to be [better] tested.
       
-  		If any errors occur during logging then they will be reported:
-  		* As an Exception occurrence reported to the err stream
-  		* As an error count later to the log, if possible.
+      If any errors occur during logging then they will be reported:
+      * As an Exception occurrence reported to the err stream
+      * As an error count later to the log, if possible.
   
       Executing logging-intensive parts of the app can cause
       the app to run slowly because of:
@@ -131,15 +131,15 @@ public class AppLog
         though judging from Console output, the app exits normally.
   
       ///tst? MakeMultiprocessSafe:  Ready for testing, with TUDNetStarter. 
-  	    ///fix: When the presently kludgy buffered mode is enabled,
-  	      interleaving of log entries might not work correctly
-  	      when there are two running instances on the same computer,
-  	      as during updates, etc.  Might need to use separate files
-  	      which are combined and interleaved later.
-  	    ///fix? It might fail if multiple app instances 
-  	      try to log simultaneously.
-  	      Make log file be share-able in case two app instances
-  	      try to write to it at the same time.  See createOrAppendToFileV(..).
+        ///fix: When the presently kludgy buffered mode is enabled,
+          interleaving of log entries might not work correctly
+          when there are two running instances on the same computer,
+          as during updates, etc.  Might need to use separate files
+          which are combined and interleaved later.
+        ///fix? It might fail if multiple app instances 
+          try to log simultaneously.
+          Make log file be share-able in case two app instances
+          try to write to it at the same time.  See createOrAppendToFileV(..).
 
       ///enh: Eliminate thread blocking caused by pausing after closing file.
         This presently allows other processes to open the log file
@@ -151,28 +151,28 @@ public class AppLog
         replace toConsoleB and similar simple-type flags with enums, 
         like LogLevel.
         
-  		///enh: Make the logging routines more orthogonal, in the following
-  		  dimensions:
-  		  * label on output: info/debug/error/exception
-  		  * output includes/does-not-include exception
-  		  * copy log file output to console, or not, except time-stamp
-  		  * re-throw exception and return vs. not returning
-  		 
-  		///enh: To limit unwanted logging, it might make sense to have 
-  			logging methods associated with classes of interest whose purpose is 
-  			to limit logging associated with those classes by instance.
-  			Some support code would be required in this class,
-  			but much of it would be in the target classes themselves.  For example:
-  			* DataNode: done.
-  			  logging is controlled by a DataNode LogLevel variable
-  			  in ancestor DataNode Lit instances.  
-  			  Methods are in DataNode and subclass NamedList.
-  			* EpiThread: 
-  			  * If logging is only for EpiThreads then 
-  			    it can be controlled by an EpiThread variable.
-  			  * If logging is to work for any Threads then 
-  			    it the control variables must be in a table or map,
-  			    probably in this class.
+      ///enh: Make the logging routines more orthogonal, in the following
+        dimensions:
+        * label on output: info/debug/error/exception
+        * output includes/does-not-include exception
+        * copy log file output to console, or not, except time-stamp
+        * re-throw exception and return vs. not returning
+       
+      ///enh: To limit unwanted logging, it might make sense to have 
+        logging methods associated with classes of interest whose purpose is 
+        to limit logging associated with those classes by instance.
+        Some support code would be required in this class,
+        but much of it would be in the target classes themselves.  For example:
+        * DataNode: done.
+          logging is controlled by a DataNode LogLevel variable
+          in ancestor DataNode Lit instances.  
+          Methods are in DataNode and subclass NamedList.
+        * EpiThread: 
+          * If logging is only for EpiThreads then 
+            it can be controlled by an EpiThread variable.
+          * If logging is to work for any Threads then 
+            it the control variables must be in a table or map,
+            probably in this class.
    
       */
 
@@ -210,30 +210,30 @@ public class AppLog
 
     // Logging levels, from least logging to most logging.
     public enum LogLevel {
-    	UNDEFINED,
-    	OFF,
-    	FATAL,
-    	ERROR, ///ano
-    	WARNING, ///ano
-    	INFO,
-    	DEBUG,
-    	TRACE
-  		}	
+      UNDEFINED,
+      OFF,
+      FATAL,
+      ERROR, ///ano
+      WARNING, ///ano
+      INFO,
+      DEBUG,
+      TRACE
+      }  
 
     public static final LogLevel defaultMaxLogLevel= 
         DEBUG; // For testing.
         // INFO;  // For production.
     
-  	private static LogLevel maxLogLevel= defaultMaxLogLevel; /*
-  	  The app may create and use their own maximum variables,
-  	  or set this variable and call methods which use it.
-  	  Calls to those methods must use this level or less for log output.
-  	  */
+    private static LogLevel maxLogLevel= defaultMaxLogLevel; /*
+      The app may create and use their own maximum variables,
+      or set this variable and call methods which use it.
+      Calls to those methods must use this level or less for log output.
+      */
 
 
-  	// Auto-close thread variables.
+    // Auto-close thread variables.
     private LockAndSignal theLockAndSignal= // For use by auto-closer thread. 
-  	    new LockAndSignal();
+        new LockAndSignal();
     private long openedAtMsL; // Time file was last opened.
     private long appendedAtMsL; // Time file received its last output.
     private boolean bufferedModeB= true; // Initially buffering.
@@ -241,7 +241,7 @@ public class AppLog
 
 
     // Session variables.
-  	private int theSessionI= -1;  // App session counter.
+    private int theSessionI= -1;  // App session counter.
     private long lastMillisL= 0; // Last time measured.
 
 
@@ -253,7 +253,7 @@ public class AppLog
     /* Debug Flags.  These are added or removed as needed during debugging
     when calls to logging methods should be called in 
     only very limited conditions.  //? 
-   	*/
+     */
     public static boolean testingForPingB= false;
     private boolean consoleCopyModeB= false; // When true, logging goes to 
       // console as well as log file.
@@ -346,15 +346,15 @@ public class AppLog
        *   it is closed for any reason.  See closeFileAndDelayV().
        * * 1 ms between file open retries.  See openWithDelayFileWriter().
        *
-       	*/
-    	{
+         */
+      {
         // Do pre-loop initialization.
         openedAtMsL= appendedAtMsL= System.currentTimeMillis();
         LockAndSignal.Input theInput= Input.NONE;
         long delayMsL= 0; // Time to next time-out.
 
-    	  loop: while (true) {
-      	  decodeInput: synchronized (this) { // Must be fast.
+        loop: while (true) {
+          decodeInput: synchronized (this) { // Must be fast.
             if ( theInput == Input.INTERRUPTION ) // If termination requested
               break loop; // exit thread loop.
             delayMsL= Long.MAX_VALUE; // Assume maximum/infinite wait time.
@@ -382,7 +382,7 @@ public class AppLog
             theLockAndSignal.waitingForInterruptOrDelayOrNotificationE(
               delayMsL);
           } // loop:
-    		} // run()
+        } // run()
 
 
     // Other methods.
@@ -403,18 +403,18 @@ public class AppLog
         }
 
     public boolean getAndEnableConsoleModeB()
-	    {    
+      {    
         System.out.println("AppLog.getAndEnableConsoleModeB(..) begins.");
-	    	boolean tmpB= consoleCopyModeB;
-		    consoleCopyModeB= true;
+        boolean tmpB= consoleCopyModeB;
+        consoleCopyModeB= true;
         System.out.println("AppLog.getAndEnableConsoleModeB(..) end.");
-		    return tmpB;
-	    	}
+        return tmpB;
+        }
 
     public void restoreConsoleModeV( boolean oldConsoleEnabledB )
-    	{ 
-    		consoleCopyModeB= oldConsoleEnabledB; 
-    		}
+      { 
+        consoleCopyModeB= oldConsoleEnabledB; 
+        }
 
     public synchronized void enableCloseLoggingV( boolean enabledB ) 
       /* This method controls whether 
@@ -439,8 +439,8 @@ public class AppLog
        * File closing is followed by a brief sleep
        * to allow output by other processes.
        * ///opt Eliminate outside callers of this?
-    	 */
-	    {
+       */
+      {
         initializeIfNeededV();
         String bufferedModeLogString= "AppLog.setBufferedModeV(..), ";
         boolean actualBufferedModeB= bufferedModeB;
@@ -448,19 +448,19 @@ public class AppLog
             ( desiredBufferedModeB == actualBufferedModeB )
             ? "already " // not changing
             : "being "; // is changing
-	    	if ( desiredBufferedModeB )
-		    	{ 
-	    	    openFileWithRetryDelayIfClosedV();
-		    	  info(bufferedModeLogString+"enabled.");
-		    		}
-		    	else
-		      { 
+        if ( desiredBufferedModeB )
+          { 
+            openFileWithRetryDelayIfClosedV();
+            info(bufferedModeLogString+"enabled.");
+            }
+          else
+          { 
             info(bufferedModeLogString+"disabled.");
-		    	  closeFileAndSleepIfOpenV();
-		      	}
-	    	bufferedModeB= desiredBufferedModeB;
-	    	theLockAndSignal.notifyingV(); // Notify auto-closer thread. 
-	    	}
+            closeFileAndSleepIfOpenV();
+            }
+        bufferedModeB= desiredBufferedModeB;
+        theLockAndSignal.notifyingV(); // Notify auto-closer thread. 
+        }
 
     private void logHeaderLinesV()
       /* This initialization helper method is used to output header lines 
@@ -493,7 +493,7 @@ public class AppLog
         the number stored in the session file incremented by one.
         */
       { 
-    	  String sessionNameString= "session";
+        String sessionNameString= "session";
         int sessionI= Confingleton.getValueI(sessionNameString);
         if (sessionI < 0) 
           sessionI= 0; // If no or bad value, change to zero
@@ -507,7 +507,7 @@ public class AppLog
 
     public void setLevelLimitV( LogLevel limitLogLevel )
       // This method is used to override the default log level at run time.
-    	{ maxLogLevel= limitLogLevel; }
+      { maxLogLevel= limitLogLevel; }
 
 
 
@@ -540,7 +540,7 @@ public class AppLog
       /* This method is for tracing.  It writes only inString.
         */
       { 
-				logB( TRACE, false, null, inString );
+        logB( TRACE, false, null, inString );
         }
 
 
@@ -610,7 +610,7 @@ public class AppLog
         If theThrowable is not null then it displays that also.
         */
       { 
-    		info(false, theThrowable, inString ); 
+        info(false, theThrowable, inString ); 
         }
 
     public void info(String conditionString, String inString)
@@ -639,7 +639,7 @@ public class AppLog
         If toConsoleB==true then out ismade to console also.
         */
       { 
-				logB(INFO, toConsoleB, theThrowable, inString);
+        logB(INFO, toConsoleB, theThrowable, inString);
         }
 
 
@@ -655,8 +655,8 @@ public class AppLog
         Exception type incompatibilities.
         */
       { 
-	    	exception(inString, e);
-	    	throw e;
+        exception(inString, e);
+        throw e;
         }
     
     public void exception(String inString, Throwable e)
@@ -863,33 +863,33 @@ public class AppLog
         This displays nothing.  It is used to control what is displayed.
         If it returns true, logging should be done.
       * logB( theLogLevel, ... ) returns true and creates a log entry with
-       	theLogLevel displayed in the entry and the remaining parameters 
-       	if theLogLevel is less than maxLogLevel.  
-       	Otherwise it just returns false.
+         theLogLevel displayed in the entry and the remaining parameters 
+         if theLogLevel is less than maxLogLevel.  
+         Otherwise it just returns false.
       * logV( ... ) creates a log entry from its parameters unconditionally.
 
       The following methods take various combinations of parameters 
       from the following set:
-    	* LogLevel theLogLevel: used for filtering and is displayed. 
+      * LogLevel theLogLevel: used for filtering and is displayed. 
       * boolean toConsoleB: controls whether a copy of the entry 
         goes to the console.
       * Throwable theThrowable: an exception to be displayed, if it is not null.
-    	* String inString: message to be displayed.
-    		
+      * String inString: message to be displayed.
+        
       */
 
     public synchronized boolean logB(
-    		LogLevel theLogLevel, 
-    		boolean toConsoleB,
-    		Throwable theThrowable, 
+        LogLevel theLogLevel, 
+        boolean toConsoleB,
+        Throwable theThrowable, 
         String inString
-    		)
-	    {
-	  		boolean loggingB= logB(theLogLevel);
-	  		if ( loggingB )
-	      		logV( theLogLevel, null, inString, theThrowable, toConsoleB );
-	  		return loggingB;
-      	}
+        )
+      {
+        boolean loggingB= logB(theLogLevel);
+        if ( loggingB )
+            logV( theLogLevel, null, inString, theThrowable, toConsoleB );
+        return loggingB;
+        }
 
     public synchronized boolean logB( LogLevel theLogLevel )
       /* This method doesn't actually log anything, but
@@ -899,36 +899,36 @@ public class AppLog
         It returns false otherwise. 
         */
       {
-      	return ( theLogLevel.compareTo( maxLogLevel ) <= 0 );
-      	}
+        return ( theLogLevel.compareTo( maxLogLevel ) <= 0 );
+        }
 
     public boolean logB( LogLevel theLogLevel, String inString )
-	    {
-	  		boolean loggingB= logB(theLogLevel);
-	  		if ( loggingB )
-	      		logV( theLogLevel, inString );
-	  		return loggingB;
-      	}
+      {
+        boolean loggingB= logB(theLogLevel);
+        if ( loggingB )
+            logV( theLogLevel, inString );
+        return loggingB;
+        }
     
     public void logV( LogLevel theLogLevel, String inString )
-    	{ 
-    		logV(theLogLevel, null, inString, null, false); 
-    		}
+      { 
+        logV(theLogLevel, null, inString, null, false); 
+        }
 
     public void logV( String inString )
-    	{ 
-    		logV(null, null, inString, null, false); 
-    		}
+      { 
+        logV(null, null, inString, null, false); 
+        }
 
 
     // Non-delegating logging methods.
 
     public synchronized void logV(
-    		LogLevel theLogLevel,
-    		String summaryIDLineString,
-    		String detailsString,
-    		Throwable theThrowable, 
-    		boolean toConsoleB )
+        LogLevel theLogLevel,
+        String summaryIDLineString,
+        String detailsString,
+        Throwable theThrowable, 
+        boolean toConsoleB )
       /* The buck stops here.  
         This logging method does not delegate to another method in the family.
 
@@ -1101,7 +1101,7 @@ public class AppLog
         */
       {
         if (thePrintWriter == null) {  // Opening file if closed.
-  	      try {
+          try {
               thePrintWriter =  // Prepare...
                 new PrintWriter(  // ...a character output stream..
                   new BufferedWriter(  // ...with buffering to...
@@ -1112,15 +1112,15 @@ public class AppLog
             } catch (IOException e) {
               System.err.println("AppLog error opening PrintWriter...: "+e);
             }
-  	      if (openSleepDelayMsI != 0) 
-    	      { // Log any open failures.
-    	        debug("openFileIfClosedV() opened after "
-    	          +openSleepDelayMsI
-    	          +" retries after 1 ms sleep each");
-    	        openSleepDelayMsI= 0; // Reset for later.
-    	        }
-  	        else
-  	        ; /// debug("openFileIfClosedV() opened log file.");
+          if (openSleepDelayMsI != 0) 
+            { // Log any open failures.
+              debug("openFileIfClosedV() opened after "
+                +openSleepDelayMsI
+                +" retries after 1 ms sleep each");
+              openSleepDelayMsI= 0; // Reset for later.
+              }
+            else
+            ; /// debug("openFileIfClosedV() opened log file.");
           }
         }
 

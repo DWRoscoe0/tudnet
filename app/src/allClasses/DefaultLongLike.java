@@ -9,7 +9,7 @@ public class DefaultLongLike
     */
   
   {
-	  private long theL;
+    private long theL;
 
     public DefaultLongLike() // Constructor. 
       {
@@ -27,21 +27,21 @@ public class DefaultLongLike
         }
 
     public synchronized long addDeltaL( long deltaL )
-	    /* This method adds deltaL to the value and returns the new value.
-		    */
+      /* This method adds deltaL to the value and returns the new value.
+        */
       {
-    	  setValueL( this.theL + deltaL ); // Adding delta to old value.
-	  	  return theL; // Returning possibly different value.
+        setValueL( this.theL + deltaL ); // Adding delta to old value.
+        return theL; // Returning possibly different value.
         }
 
     public synchronized long setValueL( final long newL )
-	    /* This method sets newL as the new value 
-		    and returns the previous value.
-		    */
-	    {
-	  	  long oldL= this.theL; // Saving present value as old one.
-				theL= newL; // Setting new value.
-				return oldL; // Returning old unchanged value.
-		  	}
+      /* This method sets newL as the new value 
+        and returns the previous value.
+        */
+      {
+        long oldL= this.theL; // Saving present value as old one.
+        theL= newL; // Setting new value.
+        return oldL; // Returning old unchanged value.
+        }
 
     }

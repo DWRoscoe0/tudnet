@@ -25,8 +25,8 @@ public class KeyMetaPiteratorOfMetaNode
     // Constructors.
       
       public KeyMetaPiteratorOfMetaNode( 
-      		Piterator<MetaNode> inNestedPiteratorOfMetaNode, String inKeyString 
-      		)
+          Piterator<MetaNode> inNestedPiteratorOfMetaNode, String inKeyString 
+          )
         /* This constructs from a Piterator and a key String.  */
         {
           super( inNestedPiteratorOfMetaNode );  // Construct superclass.
@@ -36,8 +36,8 @@ public class KeyMetaPiteratorOfMetaNode
           }
       
       public KeyMetaPiteratorOfMetaNode( 
-      		Collection<MetaNode> inCollectionOfMetaNode, String inKeyString
-      		)
+          Collection<MetaNode> inCollectionOfMetaNode, String inKeyString
+          )
         /* This constructs from a Collection and a key String.  */
         {
           this(  // Use another constructor to do the work.
@@ -50,7 +50,7 @@ public class KeyMetaPiteratorOfMetaNode
 
     // New Piterator methods.
    
-      public MetaNode nextE()	
+      public MetaNode nextE()
         /* This advances the pointer to the next element, if any,
           and sets the pointer window appropriately. */
         {

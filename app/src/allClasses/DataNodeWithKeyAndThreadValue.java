@@ -1,9 +1,9 @@
 package allClasses;
 
 public class DataNodeWithKeyAndThreadValue< 
-  	D extends KeyedStateList< K >, // DataNode type. 
-  	K // Key type in and returned by DataNode.
-  	>
+    D extends KeyedStateList< K >, // DataNode type. 
+    K // Key type in and returned by DataNode.
+    >
 
   extends Object
   
@@ -24,34 +24,34 @@ public class DataNodeWithKeyAndThreadValue<
       
     This combination was first used in what is now one of its subclasses, 
     the Unicaster class.
-	  */
+    */
 
-	{
-		private D theDataNodeD; // extends KeyedStateList<K>
-		private EpiThread theEpiThread; // associated thread.
+  {
+    private D theDataNodeD; // extends KeyedStateList<K>
+    private EpiThread theEpiThread; // associated thread.
 
     public DataNodeWithKeyAndThreadValue(  // Constructor. 
         D theDataNodeD,
         EpiThread theEpiThread
         )
       {
-    		this.theDataNodeD= theDataNodeD;
+        this.theDataNodeD= theDataNodeD;
         this.theEpiThread= theEpiThread;
         }
 
-		public K getKeyK()
-		  { 
-		    return getDataNodeD().getKeyK(); 
-		    }
+    public K getKeyK()
+      { 
+        return getDataNodeD().getKeyK(); 
+        }
     
-		public D getDataNodeD()
-		  { 
-		    return theDataNodeD; 
-		    }
+    public D getDataNodeD()
+      { 
+        return theDataNodeD; 
+        }
 
     public EpiThread getEpiThread()
       { 
         return theEpiThread; 
         }
 
-		}
+    }

@@ -18,28 +18,28 @@ public class IPAndPort
    /// opt Unfortunately it doesn't eliminate them because
    DatagramPacket.getAddress() returns a [new] InetAddress, and
    there doesn't appear to be a way to return the IP address another way.
-	   ///fix A possible solution is to put 
-	     an identifier at beginning of all packets?
-	     Unfortunately this would need to be negotiated if it to be kept short.
+     ///fix A possible solution is to put 
+       an identifier at beginning of all packets?
+       Unfortunately this would need to be negotiated if it to be kept short.
 
    */
 
   {
-		private InetAddress netcasterInetAddress;
-		private int netcasterPortI;
+    private InetAddress netcasterInetAddress;
+    private int netcasterPortI;
 
-		
-		// Constructors.
-		
-		public IPAndPort( InetAddress netcasterInetAddress, int netcasterPortI )
-			{
-				this.netcasterInetAddress= netcasterInetAddress;
-				this.netcasterPortI= netcasterPortI;
-				}
+    
+    // Constructors.
+    
+    public IPAndPort( InetAddress netcasterInetAddress, int netcasterPortI )
+      {
+        this.netcasterInetAddress= netcasterInetAddress;
+        this.netcasterPortI= netcasterPortI;
+        }
 
-		public IPAndPort( String IPString , String portString )
-		  /* This constructor creates an IPAndPort from Strings. */
-			{
+    public IPAndPort( String IPString , String portString )
+      /* This constructor creates an IPAndPort from Strings. */
+      {
         try {
             this.netcasterInetAddress= InetAddress.getByName(IPString);
           } catch ( UnknownHostException e ) { 
@@ -54,24 +54,24 @@ public class IPAndPort
                 "IPAndPort.IPAndPort(.) "+portString+" bad "+e );
             this.netcasterPortI= -1;
           }
-				}
+        }
 
-		
-		// Getters.
-		public InetAddress getInetAddress() 
-	  	{ return netcasterInetAddress; }
-		public int getPortI() 
-			{ return netcasterPortI; }
+    
+    // Getters.
+    public InetAddress getInetAddress() 
+      { return netcasterInetAddress; }
+    public int getPortI() 
+      { return netcasterPortI; }
 
-		// Setters.
-		public void setInetAddressV( InetAddress netcasterInetAddress) 
-		  { this.netcasterInetAddress= netcasterInetAddress; }
-		public void setPortI( int netcasterPortI )
-		  { this.netcasterPortI= netcasterPortI; }
+    // Setters.
+    public void setInetAddressV( InetAddress netcasterInetAddress) 
+      { this.netcasterInetAddress= netcasterInetAddress; }
+    public void setPortI( int netcasterPortI )
+      { this.netcasterPortI= netcasterPortI; }
 
 
-		// Object method overrides.
-	  public boolean equals(Object otherObject) 
+    // Object method overrides.
+    public boolean equals(Object otherObject) 
       // This is the standard equals() method.  
       {
         boolean resultB = false;  // assume objects are not equal.
@@ -86,28 +86,28 @@ public class IPAndPort
             ( this.netcasterPortI != otherIPAndPort.netcasterPortI )
             break Comparer;  // Exiting with false.
           if ( ! Nulls.equals( // Unequal InetAddresses.
-          			this.netcasterInetAddress, otherIPAndPort.netcasterInetAddress
-          			))
+                this.netcasterInetAddress, otherIPAndPort.netcasterInetAddress
+                ))
             break Comparer;  // Exiting with false.
           resultB= true;  // All parts are equal, so override result.
           }  // Comparer.
         return resultB;
         }
 
-	  public int hashCode() 
-		  {
+    public int hashCode() 
+      {
         return // Returning sum of the two component hashes. 
-        		Nulls.hashCode(netcasterInetAddress) + netcasterPortI;
+            Nulls.hashCode(netcasterInetAddress) + netcasterPortI;
         }
 
-		public String toString() 
-		  {
-				return netcasterInetAddress + ":" + netcasterPortI;
-			  }
+    public String toString() 
+      {
+        return netcasterInetAddress + ":" + netcasterPortI;
+        }
 
 
-		// Persistent storage methods (moved.
-		
+    // Persistent storage methods (moved.
+    
 
     public String getIPString()
       /* This method returns only the trailing IP address part of the InetAddress, 
@@ -119,4 +119,4 @@ public class IPAndPort
         return rawString.substring(slashOffsetI+1); 
         }
     
-		} // class IPAndPort
+    } // class IPAndPort

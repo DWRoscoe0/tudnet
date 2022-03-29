@@ -10,7 +10,7 @@ public class EmptyBranchTreeHelper extends TreeHelper {
     a branch node with no children.
     */
 
-	EmptyBranchTreeHelper(  // Constructor.
+  EmptyBranchTreeHelper(  // Constructor.
       JComponent inOwningJComponent, 
       MetaRoot theMetaRoot,
       TreePath inTreePath

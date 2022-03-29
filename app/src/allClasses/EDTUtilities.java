@@ -24,12 +24,12 @@ public class EDTUtilities {
         It already running on the EDT thread then it just calls run().
         Otherwise it uses invokeAndWait(..) to switch threads.
        */
-	    {
-	      if ( SwingUtilities.isEventDispatchThread() )
-	        jobRunnable.run();
-	      else
-	        invokeAndWaitV( jobRunnable );
-	    	}
+      {
+        if ( SwingUtilities.isEventDispatchThread() )
+          jobRunnable.run();
+        else
+          invokeAndWaitV( jobRunnable );
+        }
 
     protected static void invokeAndWaitV( Runnable theRunnable )
       /* This method calls SwingUtilities.invokeAndWait(..) 
@@ -62,21 +62,21 @@ public class EDTUtilities {
         an InterruptedException occurs.
         */
       {
-    		//appLogger.info( "EDTUtilities.invokeAndWaitV(..) begins.");
-    	  boolean interruptedB= // Saving and disabling interrupted status. 
-    	  		Thread.interrupted(); // (in case it was already true)
-    	  while (true) { // Keep trying until an invokeAndWait(..) finishes.
-				  try  // Queuing and waiting for theRunnable on EDT thread.
-			  	  { 
-	            // theAppLog.info( "EDTUtilities.invokeAndWaitV(..) before invokeAndWait(jobRunnable).");
-	            SwingUtilities.invokeAndWait( theRunnable );            
-	            // theAppLog.info( "EDTUtilities.invokeAndWaitV(..) after invokeAndWait(jobRunnable).");
-				  		break;  // Exiting because invokeAndWait(..) ended normally.
-			  	  	}
-			    catch // Wait was interrupted.
-			      (InterruptedException theInterruptedException)
-			      { 
-			        interruptedB= true; // Record interrupt for restoring later.
+        //appLogger.info( "EDTUtilities.invokeAndWaitV(..) begins.");
+        boolean interruptedB= // Saving and disabling interrupted status. 
+            Thread.interrupted(); // (in case it was already true)
+        while (true) { // Keep trying until an invokeAndWait(..) finishes.
+          try  // Queuing and waiting for theRunnable on EDT thread.
+            { 
+              // theAppLog.info( "EDTUtilities.invokeAndWaitV(..) before invokeAndWait(jobRunnable).");
+              SwingUtilities.invokeAndWait( theRunnable );            
+              // theAppLog.info( "EDTUtilities.invokeAndWaitV(..) after invokeAndWait(jobRunnable).");
+              break;  // Exiting because invokeAndWait(..) ended normally.
+              }
+          catch // Wait was interrupted.
+            (InterruptedException theInterruptedException)
+            { 
+              interruptedB= true; // Record interrupt for restoring later.
               theRunnable= // Replace theRunnable with a null one for retry.
                 new Runnable() {
                   @Override
@@ -84,42 +84,42 @@ public class EDTUtilities {
                     theAppLog.info( "EDTUtilities.invokeAndWaitV(..) null run()");
                     } // Doing nothing. 
                   };  
-			      	}
-			  	catch  // Unhandled exception occurred on Event Dispatch Thread.
-			  	  (InvocationTargetException theInvocationTargetException)
-			  	  {
-				  	  Misc.logAndRethrowAsRuntimeExceptionV( 
-			  	      "EDTUtilities.invokeAndWaitV(..) exception", 
-			  	      theInvocationTargetException);
-				  	  }
-      	  theAppLog.info( "EDTUtilities.invokeAndWaitV(..) looping.");
-    	  	}
-    	  if (interruptedB) // Setting interrupted status if interrupt occurred. 
-    	  	Thread.currentThread().interrupt(); 
-      	}
+              }
+          catch  // Unhandled exception occurred on Event Dispatch Thread.
+            (InvocationTargetException theInvocationTargetException)
+            {
+              Misc.logAndRethrowAsRuntimeExceptionV( 
+                "EDTUtilities.invokeAndWaitV(..) exception", 
+                theInvocationTargetException);
+              }
+          theAppLog.info( "EDTUtilities.invokeAndWaitV(..) looping.");
+          }
+        if (interruptedB) // Setting interrupted status if interrupt occurred. 
+          Thread.currentThread().interrupt(); 
+        }
 
     protected static boolean testAndLogIfNotRunningEDTB()
       /* This method returns whether we are not running the EDT thread.
         Returns true if not on EDT thread, false otherwise.
         If not on EDT thread it logs an error.
        */
-	    {
-	      boolean isNotEDTB= ! SwingUtilities.isEventDispatchThread();
-	      if ( isNotEDTB ) 
-	      	theAppLog.error(" testAndLogIfNotRunningEDTB() true");
-	      return isNotEDTB;
-	    	}
+      {
+        boolean isNotEDTB= ! SwingUtilities.isEventDispatchThread();
+        if ( isNotEDTB ) 
+          theAppLog.error(" testAndLogIfNotRunningEDTB() true");
+        return isNotEDTB;
+        }
 
     protected static boolean testAndLogIfRunningEDTB()
       /* This method returns whether we are running the EDT thread.
         Returns true if on EDT thread, false otherwise.
         If on EDT thread it logs an error.
        */
-	    {
-	      boolean isEDTB= SwingUtilities.isEventDispatchThread();
-	      if ( isEDTB ) 
-	      	theAppLog.error(" testAndLogIfRunningEDTB() true");
-	      return isEDTB;
-	    	}
+      {
+        boolean isEDTB= SwingUtilities.isEventDispatchThread();
+        if ( isEDTB ) 
+          theAppLog.error(" testAndLogIfRunningEDTB() true");
+        return isEDTB;
+        }
 
 }

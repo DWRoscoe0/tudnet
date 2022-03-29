@@ -22,26 +22,25 @@ public class EpiThread
       but they might be different, for example when executing the
       start() and join() methods. 
 
-	  ///enh A destination thread needs only one LockAndSignal instance
-	  to manage its inputs regardless of the number of source threads
-	  that are providing those inputs.  
-	  In fact it makes no sense to have more than one.
-	  Therefore, it might make sense to include one LockAndSignal instance
-	  and an access method, in every EpiThread for use in these operations??
-	  
-	  */
+    to manage its inputs regardless of the number of source threads
+    that are providing those inputs.  
+    In fact it makes no sense to have more than one.
+    Therefore, it might make sense to include one LockAndSignal instance
+    and an access method, in every EpiThread for use in these operations??
+    
+    */
 
   {
 
-	  /* The following constructors vary in the presence or absence of
-	    * nameString: a String to be used as the name of the thread,
-	      otherwise one will be assigned, but these are problematic.
-	    * aRunnable: an instance of a subclass of Runnable to be
-	      associated with the EpiThread.  If a Runnable is not specified,
-	      the EpiThread is probably being subclassed.
-	    These constructors correspond with similar constructors for Thread.
-	    */
-	
+    /* The following constructors vary in the presence or absence of
+      * nameString: a String to be used as the name of the thread,
+        otherwise one will be assigned, but these are problematic.
+      * aRunnable: an instance of a subclass of Runnable to be
+        associated with the EpiThread.  If a Runnable is not specified,
+        the EpiThread is probably being subclassed.
+      These constructors correspond with similar constructors for Thread.
+      */
+  
     public EpiThread( String nameString ) // Constructor.
       {
         super( nameString ); // Name here because setName() not reliable.
@@ -60,27 +59,27 @@ public class EpiThread
     public void startV()
       /* This method writes to the log and calls start().  */
       {
-      	theAppLog.debug("Threads",
-      	    "EpiThread.startV(): thread '" + getName() + "' starting.");
+        theAppLog.debug("Threads",
+            "EpiThread.startV(): thread '" + getName() + "' starting.");
 
-      	try { 
-        	    start();
-        	    } 
-      	catch 
-    	    (IllegalThreadStateException theIllegalThreadStateException) 
-    	    {
+        try { 
+              start();
+              } 
+        catch 
+          (IllegalThreadStateException theIllegalThreadStateException) 
+          {
             theAppLog.exception(
                 "EpiThread.startV() already started",
                 theIllegalThreadStateException
                 );
-    	      }
+            }
         }
 
     public static void stopAndJoinIfNotNullV( EpiThread theEpiThread )
       /* This is like theEpiThread.stopAndJoinV() but 
         does nothing if theEpiThread == null.
         */
-	    { if ( theEpiThread != null ) theEpiThread.stopAndJoinV(); }
+      { if ( theEpiThread != null ) theEpiThread.stopAndJoinV(); }
 
     public void stopAndJoinV()  // Another thread uses to stop "this" thread.
       /* This method uses stopV() to request termination of "this" thread,
@@ -95,7 +94,7 @@ public class EpiThread
       /* This is like theEpiThread.stopV() but 
         does nothing if theEpiThread == null.
         */
-	    { if ( theEpiThread != null ) theEpiThread.stopV(); }
+      { if ( theEpiThread != null ) theEpiThread.stopV(); }
 
     public void stopV()  // Requests stopping of "this" thread.
       /* Thread.currentThread() calls this method to request 
@@ -134,8 +133,8 @@ public class EpiThread
         */
       {
         // appLogger.debug("joinV(" + getName() + ") begins.");
-    	  boolean currentThreadWasInterruptedB= interrupted(); // Save and clear 
-    	    // current thread's interrupt status.
+        boolean currentThreadWasInterruptedB= interrupted(); // Save and clear 
+          // current thread's interrupt status.
         for  // Looping until this's thread has terminated.
           ( boolean waitLoopShouldTerminateB= false ; !waitLoopShouldTerminateB ; )
           try { // Calling blocking join() and handling how it ends.
@@ -156,7 +155,7 @@ public class EpiThread
               // Being here means current thread's interrupt status was set.
               theAppLog.debug("EpiThread(" + getName() 
                 + ").joinV() recording new interrupt.");
-            	currentThreadWasInterruptedB= true; // Combine new interrupt with old.
+              currentThreadWasInterruptedB= true; // Combine new interrupt with old.
               }
         if  // Setting current thread's interrupt status if it was set earlier.
           ( currentThreadWasInterruptedB )
@@ -179,15 +178,15 @@ public class EpiThread
         this is probably not very useful.
         */
       {
-    	  boolean interruptedB= false;
-    	  
+        boolean interruptedB= false;
+        
         try {
-        	if ( msL >= 0 ) // Skip if less than 0.
-        		Thread.sleep( msL ); // Try to sleep for desired time.
+          if ( msL >= 0 ) // Skip if less than 0.
+            Thread.sleep( msL ); // Try to sleep for desired time.
           } 
         catch( InterruptedException ex ) { // Handling interruption.
           Thread.currentThread().interrupt(); // Reestablish interrupted.
-        	interruptedB= true; // Changing return value to indicate it.
+          interruptedB= true; // Changing return value to indicate it.
           }
         
         return interruptedB;
@@ -203,25 +202,25 @@ public class EpiThread
         or when it is certain that the delay will not cause a problem.
         */
       {
-		  	long beginTimeMsL= // Recording beginning of sleep interval. 
-			  		System.currentTimeMillis();
-		  	long endTimeMsL=  // Calculating end of sleep interval.
-		  			beginTimeMsL + msL;
-    	  boolean interruptedB= false;
+        long beginTimeMsL= // Recording beginning of sleep interval. 
+            System.currentTimeMillis();
+        long endTimeMsL=  // Calculating end of sleep interval.
+            beginTimeMsL + msL;
+        boolean interruptedB= false;
 
-    	  while (true) { // repeatedly sleep until full delay passes.
-    	  	if // Record and clear thread interrupt status.
-    	  	  (Thread.currentThread().isInterrupted())
-    	  		interruptedB= true;
-    	  	long remainingMsL= // Calculate time in ms remaining to sleep. 
-    	  			endTimeMsL - System.currentTimeMillis();
-    	  	if ( remainingMsL <= 0L ) break; // Exit if there's no remaining time. 
-    	  	interruptibleSleepB( remainingMsL ); // Try sleeping for that time.
-    	  	}
+        while (true) { // repeatedly sleep until full delay passes.
+          if // Record and clear thread interrupt status.
+            (Thread.currentThread().isInterrupted())
+            interruptedB= true;
+          long remainingMsL= // Calculate time in ms remaining to sleep. 
+              endTimeMsL - System.currentTimeMillis();
+          if ( remainingMsL <= 0L ) break; // Exit if there's no remaining time. 
+          interruptibleSleepB( remainingMsL ); // Try sleeping for that time.
+          }
 
-    	  if ( interruptedB ) // IF an interruption happened at any time
-    	  	Thread.currentThread().interrupt(); // reestablish interrupt status.
-      	return interruptedB;
+        if ( interruptedB ) // IF an interruption happened at any time
+          Thread.currentThread().interrupt(); // reestablish interrupt status.
+        return interruptedB;
         }
 
     public static boolean testInterruptB()
@@ -233,5 +232,5 @@ public class EpiThread
       { 
         return Thread.currentThread().isInterrupted(); // Just return status.
         }
-		
-		}
+    
+    }

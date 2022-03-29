@@ -15,7 +15,7 @@ public class DirectoryTableCellRenderer
     */
   { // class DirectoryTableCellRenderer
 
-	  public Component getTableCellRendererComponent
+    public Component getTableCellRendererComponent
       ( JTable table, 
         Object value,
         boolean isSelected, 
@@ -49,7 +49,7 @@ public class DirectoryTableCellRenderer
 
         try {
           UIColor.setColorsV( // Override its colors in renderer.
-          		RenderComponent,
+              RenderComponent,
               Color.RED, // kluge, cachedBackgroundColor not used for directories.
               value,
               isSelected,

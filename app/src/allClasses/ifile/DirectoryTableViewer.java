@@ -173,9 +173,9 @@ public class DirectoryTableViewer
 
     // TreeAware and TreePathListener interface code for TreeHelper class.
 
-			private TreeHelper theTreeHelper;  // Reference to helper class.
+      private TreeHelper theTreeHelper;  // Reference to helper class.
 
-			public TreeHelper getTreeHelper() { return theTreeHelper; }
+      public TreeHelper getTreeHelper() { return theTreeHelper; }
       /* TreePathListener code, for when TreePathEvent-s
         happen in either the left or right panel.
         This was based on TreeSelectionListener code.

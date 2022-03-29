@@ -9,19 +9,19 @@ public class EpiDatagramSocket extends DatagramSocket
     private EpiDatagramSocket() // Never-used constructor to satisfy compiler. 
       throws SocketException 
       {
-			  super(); // Auto-generated constructor stub
-		    }
+        super(); // Auto-generated constructor stub
+        }
 
     static public boolean isNullOrClosedB( DatagramSocket theDatagramSocket )
-	    {
-	    	 return (
-	    			 ( theDatagramSocket == null ) || ( theDatagramSocket.isClosed() )
-	    			 ) ;
-	    	 }
+      {
+         return (
+             ( theDatagramSocket == null ) || ( theDatagramSocket.isClosed() )
+             ) ;
+         }
 
     static public void closeIfNotNullV( DatagramSocket theDatagramSocket )
-	    {
-	    	 if ( theDatagramSocket != null ) theDatagramSocket.close();
-	    	 }
+      {
+         if ( theDatagramSocket != null ) theDatagramSocket.close();
+         }
     
     }

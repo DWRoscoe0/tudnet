@@ -14,8 +14,8 @@ public class IJTree extends JTree
    
   {       
 
-		private TreeCellRenderer theTitledTreeCellRenderer=
-	  		new IJTreeCellRendererOfDataNodes(); // for custom cell rendering.
+    private TreeCellRenderer theTitledTreeCellRenderer=
+        new IJTreeCellRendererOfDataNodes(); // for custom cell rendering.
     private Color cachedBackgroundColor; // For faster color rendering.
 
     public IJTree( DataTreeModel inDataTreeModel ) // Constructor.
@@ -23,7 +23,7 @@ public class IJTree extends JTree
         super(inDataTreeModel); 
 
         { // customize the tree cell rendering.
-	        cachedBackgroundColor= getBackground();
+          cachedBackgroundColor= getBackground();
           setCellRenderer( theTitledTreeCellRenderer );
           } // customize the tree cell rendering.
         }
@@ -32,11 +32,11 @@ public class IJTree extends JTree
       extends DefaultTreeCellRenderer
       implements TreeCellRenderer
       {
-    	  public IJTreeCellRendererOfDataNodes() // Constructor.
-      	  {
-        		setOpaque(true);  // To turn off normal background transparency.
-      	  	}
-    	  
+        public IJTreeCellRendererOfDataNodes() // Constructor.
+          {
+            setOpaque(true);  // To turn off normal background transparency.
+            }
+        
         public Component getTreeCellRendererComponent
           ( JTree theJTreeOfDataNodes,
             Object theDataNodeObject,
@@ -48,18 +48,18 @@ public class IJTree extends JTree
             )
           /* Returns a Component for displaying a DataNode in a JTree. */
           {
-        		Component resultTreeCellRendererComponent= // Get renderer...
-        				super.getTreeCellRendererComponent(  // from superclass .
-	              	theJTreeOfDataNodes,
-	                theDataNodeObject,
-	                isSelectedB,
-	                expandedB,
-	                isLeafB,
-	                rowI,
-	                hasFocusB
-	                );
+            Component resultTreeCellRendererComponent= // Get renderer...
+                super.getTreeCellRendererComponent(  // from superclass .
+                  theJTreeOfDataNodes,
+                  theDataNodeObject,
+                  isSelectedB,
+                  expandedB,
+                  isLeafB,
+                  rowI,
+                  hasFocusB
+                  );
             UIColor.setColorsV( // Override its colors in renderer.
-            	resultTreeCellRendererComponent,
+              resultTreeCellRendererComponent,
               cachedBackgroundColor,
               (DataNode)theDataNodeObject,
               isSelectedB,

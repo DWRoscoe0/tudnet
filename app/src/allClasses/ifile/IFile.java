@@ -64,20 +64,20 @@ public class IFile
           have been converted to IFiles.
           */
         {
-      		DataNode childDataNode= (DataNode)childObject;
-      		String childString= childDataNode.toString(); // Get name of target.
+          DataNode childDataNode= (DataNode)childObject;
+          String childString= childDataNode.toString(); // Get name of target.
 
           int resultI = -1;  // Initialize result for not found.
           for // Search for child with matching name. 
             ( int i = 0; i < childMultiLinkOfDataNodes.getCountI(); ++i) 
             {
-          		if 
-          		  ( childString.equals( 
-          		      childMultiLinkOfDataNodes.getE(i).getNameString()))
-	              {
-	                resultI = i;  // Set result to index of found child.
-	                break;
-	                }
+              if 
+                ( childString.equals( 
+                    childMultiLinkOfDataNodes.getE(i).getNameString()))
+                {
+                  resultI = i;  // Set result to index of found child.
+                  break;
+                  }
               }
 
           return resultI;
@@ -106,8 +106,8 @@ public class IFile
             catch (Exception ReaderException){
               // System.out.println("error reading file! " + ReaderException);
               theStringBuilder.append(
-            			NL + "Error reading file!" + NL + NL + ReaderException + NL
-            			);
+                  NL + "Error reading file!" + NL + NL + ReaderException + NL
+                  );
               }
             } // Read in file to JTextArea.
           return theStringBuilder.toString();
@@ -122,7 +122,7 @@ public class IFile
          */
         {
           JComponent resultJComponent= // Return a text viewer to view the file.
-	              new TitledTextViewer(theTreePath, inDataTreeModel, getFileString());
+                new TitledTextViewer(theTreePath, inDataTreeModel, getFileString());
           return resultJComponent;  // return the final result.
           }
 

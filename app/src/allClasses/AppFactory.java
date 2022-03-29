@@ -44,8 +44,8 @@ public class AppFactory {  // For App class lifetimes.
   // Injected dependencies that will still be needed after construction.
   private final Persistent thePersistent;
 
-	// Other objects that will be needed later.
-	private PortManager thePortManager;
+  // Other objects that will be needed later.
+  private PortManager thePortManager;
   private final Shutdowner theShutdowner;
   private final OuterApp theOuterApp;
   private final TCPCopier theTCPCopier;
@@ -77,13 +77,13 @@ public class AppFactory {  // For App class lifetimes.
 
       this.thePersistent= inPersistent;
 
-  		thePortManager= new PortManager( thePersistent );
-  		theShutdowner= new Shutdowner();
-  		AppInstanceManager newAppInstanceManager= new AppInstanceManager(
-  		    inCommandArgs, theShutdowner, thePortManager
-      		);
-  		theTCPCopier= new TCPCopier( "TCPCopier", thePersistent, thePortManager );
-  		OuterApp newApp= new OuterApp(
+      thePortManager= new PortManager( thePersistent );
+      theShutdowner= new Shutdowner();
+      AppInstanceManager newAppInstanceManager= new AppInstanceManager(
+          inCommandArgs, theShutdowner, thePortManager
+          );
+      theTCPCopier= new TCPCopier( "TCPCopier", thePersistent, thePortManager );
+      OuterApp newApp= new OuterApp(
         this, // The App gets to know the factory that made it. 
         thePersistent,
         theShutdowner,
@@ -236,12 +236,12 @@ public class AppFactory {  // For App class lifetimes.
         theDataRoot,
         theJavaFXGUI
         );
-  		
-  		// Save in instance variables injected objects that are needed later.
-	    // None.  Already saved.
+      
+      // Save in instance variables injected objects that are needed later.
+      // None.  Already saved.
 
-  	  // Save new objects that will be needed later 
-  		// from local variables to instance variables. 
+      // Save new objects that will be needed later 
+      // from local variables to instance variables. 
       //% this.theShutdowner= theShutdowner;
       this.theInnerApp= newInnerApp;
       this.theOuterApp= newApp;
