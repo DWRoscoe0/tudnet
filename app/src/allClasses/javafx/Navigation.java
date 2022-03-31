@@ -401,7 +401,7 @@ public class Navigation extends EpiStage
     
     private int countI= 0;
 
-    private TreeItem<DataNode> child2TreeItem;
+    private TreeItem<DataNode> middleChildTreeItem;
     private TreeView<DataNode> testTreeView;
 
 
@@ -409,19 +409,19 @@ public class Navigation extends EpiStage
       {
         EpiTreeItem rootItem = 
             new EpiTreeItem(
-                new NamedList("TestRoot"));
+                new NamedList("TestTreeRoot"));
         rootItem.setExpanded(true);
-        for (int i = 1; i < 6; i++) {
+        for (int i = 1; i < 4; i++) {
             TreeItem<DataNode> item= 
                 new TreeItem<DataNode> (
                     NamedLeaf.makeNamedLeaf("TestChild" + i));
             rootItem.getChildren().add(item);
         }
-        child2TreeItem= rootItem.getChildren().get(2); // Get child # 2.
+        middleChildTreeItem= rootItem.getChildren().get(1); // Get middle child.
         testTreeView= 
             new TreeView<DataNode> (rootItem);        
-        StackPane root = new StackPane();
-        root.getChildren().add(testTreeView);
+        StackPane rootStackPane = new StackPane();
+        rootStackPane.getChildren().add(testTreeView);
 
         Runnable updateRunnable= // Create Runnable that updates child.
           (() -> {
@@ -432,10 +432,12 @@ public class Navigation extends EpiStage
 
                 theAppLog.debug("Navigation.createTestTreeViewV() updating TreeView.");
                 System.out.print("[tti]");
-                DataNode child2DataNode= child2TreeItem.getValue();
+                DataNode child2DataNode= middleChildTreeItem.getValue();
                 ((NamedLeaf)child2DataNode).setNameV("NEW-VALUE-"+countI++);
-                child2TreeItem.setValue(null);
-                child2TreeItem.setValue(child2DataNode);
+                middleChildTreeItem.setValue(null);
+                middleChildTreeItem.setValue(child2DataNode);
+                /// testTreeView.requestLayout();
+                /// testTreeView.layout();
 
                 });
               }
