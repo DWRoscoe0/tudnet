@@ -11,7 +11,7 @@ import javax.swing.tree.TreePath;
 
 public class TreeListModel
 
-	extends AbstractListModel<DataNode>
+  extends AbstractListModel<DataNode>
 
   implements TreeModelListener
   
@@ -29,13 +29,13 @@ public class TreeListModel
 
   { // class TreeListModel
 
-	  // Injected dependency variables.
-		private final DataNode theListDataNode;  //Node in tree with list data.
-	  private final TreePath theTreePath;  // TreePath to that node.
+// Injected dependency variables.
+    private final DataNode theListDataNode;  //Node in tree with list data.
+    private final TreePath theTreePath;  // TreePath to that node.
 
-	  // Other instance variables.
-	  private DataTreeModel theDataTreeModel;  // Model of tree containing node.
-	  private int lastSizeI= 0; /* Last known size of list.
+    // Other instance variables.
+    private DataTreeModel theDataTreeModel;  // Model of tree containing node.
+    private int lastSizeI= 0; /* Last known size of list.
       This variable is used to save the size of the List so that
       treeStructureChanged(..) will know how big an interval to use
       when it calls fireContentsChanged(..).
@@ -51,11 +51,11 @@ public class TreeListModel
       */
 
     TreeListModel(  // Constructor.
-    		DataNode theListDataNode, TreePath theTreePath
-    		)
+        DataNode theListDataNode, TreePath theTreePath
+        )
       {
-	      this.theListDataNode= theListDataNode;
-	      this.theTreePath= theTreePath;
+        this.theListDataNode= theListDataNode;
+        this.theTreePath= theTreePath;
         }
 
     // Initialization/setter methods.
@@ -85,48 +85,48 @@ public class TreeListModel
           However it should be able to be called any number of times
           with any of 4 null/not-null combinations.
           */
-	      {
-      	  DataTreeModel oldDataTreeModel= this.theDataTreeModel; // Save old model.
+        {
+          DataTreeModel oldDataTreeModel= this.theDataTreeModel; // Save old model.
           this.theDataTreeModel= newDataTreeModel; // Store new model.
 
           // Adjust listener registrations.
           if ( oldDataTreeModel != null ) {
-	          oldDataTreeModel.removeTreeModelListener( this );
-	          saveSizeV(0); // Reset to zero the last saved size because model removed.
-      	    }
-	    	  if ( newDataTreeModel != null ) {
-	    	  	newDataTreeModel.addTreeModelListener( this );
-	    	  	saveSizeV(); // Update last size from new model.
-	    	  	}
-	    	  }
+            oldDataTreeModel.removeTreeModelListener( this );
+            saveSizeV(0); // Reset to zero the last saved size because model removed.
+            }
+          if ( newDataTreeModel != null ) {
+            newDataTreeModel.addTreeModelListener( this );
+            saveSizeV(); // Update last size from new model.
+            }
+          }
 
     /* Each of these ListModel interface methods translates
       into calls to TreeModel interface methods using the context of
       the present tree node children as list elements.
       */
-	    
-	    @Override
-	    public DataNode getElementAt(int indexI)
-	      {
-	        return (DataNode) theDataTreeModel.getChild( theListDataNode, indexI );
-	        }
-	
-	    @Override
-	    public int getSize()
-	      /* This is being called from the EDT when theDataTreeModel is null,
-	        apparently after it is finalized.
-	        For now catch it and return 0.
-	        ///fix Eventually figure out why it's happening.
-	       */
-	      {
-	    	  if ( theDataTreeModel == null )
-		    	  {
-		    		  theAppLog.debug("TreeListModel.getSize(): null TreeModel!");
-		    		  return 0;
-		    	    }
-		    	  else
-		        return theDataTreeModel.getChildCount( theListDataNode ); 
-	        }
+      
+      @Override
+      public DataNode getElementAt(int indexI)
+        {
+          return (DataNode) theDataTreeModel.getChild( theListDataNode, indexI );
+          }
+  
+      @Override
+      public int getSize()
+        /* This is being called from the EDT when theDataTreeModel is null,
+          apparently after it is finalized.
+          For now catch it and return 0.
+          ///fix Eventually figure out why it's happening.
+         */
+        {
+          if ( theDataTreeModel == null )
+            {
+              theAppLog.debug("TreeListModel.getSize(): null TreeModel!");
+              return 0;
+              }
+            else
+            return theDataTreeModel.getChildCount( theListDataNode ); 
+          }
 
     /* Each of these TreeModelListener interface methods translates 
       a TreeModelListener method call with a TreeModelEvent into
@@ -138,93 +138,93 @@ public class TreeListModel
       but a ListDataEvent contains an interval of child indexes. 
       */
 
-	    public void treeNodesInserted(TreeModelEvent theTreeModelEvent)
-	      /* Translates theTreeModelEvent reporting an insertion into 
-	        an equivalent ListDataEvent and notifies the ListDataListeners.
-	        */
-	      {
-	    		//appLogger.debug("TreeListModel.treeNodesInserted(..)");
-	    	  if ( // Ignoring event if it doesn't have our TreePath. 
-	    	      	!theTreePath.equals(theTreeModelEvent.getTreePath())
-	    	      	)
-	    	  	; // Doing nothing.
-	    	  	else
-	    	  	{ // Sending an equivalent ListModelEvent for each child in array.
-	    	  		for (int childI: theTreeModelEvent.getChildIndices()) {
-	    	  			fireIntervalAdded( 
-		    	  				ListDataEvent.INTERVAL_ADDED,
-		    	  		  	childI,
-		    	  		  	childI
-		    	  		  	);
-	    	  		  }
-	    	  		}
-		  		saveSizeV();
-	    	  }
-
-	    public void treeNodesRemoved(TreeModelEvent theTreeModelEvent)
-	      /* Translates theTreeModelEvent reporting a removal into 
-		      an equivalent ListDataEvent and notifies the ListDataListeners.
-	        */
-	      {
-	    		//appLogger.debug("TreeListModel.treeNodesRemoved(..)");
-	    	  if ( // Ignoring event if it doesn't have our TreePath. 
-	    	      	!theTreePath.equals(theTreeModelEvent.getTreePath())
-	    	      	)
-	    	  	; // Doing nothing.
-	    	  	else
+      public void treeNodesInserted(TreeModelEvent theTreeModelEvent)
+        /* Translates theTreeModelEvent reporting an insertion into 
+          an equivalent ListDataEvent and notifies the ListDataListeners.
+          */
+        {
+          //appLogger.debug("TreeListModel.treeNodesInserted(..)");
+          if ( // Ignoring event if it doesn't have our TreePath. 
+                !theTreePath.equals(theTreeModelEvent.getTreePath())
+                )
+            ; // Doing nothing.
+            else
             { // Sending an equivalent ListModelEvent for each child in array.
-	    	  		for (int childI: theTreeModelEvent.getChildIndices()) {
-	    	  			fireIntervalRemoved( 
-		    	  				ListDataEvent.INTERVAL_REMOVED,
-		    	  		  	childI,
-		    	  		  	childI
-		    	  		  	);
-	    	  		  }
-	    	  		}
-		  		saveSizeV();
-	    	  }
+              for (int childI: theTreeModelEvent.getChildIndices()) {
+                fireIntervalAdded( 
+                    ListDataEvent.INTERVAL_ADDED,
+                    childI,
+                    childI
+                    );
+                }
+              }
+          saveSizeV();
+          }
 
-	    public void treeNodesChanged(TreeModelEvent theTreeModelEvent) 
-	      /* Translates theTreeModelEvent reporting a DataNode change into 
-		      an equivalent ListDataEvent and notifies the ListDataListeners.
-		      */
-	      {
-	    		//appLogger.debug("TreeListModel.treeNodesChanged(..)");
-	    	  if ( // Ignoring event if parent doesn't have our TreePath. 
-	    	      	!theTreePath.equals(theTreeModelEvent.getTreePath())
-	    	      	)
-	    	  	; // Doing nothing.
-	    	  	else
+      public void treeNodesRemoved(TreeModelEvent theTreeModelEvent)
+        /* Translates theTreeModelEvent reporting a removal into 
+          an equivalent ListDataEvent and notifies the ListDataListeners.
+          */
+        {
+          //appLogger.debug("TreeListModel.treeNodesRemoved(..)");
+          if ( // Ignoring event if it doesn't have our TreePath. 
+                !theTreePath.equals(theTreeModelEvent.getTreePath())
+                )
+            ; // Doing nothing.
+            else
             { // Sending an equivalent ListModelEvent for each child in array.
-	    	  		for (int childI: theTreeModelEvent.getChildIndices()) {
-	    	  			fireContentsChanged(
-		    	  				ListDataEvent.CONTENTS_CHANGED,
-		    	  		  	childI,
-		    	  		  	childI
-		    	  		  	);
-	    	  		  }
-	    	  		}
-		  		saveSizeV();
-	    	  }
+              for (int childI: theTreeModelEvent.getChildIndices()) {
+                fireIntervalRemoved( 
+                    ListDataEvent.INTERVAL_REMOVED,
+                    childI,
+                    childI
+                    );
+                }
+              }
+          saveSizeV();
+          }
 
-	    public void treeStructureChanged(TreeModelEvent theTreeModelEvent) 
-	      /* This method is implemented by calling fireContentsChanged(..)
-	        for an interval which is the entire last known size of the List. 
-	        
-	        Implementing this by signaling removal of all elements,
-	        then inserting all new ones would eliminate the need for lastSizeI
-	        because one would still need to know it to know how many to remove.
-	        */
-	      {
-		  		fireContentsChanged(
-	  				ListDataEvent.CONTENTS_CHANGED,
-	  		  	0,
-	  		  	lastSizeI - 1
-	  		  	);
-		  		saveSizeV();
-	     		}
+      public void treeNodesChanged(TreeModelEvent theTreeModelEvent) 
+        /* Translates theTreeModelEvent reporting a DataNode change into 
+          an equivalent ListDataEvent and notifies the ListDataListeners.
+          */
+        {
+          //appLogger.debug("TreeListModel.treeNodesChanged(..)");
+          if ( // Ignoring event if parent doesn't have our TreePath. 
+                !theTreePath.equals(theTreeModelEvent.getTreePath())
+                )
+            ; // Doing nothing.
+            else
+            { // Sending an equivalent ListModelEvent for each child in array.
+              for (int childI: theTreeModelEvent.getChildIndices()) {
+                fireContentsChanged(
+                    ListDataEvent.CONTENTS_CHANGED,
+                    childI,
+                    childI
+                    );
+                }
+              }
+          saveSizeV();
+          }
 
-	  // Miscellaneous.
+      public void treeStructureChanged(TreeModelEvent theTreeModelEvent) 
+        /* This method is implemented by calling fireContentsChanged(..)
+          for an interval which is the entire last known size of the List. 
+          
+          Implementing this by signaling removal of all elements,
+          then inserting all new ones would eliminate the need for lastSizeI
+          because one would still need to know it to know how many to remove.
+          */
+        {
+          fireContentsChanged(
+            ListDataEvent.CONTENTS_CHANGED,
+            0,
+            lastSizeI - 1
+            );
+          saveSizeV();
+           }
+
+    // Miscellaneous.
 
       private void saveSizeV()
         /* Saves last known list size.  See lastSizeI for more information.  */

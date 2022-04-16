@@ -2,7 +2,7 @@ package allClasses;
 
 public class SubcasterValue
 
-	extends DataNodeWithKeyAndThreadValue< Subcaster, String >
+  extends DataNodeWithKeyAndThreadValue< Subcaster, String >
   // 2 of 5 errors disappeared!  All disappeared when I did a Project/Clean.   
 
   {
@@ -12,13 +12,13 @@ public class SubcasterValue
         Subcaster theSubcaster
         )
       {
-    	  super( 
-    	  		theSubcaster,
-        		new EpiThread( 
-  		          theSubcaster,
-  		          "SubcasterValue-"+subcasterString
-  		          )
-    	  		);
+        super( 
+            theSubcaster,
+            new EpiThread( 
+                theSubcaster,
+                "SubcasterValue-"+subcasterString
+                )
+            );
         }
 
     }

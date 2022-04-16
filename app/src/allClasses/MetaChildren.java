@@ -55,7 +55,7 @@ public class MetaChildren
             if ( scanMetaNode == null ) // Exiting if no more candidates.
               break; 
             if  // Exiting if name Strings match.
-            	( scanMetaNode.compareNamesWithSubstitutionB( keyDataNode) )
+              ( scanMetaNode.compareNamesWithSubstitutionB( keyDataNode) )
               break; 
             childPiterator.nextE(); // Going to next candidate.
             }
@@ -128,7 +128,7 @@ public class MetaChildren
                 aListIteratorOfIDNumber,
                 inParentDataNode
                 );
-        	  
+            
             @SuppressWarnings("unchecked")
             ListIterator<MetaNode> aListIiteratorOfMetaNode=  // Caste it.
               (ListIterator<MetaNode>)
@@ -238,8 +238,8 @@ public class MetaChildren
             whether is has any of it's own attributes or not.
           */
         {
-      			boolean childrenPurgedB=  // Set default result of purge failure.
-      					false;
+            boolean childrenPurgedB=  // Set default result of purge failure.
+                false;
           toReturn: {
             Iterator < MetaNode > childIterator= 
               getLoadingListIteratorOfMetaNode( 
@@ -257,7 +257,7 @@ public class MetaChildren
           } // toSuccess:  and end loop.
             childrenPurgedB= true; // Override result for purge success.
           } // toReturn.
-      			return childrenPurgedB;  // Return whether all children were purged.
+            return childrenPurgedB;  // Return whether all children were purged.
           }
 
     } // class MetaChildren 

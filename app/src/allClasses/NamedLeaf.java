@@ -10,14 +10,22 @@ public class NamedLeaf
   
   {
 
-		public static NamedLeaf makeNamedLeaf( String nameString )
-			{
-				NamedLeaf theNamedLeaf= new NamedLeaf();
-				theNamedLeaf.setNameV( nameString );
+    public static NamedLeaf makeNamedLeaf( String nameString )
+      {
+        NamedLeaf theNamedLeaf= new NamedLeaf();
+        theNamedLeaf.setNameV( nameString );
 
-	  		return theNamedLeaf;
-	  		}
-	
+        return theNamedLeaf;
+        }
+
+
+    
+    
+    
+    
+    
+    
+    
     public boolean isLeaf( )
       // Make it clear: This is a leaf node, not a branch.
       {

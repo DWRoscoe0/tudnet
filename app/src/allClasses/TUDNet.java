@@ -62,12 +62,12 @@ import static allClasses.SystemSettings.NL;
 
 class TUDNet
 
-	{ // TUDNet
+  { // TUDNet
 
-	  public static void main(String[] argStrings) // This is app's entry point.
+    public static void main(String[] argStrings) // This is app's entry point.
 
-			/* This method is the app's entry point.  
-			  It does the following actions in the following order:
+      /* This method is the app's entry point.  
+        It does the following actions in the following order:
 
         * It prepares the AppLog logger for use first, 
           because many modules use it to log significant events.
@@ -75,39 +75,39 @@ class TUDNet
           so modules can access app settings.
         * ///ano It starts the JavaFX runtime next, so other modules can 
           use its GUI to report early anomalies to the user.
-	      * ///ano It creates and activates the app's BackupTerminator in case
-	        normal termination fails at shutdown.
-			  * It sets a default Exception handler for unhandled exceptions.
-			  * 
-			  * It constructs the AppFactory object.
-			  * It uses the AppFactory object to construct the App object.
-			  * It calls the App.runV() method,
-			    which does most of the work of this app.
-			    This method might or might not return, depending on
-			    how shutdown is done, but usually it returns.
-			  * If App.runV() does return, then main(.) does these additional actions:
-			    * It does some final logging about app termination.
+        * ///ano It creates and activates the app's BackupTerminator in case
+          normal termination fails at shutdown.
+        * It sets a default Exception handler for unhandled exceptions.
+        * 
+        * It constructs the AppFactory object.
+        * It uses the AppFactory object to construct the App object.
+        * It calls the App.runV() method,
+          which does most of the work of this app.
+          This method might or might not return, depending on
+          how shutdown is done, but usually it returns.
+        * If App.runV() does return, then main(.) does these additional actions:
+          * It does some final logging about app termination.
           * It finalizes the Persistent data module, 
             which saves changed data to non-volatile storage.
-			    * ///ano It triggers the BackupTerminator timer to force termination 
-			      in case normal termination doesn't happen after main(.) exits.  
-			      See BackupTerminator for details.
-			    * It returns to the JVM, which should then itself shut down,
-			      terminating the entire app and the process containing it.
+          * ///ano It triggers the BackupTerminator timer to force termination 
+            in case normal termination doesn't happen after main(.) exits.  
+            See BackupTerminator for details.
+          * It returns to the JVM, which should then itself shut down,
+            terminating the entire app and the process containing it.
 
-	      Exiting this method should cause process termination because
-	      all remaining threads should be either daemon threads
-	      which do not need to be terminated,
-	      or normal threads which should be in the process of terminating.
-	      When all normal threads have terminated, 
-	      it should trigger a JVM shutdown, unless that happened earlier.
-	      When the JVM shuts down, the app's process terminates,
-	      and app termination is complete.
-	      
-	      ///ano Unfortunately, for unknown reasons, 
-	      this app doesn't always terminate as it should. 
-	      Termination is forced in that case.
-	      See BackupTerminator for details about this.
+        Exiting this method should cause process termination because
+        all remaining threads should be either daemon threads
+        which do not need to be terminated,
+        or normal threads which should be in the process of terminating.
+        When all normal threads have terminated, 
+        it should trigger a JVM shutdown, unless that happened earlier.
+        When the JVM shuts down, the app's process terminates,
+        and app termination is complete.
+        
+        ///ano Unfortunately, for unknown reasons, 
+        this app doesn't always terminate as it should. 
+        Termination is forced in that case.
+        See BackupTerminator for details about this.
 
         Command line switches in method parameter argStrings
         are used to pass information from one app instance to another.  
@@ -139,9 +139,9 @@ class TUDNet
             Therefore it should be safe for the ancestor TUDNetStarter app
             to exit, which would cause the temporary directory to be deleted.
 
-			  */
+        */
 
-	    { // Beginning of the body of main(.).
+      { // Beginning of the body of main(.).
 
         theAppLog= new AppLog( // Prepare logger.
           new File(new File(System.getProperty("user.home")),Config.appString));
@@ -151,8 +151,8 @@ class TUDNet
         theAppLog.setPersistentV(thePersistent); // Add for conditional logging.
         String javaFXStartAnomalyString= ///ano Save to later report result of
           JavaFXGUI.startRuntimeAndReturnString(); // start of JavaFX runtime.
-	      BackupTerminator theBackupTerminator= ///ano 
-	          BackupTerminator.makeBackupTerminator(); ///ano
+        BackupTerminator theBackupTerminator= ///ano 
+            BackupTerminator.makeBackupTerminator(); ///ano
 
         theAppLog.info(true,"TUDNet.main() ======= APP IS STARTING =======");
 
@@ -163,13 +163,13 @@ class TUDNet
 
         CommandArgs theCommandArgs= new CommandArgs(argStrings);
         AppSettings.initializeV(TUDNet.class, theCommandArgs);
-	      AppFactory theAppFactory= new AppFactory(theCommandArgs, thePersistent);
-	      OuterApp theOuterApp= theAppFactory.getOuterApp();
-	      theOuterApp.runV();  // Run the app until shutdown.
-	        // This might not return if a shutdown is initiated by the JVM!
+        AppFactory theAppFactory= new AppFactory(theCommandArgs, thePersistent);
+        OuterApp theOuterApp= theAppFactory.getOuterApp();
+        theOuterApp.runV();  // Run the app until shutdown.
+          // This might not return if a shutdown is initiated by the JVM!
 
-	      // If here then shutdown was requested in App.runV() and it returned.
-	      thePersistent.finalizeV();  // Write any new or changed app properties.
+        // If here then shutdown was requested in App.runV() and it returned.
+        thePersistent.finalizeV();  // Write any new or changed app properties.
         BackupTerminator.logThreadsV(); ///ano Record threads active now.
         theAppLog.info(true,"TUDNet.main() ======== APP IS ENDING ========"
           + NL + "    by closing log file and exiting the main(.) method.");
@@ -177,8 +177,8 @@ class TUDNet
         theBackupTerminator.setTerminationUnderwayV(); ///ano Start exit timer.
           // while(true) {} ///ano Use this infinite loop to test above line.
 
-	      } // End of the body of main(.).
+        } // End of the body of main(.).
 
-		} // /TUDNet
+    } // /TUDNet
 
 // End of file.

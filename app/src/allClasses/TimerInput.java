@@ -10,42 +10,42 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class TimerInput
-	/* This class performs functions similar to java.util.Timer,
-	  such as the ability to call a Runnable's run() method,
-	  but also provides methods with which 
-	  the state of the timer can be tested.
-	  It can time only one interval at a time, but it can be reused.
-	  It's called TimerInput because it is meant to provide inputs to
-	  a thread or a state machine.
-	  There is a rescheduleB(.) method for doing exponential back-off.
+  /* This class performs functions similar to java.util.Timer,
+    such as the ability to call a Runnable's run() method,
+    but also provides methods with which 
+    the state of the timer can be tested.
+    It can time only one interval at a time, but it can be reused.
+    It's called TimerInput because it is meant to provide inputs to
+    a thread or a state machine.
+    There is a rescheduleB(.) method for doing exponential back-off.
 
-	  This class can use either java.util.Timer or 
-	  java.util.concurrent.ScheduledThreadPoolExecutor to do the timing.
-	  Lately the java.util.concurrent.ScheduledThreadPoolExecutor is being used.
-	  ///del java.util.Timer should be deleted.  It has been put off,
-	    because it involves replacing a lot of conditional code.
+    This class can use either java.util.Timer or 
+    java.util.concurrent.ScheduledThreadPoolExecutor to do the timing.
+    Lately the java.util.concurrent.ScheduledThreadPoolExecutor is being used.
+    ///del java.util.Timer should be deleted.  It has been put off,
+      because it involves replacing a lot of conditional code.
 
-	  If java.util.Timer is used, the run() method that is triggered 
-	  must return quickly or other events using the same Timer could be delayed.
+    If java.util.Timer is used, the run() method that is triggered 
+    must return quickly or other events using the same Timer could be delayed.
 
-		An earlier version of this class used LockAndSignal.notifyingV()
-	  in the run() method of TimerTask instances that it creates for quickness.
-	  This version does not have that guarantee.
+    An earlier version of this class used LockAndSignal.notifyingV()
+    in the run() method of TimerTask instances that it creates for quickness.
+    This version does not have that guarantee.
     
     ///enh Add ability to track total schedule and reschedule time
       since previous cancel so it can trigger on both retry interval times
       and interval total times.
 
-	  */
-	{	
-	  // Injected dependencies.
-	  private Timer theTimer= null; ///del
-	  private Runnable inputRunnable;
-	  private ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor= null;
+    */
+  {  
+    // Injected dependencies.
+    private Timer theTimer= null; ///del
+    private Runnable inputRunnable;
+    private ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor= null;
 
-		// Other (non-injected) variables.
+    // Other (non-injected) variables.
 
-	  // Common variables
+    // Common variables
     private boolean inputArrivedB= false; 
     private long lastDelayUsedMsL= 0;
     private boolean enabledB= true;
@@ -143,14 +143,14 @@ public class TimerInput
       { 
         return inputArrivedB; 
         }
-	
-	  public synchronized void scheduleV( long delayMsL )
-	    /* Schedules this timer for input activation 
-	      after delayMsL milliseconds.
-	      If this timer object is already scheduled or active 
-	      then the old scheduled activation is cancelled first.
-	     */
-	    {
+  
+    public synchronized void scheduleV( long delayMsL )
+      /* Schedules this timer for input activation 
+        after delayMsL milliseconds.
+        If this timer object is already scheduled or active 
+        then the old scheduled activation is cancelled first.
+       */
+      {
         if (delayMsL <= 0)
           theAppLog.warning( "TimerInput.schedule(..) non-positive delay!" );
 
@@ -159,18 +159,18 @@ public class TimerInput
           {
             theAppLog.debug("TimerInput.schedule("
                 + delayMsL + ") using Timer." );
-    	    	ourTimerTask= new TimerTask() {
-    	        public void run()
-    	          // Our Runnable method to process triggering of the timer.
-    		        {
-    	        		if (enabledB) // Unless disabled for debug tracing,...
-      	        		{ // Take appropriate triggered action.
-    	        		    inputArrivedB= true;  // Record that end time has arrived.
-      	        		  inputRunnable.run(); // Run user handler Runnable's run().
-      	        		  }
-    		          }
-    	    		};
-    	    	theTimer.schedule(ourTimerTask, delayMsL);
+            ourTimerTask= new TimerTask() {
+              public void run()
+                // Our Runnable method to process triggering of the timer.
+                {
+                  if (enabledB) // Unless disabled for debug tracing,...
+                    { // Take appropriate triggered action.
+                      inputArrivedB= true;  // Record that end time has arrived.
+                      inputRunnable.run(); // Run user handler Runnable's run().
+                      }
+                  }
+              };
+            theTimer.schedule(ourTimerTask, delayMsL);
             }
           else
           {
@@ -191,27 +191,27 @@ public class TimerInput
               );
             }
         lastDelayUsedMsL= delayMsL;
-	    	}
+        }
 
-	  public synchronized boolean rescheduleB( long maxDelayMsL )
-	    /* Reschedules this timer for input activation using 
-	      exponential back-off, doubling the previous delay used,
-	      but not greater than maxDelayMsl.
-	      Otherwise, it works like scheduleV(.).
-	      Returns true if maximum delay was exceeded, false otherwise.
-	      If the limit is exceeded then it does not schedule the timer,
-	      and instead cancels the present timer input. 
-	     */
-	    {
-	  	  long theDelayMsL= 2 * lastDelayUsedMsL; // Double previous delay.
-	  	  boolean limitedExceededB= // Calculate whether maximum exceeded.
-	  	  		(theDelayMsL > maxDelayMsL);
-	  	  if (!limitedExceededB) // Schedule timer if limit is not exceeded.
-	  	    scheduleV(theDelayMsL); // Schedule using result.
-	  	    else
-	  	    cancelingV(); // otherwise cancel existing input.
-	  	  return limitedExceededB;
-	    	}
+    public synchronized boolean rescheduleB( long maxDelayMsL )
+      /* Reschedules this timer for input activation using 
+        exponential back-off, doubling the previous delay used,
+        but not greater than maxDelayMsl.
+        Otherwise, it works like scheduleV(.).
+        Returns true if maximum delay was exceeded, false otherwise.
+        If the limit is exceeded then it does not schedule the timer,
+        and instead cancels the present timer input. 
+       */
+      {
+        long theDelayMsL= 2 * lastDelayUsedMsL; // Double previous delay.
+        boolean limitedExceededB= // Calculate whether maximum exceeded.
+            (theDelayMsL > maxDelayMsL);
+        if (!limitedExceededB) // Schedule timer if limit is not exceeded.
+          scheduleV(theDelayMsL); // Schedule using result.
+          else
+          cancelingV(); // otherwise cancel existing input.
+        return limitedExceededB;
+        }
 
     public synchronized long getLastDelayMsL()
       /* Returns the last delay set in this timer. 
@@ -219,33 +219,33 @@ public class TimerInput
       {
         return lastDelayUsedMsL;
         }
-	
-	  public synchronized void cancelingV()
-	    /* Cancels future generation of a timer input.
-	      This will cancel both inputs that have been scheduled
-	      but not yet arrived, and inputs that have arrived.
-	
-	      An earlier version returned true if cancellation was successful, 
-	      false otherwise, but it could not be trusted.
-	      */
-	    {
-	      if (null != theTimer)
-  	      {
-    	  		if (ourTimerTask != null) // Handling timer created and scheduled.
-      	    	{
-    	  				inputArrivedB= false; // Erasing any arrived input.
-    	    			ourTimerTask.cancel(); // Canceling timer.
-    			    	ourTimerTask= null; // Recording as not created and scheduled.
-    	    			}
-    	      }
-	        else
-      	  {
+  
+    public synchronized void cancelingV()
+      /* Cancels future generation of a timer input.
+        This will cancel both inputs that have been scheduled
+        but not yet arrived, and inputs that have arrived.
+  
+        An earlier version returned true if cancellation was successful, 
+        false otherwise, but it could not be trusted.
+        */
+      {
+        if (null != theTimer)
+          {
+            if (ourTimerTask != null) // Handling timer created and scheduled.
+              {
+                inputArrivedB= false; // Erasing any arrived input.
+                ourTimerTask.cancel(); // Canceling timer.
+                ourTimerTask= null; // Recording as not created and scheduled.
+                }
+            }
+          else
+          {
             inputArrivedB= false; // Erasing any arrived input.
             if (null != outputFuture) {
               outputFuture.cancel(true);
               outputFuture= null;
               }
             }
-	    	}	 
-	
-		} // class TimerInput
+        }   
+  
+    } // class TimerInput

@@ -16,27 +16,27 @@ class StreamConsumer extends Thread
    This class might no longer be used now that
    output is being logged to a file by methods in the Misc class.
    */
-	{
-	  InputStream is;
-	  String NameString;
-	  
-	  // reads everything from is until empty. 
-	  StreamConsumer(InputStream is, String NameString) {
-	      this.is = is;
-	      this.NameString= NameString;
-	  }
-	
-	  public void run() {
-	      try {
-	          InputStreamReader isr = new InputStreamReader(is);
-	          BufferedReader br = new BufferedReader(isr);
-	          String line=null;
-	          while ( (line = br.readLine()) != null)
-	              System.out.println(NameString+":"+line);    
-	      } catch (IOException ioe) {
-	          ioe.printStackTrace();  
-	      }
-	  }
-	}
+  {
+    InputStream is;
+    String NameString;
+    
+    // reads everything from is until empty. 
+    StreamConsumer(InputStream is, String NameString) {
+        this.is = is;
+        this.NameString= NameString;
+    }
+  
+    public void run() {
+        try {
+            InputStreamReader isr = new InputStreamReader(is);
+            BufferedReader br = new BufferedReader(isr);
+            String line=null;
+            while ( (line = br.readLine()) != null)
+                System.out.println(NameString+":"+line);    
+        } catch (IOException ioe) {
+            ioe.printStackTrace();  
+        }
+    }
+  }
 
 

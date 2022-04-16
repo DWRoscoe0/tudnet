@@ -179,8 +179,8 @@ public class MetaNode extends IDNumber
     // Iterator factory methods.
 
       KeyMetaPiteratorOfMetaNode makeKeyMetaPiteratorOfMetaNode( 
-      		String inKeyString 
-      		)
+          String inKeyString 
+          )
         /* This method makes and returns a KeyMetaPiteratorOfMetaNode
           for iterating through the attributes of this MetaNode
           searching for an attribute with key inKeyString.
@@ -209,7 +209,7 @@ public class MetaNode extends IDNumber
               makeKeyMetaPiteratorOfMetaNode( inKeyString );
 
           return  // Return first child which has the desired key.
-          		childKeyMetaPiteratorOfMetaNode.getE(); 
+              childKeyMetaPiteratorOfMetaNode.getE(); 
           }
 
       MetaNode getChildWithAttributeMetaNode
@@ -297,21 +297,21 @@ public class MetaNode extends IDNumber
           then it replaces the UnknownDataNode with inDataNode. 
           */
         {
-      	  DataNode thisDataNode= getDataNode();
-  	  		String thisString =thisDataNode.getNameString( ); 
-  	  		String inString =inDataNode.getNameString( );
-      	  boolean matchB= // Determining whether names match.
-      	  		thisString.equals( inString ); 
-      	  if ( matchB )  // Attempting DataNode substitution if match.
-      	  	if // Substitute if it's a temporary UnknownDataNode.  
-      	  	  ( UnknownDataNode.isOneB( thisDataNode ))
-      	  	  this.theDataNode= inDataNode;
-      	  return matchB;
+          DataNode thisDataNode= getDataNode();
+          String thisString =thisDataNode.getNameString( ); 
+          String inString =inDataNode.getNameString( );
+          boolean matchB= // Determining whether names match.
+              thisString.equals( inString ); 
+          if ( matchB )  // Attempting DataNode substitution if match.
+            if // Substitute if it's a temporary UnknownDataNode.  
+              ( UnknownDataNode.isOneB( thisDataNode ))
+              this.theDataNode= inDataNode;
+          return matchB;
           }
 
       boolean eliminateAndTestForUnknownDataNodeB( 
-      		MetaTool parentHoldingMetaTool
-      		)
+          MetaTool parentHoldingMetaTool
+          )
         /* This method replaces an UnknownDataNode,
           if present, in this MetaNode, with a valid DataNode.
           It assumes that parentHoldingMetaTool references
@@ -323,23 +323,23 @@ public class MetaNode extends IDNumber
           false otherwise.
           */
         {
-      	  boolean resultB= false; // Assuming UnknownDataNode will be gone.
+          boolean resultB= false; // Assuming UnknownDataNode will be gone.
 
-    	  	if // Replacing UnknownDataNode if present.  
-	  	  	  ( UnknownDataNode.isOneB( theDataNode ))
-	    	  	{ // Replacing UnknownDataNode if replacement exists.
-    	  			String unknownDataNodeString= theDataNode.getNameString( );
-        	  	DataNode parentDataNode=
-        	  			parentHoldingMetaTool.getMetaNode().theDataNode;  
-            	DataNode replacementDataNode= // Searching for name match.
-            			parentDataNode.getNamedChildDataNode( unknownDataNodeString );
-    	  		  if ( replacementDataNode != null ) // Replacing if match found.
-    	  		    theDataNode= replacementDataNode; // Replacing.
-    	  		  	else
-    	  		    resultB= true; // Indicating UknownDataNode remains.
-    	  		  }
+          if // Replacing UnknownDataNode if present.  
+            ( UnknownDataNode.isOneB( theDataNode ))
+            { // Replacing UnknownDataNode if replacement exists.
+              String unknownDataNodeString= theDataNode.getNameString( );
+              DataNode parentDataNode=
+                  parentHoldingMetaTool.getMetaNode().theDataNode;  
+              DataNode replacementDataNode= // Searching for name match.
+                  parentDataNode.getNamedChildDataNode( unknownDataNodeString );
+              if ( replacementDataNode != null ) // Replacing if match found.
+                theDataNode= replacementDataNode; // Replacing.
+                else
+                resultB= true; // Indicating UknownDataNode remains.
+              }
 
-    	  	return resultB;
+          return resultB;
           }
 
     } // class MetaNode.

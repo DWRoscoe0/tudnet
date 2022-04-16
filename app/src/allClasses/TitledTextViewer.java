@@ -76,15 +76,15 @@ public class TitledTextViewer
 
 
       private void CommonInitialization( 
-      		TreePath theTreePath, 
-      		TreeModel theTreeModel
-      		)
+          TreePath theTreePath, 
+          TreeModel theTreeModel
+          )
         /* This grouping method creates and initializes the JTextArea.  */
         { // CommonInitialization( )
           if ( theTreePath == null )  // prevent null TreePath.
-          	theTreePath = new TreePath( 
-          			NamedLeaf.makeNamedLeaf( "ERROR TreePath" )
-          			);
+            theTreePath = new TreePath( 
+                NamedLeaf.makeNamedLeaf( "ERROR TreePath" )
+                );
 
           theTreeHelper=  // construct helper class instance.
             new MyTreeHelper( 
@@ -102,11 +102,11 @@ public class TitledTextViewer
           titleJLabel.setOpaque( true );
           Font labelFont= titleJLabel.getFont();
           titleJLabel.setFont( 
-          		labelFont.deriveFont( labelFont.getSize() * 1.5f) );
+              labelFont.deriveFont( labelFont.getSize() * 1.5f) );
           //titleJLabel.setAlignmentX( Component.CENTER_ALIGNMENT );
           titleJLabel.setHorizontalAlignment( SwingConstants.CENTER );
           Border raisedetched= 
-          		BorderFactory.createEtchedBorder(EtchedBorder.RAISED);
+              BorderFactory.createEtchedBorder(EtchedBorder.RAISED);
           titleJLabel.setBorder(raisedetched);
           add(titleJLabel,BorderLayout.NORTH); // Adding it to main JPanel.
 
@@ -124,49 +124,49 @@ public class TitledTextViewer
       The only method which is handled is treeNodesChanged(..),
       which is used to indicate that the JTextArea needs to be updated,
       and only if the tree changes is associated with the displayed DataNode.
-     	*/
+       */
 
-	    public void treeNodesInserted(TreeModelEvent theTreeModelEvent)
-      	{ } // Ignoring.
+      public void treeNodesInserted(TreeModelEvent theTreeModelEvent)
+        { } // Ignoring.
 
-	    public void treeNodesRemoved(TreeModelEvent theTreeModelEvent)
-      	{ } // Ignoring.
+      public void treeNodesRemoved(TreeModelEvent theTreeModelEvent)
+        { } // Ignoring.
 
-	    public void treeNodesChanged(TreeModelEvent theTreeModelEvent) 
-	      /* Translates theTreeModelEvent reporting a DataNode change into 
-		      replacing the JTextArea text.
-		      */
-	      {
-	    		//appLogger.debug("TitledTextViewer.treeNodesChanged(..)");
-	    		if ( // Ignoring event if event parent path isn't our parent path. 
-	    	      	!theTreeHelper.getWholeTreePath().getParentPath().equals(
-	    	      			theTreeModelEvent.getTreePath()
-	    	      			)
-	    	      	)
-	    	  	; // Ignoring.
-	    	  else // Updating TextArea if it shows any (the) event child DataNode.
-	          for 
-		          ( Object childObject: theTreeModelEvent.getChildren() )
-	          	{ // Updating TextArea if it shows this event child DataNode.
-	          	  if ( childObject == theTreeHelper.getWholeDataNode() )
-	  	    	  		theIJTextArea.replaceRange(
-	  	    	  				((DataNode)childObject).getContentString(),
-	  	    	  			  0,
-	  	    	  				theIJTextArea.getText().length()
-	  	    	  			  );
-	          		}
-	    	  }
+      public void treeNodesChanged(TreeModelEvent theTreeModelEvent) 
+        /* Translates theTreeModelEvent reporting a DataNode change into 
+          replacing the JTextArea text.
+          */
+        {
+          //appLogger.debug("TitledTextViewer.treeNodesChanged(..)");
+          if ( // Ignoring event if event parent path isn't our parent path. 
+                !theTreeHelper.getWholeTreePath().getParentPath().equals(
+                    theTreeModelEvent.getTreePath()
+                    )
+                )
+            ; // Ignoring.
+          else // Updating TextArea if it shows any (the) event child DataNode.
+            for 
+              ( Object childObject: theTreeModelEvent.getChildren() )
+              { // Updating TextArea if it shows this event child DataNode.
+                if ( childObject == theTreeHelper.getWholeDataNode() )
+                  theIJTextArea.replaceRange(
+                      ((DataNode)childObject).getContentString(),
+                      0,
+                      theIJTextArea.getText().length()
+                      );
+                }
+          }
 
-	    public void treeStructureChanged(TreeModelEvent theTreeModelEvent)
-	    	{ } // Ignoring.
+      public void treeStructureChanged(TreeModelEvent theTreeModelEvent)
+        { } // Ignoring.
     
       // End of TreeModelListener interface methods.
 
     // TreeAware interface code for TreeHelper access.
 
-			public TreeHelper theTreeHelper;
+      public TreeHelper theTreeHelper;
 
-			public TreeHelper getTreeHelper() { return theTreeHelper; }
+      public TreeHelper getTreeHelper() { return theTreeHelper; }
 
     class MyTreeHelper  // TreeHelper customization subclass.
 

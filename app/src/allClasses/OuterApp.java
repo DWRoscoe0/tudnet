@@ -47,8 +47,8 @@ public class OuterApp { // The outer part of app, with a very limited UI.
       TCPCopier theTCPCopier
       )
     {
-  		this.theAppFactory= theAppFactory;
-  	  this.thePersistent= thePersistent; 
+      this.theAppFactory= theAppFactory;
+      this.thePersistent= thePersistent; 
       this.theShutdowner= theShutdowner;
       this.theAppInstanceManager= theAppInstanceManager;
       this.theTCPCopier= theTCPCopier;
@@ -64,18 +64,18 @@ public class OuterApp { // The outer part of app, with a very limited UI.
      */
     {
       // OuterApp initialization.
-  		theAppLog.info("OuterApp.run() begins.");
-  	  defineRootIdV();
-			theShutdowner.initializeV();
+      theAppLog.info("OuterApp.run() begins.");
+      defineRootIdV();
+      theShutdowner.initializeV();
 
-			theAppInstanceManager.initializeV();
+      theAppInstanceManager.initializeV();
 
-			delegateOrDoV(); // Actually do some work until shutdown requested.
+      delegateOrDoV(); // Actually do some work until shutdown requested.
 
       // OuterApp shutdown.
       theAppLog.info("OuterApp.run() shutting down.");
       theAppInstanceManager.finalizeV();
-  		//appLogger.info("OuterApp calling Shutdowner.finishV().");
+      //appLogger.info("OuterApp calling Shutdowner.finishV().");
       theShutdowner.finishAppShutdownV();  // Doing final app shutdown jobs.
         // This might not return if shutdown began in the JVM. 
       theAppLog.setBufferedModeV( 
@@ -104,21 +104,21 @@ public class OuterApp { // The outer part of app, with a very limited UI.
       * This might not be a one-time operation
       * It requires user interaction anyway for saving a copy of 
         the private key.
-     	*/
-	  {
-	    String nodeIdentyString= 
-	    		thePersistent.getRootMapEpiNode().getEmptyOrString(
-	    		    Config.userIdString);
-	    if ( ! nodeIdentyString.isEmpty() ) {
-	    	  ; // Do nothing because identity is already defined.
-	    	} else { // Define and store identity.
-	    		Random theRandom= new Random();  // Construct random # generator.
+       */
+    {
+      String nodeIdentyString= 
+          thePersistent.getRootMapEpiNode().getEmptyOrString(
+              Config.userIdString);
+      if ( ! nodeIdentyString.isEmpty() ) {
+          ; // Do nothing because identity is already defined.
+        } else { // Define and store identity.
+          Random theRandom= new Random();  // Construct random # generator.
           theRandom.setSeed( System.currentTimeMillis() ); // Seed with time.
-	    		BigInteger identityBigInteger= new BigInteger(256, theRandom);
-	    		thePersistent.getRootMapEpiNode().putV(
-	    		    Config.userIdString, ""+identityBigInteger);
-	    	}
-	  	}
+          BigInteger identityBigInteger= new BigInteger(256, theRandom);
+          thePersistent.getRootMapEpiNode().putV(
+              Config.userIdString, ""+identityBigInteger);
+        }
+      }
 
   private void delegateOrDoV()
     /* This method calls the theAppInstanceManager,
@@ -128,15 +128,15 @@ public class OuterApp { // The outer part of app, with a very limited UI.
       to interact with the user and do various other things
       until a shutdown is requested, then it exits.
       */
-  	{
-		  if ( theAppInstanceManager.tryDelegatingToAnotherAppInstanceB() )
-		    ; // Do nothing because delegation succeeded and shutdown is requested.
-		    else
-		    { // Delegation failed.  Present inner app UI to user and interacting.
-		  	  InnerApp theInnerApp= theAppFactory.getInnerApp();
-		      theInnerApp.runV(); // Running inner app until shutdown is requested.
-		      	// Network operations happen at this time also.
-		      }
-	  	}
+    {
+      if ( theAppInstanceManager.tryDelegatingToAnotherAppInstanceB() )
+        ; // Do nothing because delegation succeeded and shutdown is requested.
+        else
+        { // Delegation failed.  Present inner app UI to user and interacting.
+          InnerApp theInnerApp= theAppFactory.getInnerApp();
+          theInnerApp.runV(); // Running inner app until shutdown is requested.
+            // Network operations happen at this time also.
+          }
+      }
 
   } // class OuterApp.

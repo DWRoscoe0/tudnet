@@ -14,7 +14,7 @@ import static allClasses.SystemSettings.NL;
 
 public class NamedList
 
-	extends NamedBranch
+  extends NamedBranch
 
   { // Beginning of class NamedList.
   
@@ -46,7 +46,7 @@ public class NamedList
       */
 
 
-		// Instance variables.
+    // Instance variables.
 
     protected MultiLink<DataNode> childMultiLinkOfDataNodes /* The children. */
       = new ListMultiLink<DataNode>(); // Set the List of children to empty.
@@ -105,10 +105,10 @@ public class NamedList
       ///fix? This needs to initialize parent references?
       */
     {
-  		super.setNameV( nameString );
+      super.setNameV( nameString );
 
-  		for ( DataNode childDataNode : childDataNodes) // For each new child
-  			addAtEndV( childDataNode ); // append child to list.
+      for ( DataNode childDataNode : childDataNodes) // For each new child
+        addAtEndV( childDataNode ); // append child to list.
       }
 
 
@@ -229,59 +229,59 @@ public class NamedList
         return resultB;
         }
 
-	  public synchronized boolean addB(  // Add at index. 
-	  		final int requestedIndexI, final DataNode childDataNode 
-	  		)
-	    /* This method tries to add childDataNode to 
-	     * this DataNode's list of child DataNodes.
-	     * If childDataNode is already in the list
-	     * then this method changes nothing and returns false,
-	     * otherwise it adds childDataNode to the list and returns true.
-	     * The childDataNode is added at index position requestedIndexI,
-	     * or the end of the list if requestedIndexI < 0.
-	     * 
-	     * If childDataNode is actually added then:
-	     * 
-	     * * This method notifies all interested listeners about the addition.
-	     * 
-	     * * This method makes the following adjustments to childDataNode:
-	     *   * It stores this DataNode as childDataNode's parent node.
+    public synchronized boolean addB(  // Add at index. 
+        final int requestedIndexI, final DataNode childDataNode 
+        )
+      /* This method tries to add childDataNode to 
+       * this DataNode's list of child DataNodes.
+       * If childDataNode is already in the list
+       * then this method changes nothing and returns false,
+       * otherwise it adds childDataNode to the list and returns true.
+       * The childDataNode is added at index position requestedIndexI,
+       * or the end of the list if requestedIndexI < 0.
+       * 
+       * If childDataNode is actually added then:
+       * 
+       * * This method notifies all interested listeners about the addition.
+       * 
+       * * This method makes the following adjustments to childDataNode:
+       *   * It stores this DataNode as childDataNode's parent node.
        *   * It propagates theDataTreeModel into the childDataNode,
        *     and its descendants if necessary.
-	     *  
-	     * These operations are done in a thread-safe manner
-	     * by being synchronized and using synchronized methods.
-	     * The EDT thread might not be involved at all.
-	     */
-	    {
+       *  
+       * These operations are done in a thread-safe manner
+       * by being synchronized and using synchronized methods.
+       * The EDT thread might not be involved at all.
+       */
+      {
         // theAppLog.debug("NamedList.addB(int,DataNode) to "
         //     + this + " at index "+requestedIndexI+" node "+childDataNode);
-	  		final boolean successB; 
-	  		final DataNode parentDataNode= this; // Because vars must be final.
-	  	  int searchIndexI=  // Searching for child by getting its index. 
-		    	  getIndexOfChild( childDataNode );
-    	  if ( searchIndexI != -1) // Add child if not already in list.
-    	    { // Not in list.
+        final boolean successB; 
+        final DataNode parentDataNode= this; // Because vars must be final.
+        int searchIndexI=  // Searching for child by getting its index. 
+            getIndexOfChild( childDataNode );
+        if ( searchIndexI != -1) // Add child if not already in list.
+          { // Not in list.
             // theAppLog.debug("NamedList.addB(int,DataNode): FAIL");
-    	      successB= false; // Returning add failure.
-    	      }
-    	  	else // Child was not found in list.
-	    	  { // Adding to List because it's not there yet.
+            successB= false; // Returning add failure.
+            }
+          else // Child was not found in list.
+          { // Adding to List because it's not there yet.
             childDataNode.propagateTreeModelIntoSubtreeV( theDataTreeModel );
             childDataNode.setTreeParentToV( this ); // Set child's parent link.
-	    	  	int actualIndexI= // Converting 
-	    	  			(requestedIndexI < 0) // requested index < 0 
-	    	  			? childMultiLinkOfDataNodes.getCountI() // to mean end of list,
-            	  : requestedIndexI; // otherwise use requested index.
+            int actualIndexI= // Converting 
+                (requestedIndexI < 0) // requested index < 0 
+                ? childMultiLinkOfDataNodes.getCountI() // to mean end of list,
+                : requestedIndexI; // otherwise use requested index.
             childMultiLinkOfDataNodes.addV( // Insert child at correct spot.
                 actualIndexI, childDataNode );
             DataNode.signalInsertionV( // Notify interested listeners about add.
                 parentDataNode, actualIndexI, childDataNode );
             // theAppLog.debug("NamedList.addB(int,DataNode): success");
             successB= true; // Returning add success.
-    	  	  }
-	  		return successB; // Returning whether add succeeded.
-	      }
+            }
+        return successB; // Returning whether add succeeded.
+        }
 
     
     // Scanning/visiting method.
@@ -312,7 +312,7 @@ public class NamedList
 
     // Child getting methods.'
 
-	  // Child DataNode getter methods.
+    // Child DataNode getter methods.
  
     @Override 
     public DataNode getChild( int indexI ) 
@@ -339,33 +339,33 @@ public class NamedList
         }
 
 
-	  ///dbg Debug methods.
+    ///dbg Debug methods.
 
-  	protected void logNullDataTreeModelsV()  ///dbg
-  	  /* Recursively checks for null TreeModel in node and ancestors.
-  	   */
-  	  {
-  		  toReturn: {
-	  		  if (theDataTreeModel != null) {
-			  		theAppLog.debug(
-			  				"checkForNullDataTreeModelV() theDataTreeModel != null in:" + NL
-			  				+ this);
-	  		  	break toReturn;
-	  		  	}
-	  		  
-	  		  if ( getTreeParentNamedList() == null ) { 
-			  		theAppLog.debug(
-			  				"checkForNullDataTreeModelV() parentNamedList == null in:" + NL
-			  				+ this);
-	  		  	break toReturn;
-		  		  }
+    protected void logNullDataTreeModelsV()  ///dbg
+      /* Recursively checks for null TreeModel in node and ancestors.
+       */
+      {
+        toReturn: {
+          if (theDataTreeModel != null) {
+            theAppLog.debug(
+                "checkForNullDataTreeModelV() theDataTreeModel != null in:" + NL
+                + this);
+            break toReturn;
+            }
+          
+          if ( getTreeParentNamedList() == null ) { 
+            theAppLog.debug(
+                "checkForNullDataTreeModelV() parentNamedList == null in:" + NL
+                + this);
+            break toReturn;
+            }
 
-		  		theAppLog.debug(
-		  				"checkForNullDataTreeModelV() "
-		  				+ "theDataTreeModel == null and  parentNamedList != null in:" + NL
-		  				+ this);
-	  		  getTreeParentNamedList().logNullDataTreeModelsV(); // Recurs for ancestors.
-  				} // toReturn:
-  	  	}
+          theAppLog.debug(
+              "checkForNullDataTreeModelV() "
+              + "theDataTreeModel == null and  parentNamedList != null in:" + NL
+              + this);
+          getTreeParentNamedList().logNullDataTreeModelsV(); // Recurs for ancestors.
+          } // toReturn:
+        }
 
     } // class NamedList

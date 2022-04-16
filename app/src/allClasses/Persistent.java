@@ -17,9 +17,9 @@ import static allClasses.SystemSettings.NL;
 
 public class Persistent 
 
-	/* This class implements persistent data for an app.  It is stored in 2 ways:
+  /* This class implements persistent data for an app.  It is stored in 2 ways:
 
-	  * It is stored in main memory as a tree of EpiNode instances
+    * It is stored in main memory as a tree of EpiNode instances
 
     * It is stored on non-volatile external storage as a text file.
       EpiNode data is expressed in a YAML subset.
@@ -29,28 +29,28 @@ public class Persistent
     * a MapEpiNode, a nested map of key-value pairs, 
       with each value being another node.
 
-	  Unlike MapEpiNode, which does not understand paths within a tree, 
-	  this class does.
+    Unlike MapEpiNode, which does not understand paths within a tree, 
+    this class does.
 
-	  However the internal use of paths 
-	  to identify persistent data has been deprecated. 
+    However the internal use of paths 
+    to identify persistent data has been deprecated. 
     Although some multiple element path capability exists, 
     it is not presently used,
     meaning that paths parameter are all single element map keys.
 
     If paths are ever used again:
 
-		  A path can be:
-  		* relative to a given map node, or
-  		* absolute, meaning relative to the root map node.
+      A path can be:
+      * relative to a given map node, or
+      * absolute, meaning relative to the root map node.
 
-  		A path expressed as a String is a list of elements separated by a "/".
-  		A path can contain 0, 1, 2, or more elements.
+      A path expressed as a String is a list of elements separated by a "/".
+      A path can contain 0, 1, 2, or more elements.
 
-  	  In earlier versions of this class, "key" was synonymous with "full path".
-  	  Now "key" is only a single element of a path.
+      In earlier versions of this class, "key" was synonymous with "full path".
+      Now "key" is only a single element of a path.
 
-  	  A path does not end in a slash.  A prefix ends in a slash.
+      A path does not end in a slash.  A prefix ends in a slash.
 
     ///opt Paths used internally might eventually be eliminated completely.
 
@@ -66,27 +66,27 @@ public class Persistent
     When all references to these service methods have been eliminated,
     the methods will be removed from this class. 
 
-	 	*/
+     */
 
-	{
-		private MapEpiNode rootMapEpiNode= null; // Root of tree data to persist.
+  {
+    private MapEpiNode rootMapEpiNode= null; // Root of tree data to persist.
 
 
-		// Initialization and loading methods.
+    // Initialization and loading methods.
 
-	  public Persistent initializePersistent()
-	    /* This method loads the persistent data from an external file.
-	      It also does some temporary data conversions and extra file outputs
-	      as part of the conversion from PersistentNode data to EpiNode data. 
-	      It returns a reference to the initialized Persistent instance.
+    public Persistent initializePersistent()
+      /* This method loads the persistent data from an external file.
+        It also does some temporary data conversions and extra file outputs
+        as part of the conversion from PersistentNode data to EpiNode data. 
+        It returns a reference to the initialized Persistent instance.
 
-	      It is possible to eliminate this method, 
-	      and trigger things by lazy loading,
-	      triggered by the first call that needs theMap variable defined.
-	      But because finalizeV() must be called to write any changes,
-	      we might as well just call initializeV() as well.
-	      */
-	    {
+        It is possible to eliminate this method, 
+        and trigger things by lazy loading,
+        triggered by the first call that needs theMap variable defined.
+        But because finalizeV() must be called to write any changes,
+        we might as well just call initializeV() as well.
+        */
+      {
         rootMapEpiNode=  // Translate external text to internal EpiNodes
           loadMapEpiNode(Config.persistentFileString); // by loading text file.
 
@@ -97,7 +97,7 @@ public class Persistent
         updateFormatV();
         
         return this;
-	  	  }
+        }
 
     private void updateFormatV()
       /* This method was created to deal with 
@@ -376,5 +376,5 @@ public class Persistent
         return rootMapEpiNode;
         }
 
-	}
+  }
 

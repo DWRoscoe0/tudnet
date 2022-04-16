@@ -163,61 +163,61 @@ public class Shutdowner
       // This is needed to detect re-entry because testing and waiting 
       // clear the appShutdownRequestedLockAndSignal notification flag.
     
-	  private LockAndSignal appShutdownRequestedLockAndSignal=
-	  		new LockAndSignal(); // This is signaled when shutdown is requested.
-	      // It is signaled by Shutdowner.requestAppShutdownV()
-	      // It is waited-for by Shutdowner.waitForAppShutdownRequestedV()
-	      // A shutdown can be triggered by either the JVM shutdown hook or 
-	      // an app request.
-	  
-	  private LockAndSignal appShutdownDoneLockAndSignal= 
-	  		new LockAndSignal(); // This is signaled when shutdown is complete.
-	      // It means all app shutdown actions, excluding JVM, are done.
-	      // It is signaled by Shutdowner.finishAppShutdownV().
-	      // It is waited-for by ShutdownHook.run().
+    private LockAndSignal appShutdownRequestedLockAndSignal=
+        new LockAndSignal(); // This is signaled when shutdown is requested.
+        // It is signaled by Shutdowner.requestAppShutdownV()
+        // It is waited-for by Shutdowner.waitForAppShutdownRequestedV()
+        // A shutdown can be triggered by either the JVM shutdown hook or 
+        // an app request.
+    
+    private LockAndSignal appShutdownDoneLockAndSignal= 
+        new LockAndSignal(); // This is signaled when shutdown is complete.
+        // It means all app shutdown actions, excluding JVM, are done.
+        // It is signaled by Shutdowner.finishAppShutdownV().
+        // It is waited-for by ShutdownHook.run().
 
-	  private String[] exitProcessStrings= null; // To execute before exit.
+    private String[] exitProcessStrings= null; // To execute before exit.
 
     private Long starterPortLong= 0L; // For feedback to our starter process.
       ///ehn Is this needed?  Not if CommandArgs are preserved.
-	  
-	  public void initializeV() // Prepares ShutdownHook as shutdown hook.
-		  {
-	      Runtime.getRuntime().addShutdownHook(
-	      		new ShutdownHook("ShutDwn")
-	      		); // Adding...
-	        // ...it to Runtime to be run at shut-down time.
-		    }
+    
+    public void initializeV() // Prepares ShutdownHook as shutdown hook.
+      {
+        Runtime.getRuntime().addShutdownHook(
+            new ShutdownHook("ShutDwn")
+            ); // Adding...
+          // ...it to Runtime to be run at shut-down time.
+        }
 
     class ShutdownHook  // To allow the JVM to terminate this app.
-	    extends Thread
-	    /* This nested shutdown hook Thread's run() method
-	      is started when JVM shutdown is underway.
-	      It requests or re-requests app shutdown.
-	      Next it waits for the app to signal completion of its shutdown. 
-	      Then this thread ends.
-	      */
-	    { // ShutdownHook
-	      
-    	  public ShutdownHook( String nameString ) // Constructor.
-    	  	{ super( nameString ); }
-    	  
-	      public void run()
-	        // This method runs when the JVM's shutdown hook thread activates. 
-	        {
-	      		theAppLog.info( 
-	      				"ShutdownHook.run() beginning, "
-	      				+ "calling requestAppShutdownV() on behalf of JVM." 
-	      				);
-	      		requestAppShutdownV();
+      extends Thread
+      /* This nested shutdown hook Thread's run() method
+        is started when JVM shutdown is underway.
+        It requests or re-requests app shutdown.
+        Next it waits for the app to signal completion of its shutdown. 
+        Then this thread ends.
+        */
+      { // ShutdownHook
+        
+        public ShutdownHook( String nameString ) // Constructor.
+          { super( nameString ); }
+        
+        public void run()
+          // This method runs when the JVM's shutdown hook thread activates. 
+          {
+            theAppLog.info( 
+                "ShutdownHook.run() beginning, "
+                + "calling requestAppShutdownV() on behalf of JVM." 
+                );
+            requestAppShutdownV();
 
-	      	  appShutdownDoneLockAndSignal.
-	      	    waitingForInterruptOrNotificationE(); // Waiting
-	      	      // for app-shutdown to complete.
-	      		theAppLog.info( "ShutdownHook.run() ending. ======== APP SHUTDOWN DONE ========");
-	          }
-	
-	      } // ShutdownHook
+            appShutdownDoneLockAndSignal.
+              waitingForInterruptOrNotificationE(); // Waiting
+                // for app-shutdown to complete.
+            theAppLog.info( "ShutdownHook.run() ending. ======== APP SHUTDOWN DONE ========");
+            }
+  
+        } // ShutdownHook
 
     public void injectStarterPortV(Long starterPortLong)
       {
@@ -233,28 +233,28 @@ public class Shutdowner
           shutdown is underway, such as code which calls modules which
           might themselves be in the process of shutting down.
         */
-    	{ return  shutdownRequestedB; }
+      { return  shutdownRequestedB; }
 
-	  public synchronized void requestAppShutdownV()
-	    /* This method requests app shutdown.
-	      It also records that it is underway.
-	      It detects any re-entry of this method and logs it 
-	      but otherwise ignores it.
-	      It may be called multiple times from many different places.
-	      Only the first call is significant. 
-	      */
-	    { 
-	  	  if ( shutdownRequestedB )
-	      	theAppLog.info(  // Log re-entry.
-		  				"Shutdowner.requestAppShutdownV(), called again, ignored." 
-		  				);
-	  	  else
-  	  	  {
+    public synchronized void requestAppShutdownV()
+      /* This method requests app shutdown.
+        It also records that it is underway.
+        It detects any re-entry of this method and logs it 
+        but otherwise ignores it.
+        It may be called multiple times from many different places.
+        Only the first call is significant. 
+        */
+      { 
+        if ( shutdownRequestedB )
+          theAppLog.info(  // Log re-entry.
+              "Shutdowner.requestAppShutdownV(), called again, ignored." 
+              );
+        else
+          {
             shutdownRequestedB= true; // Recording that shutdown is underway.
-  		  		theAppLog.info( "Shutdowner.requestAppShutdownV() called." ); // Log it.
-  		  	  appShutdownRequestedLockAndSignal.notifyingV();
-  	  	    }
-	  	  }
+            theAppLog.info( "Shutdowner.requestAppShutdownV() called." ); // Log it.
+            appShutdownRequestedLockAndSignal.notifyingV();
+            }
+        }
 
     public boolean waitForTimeOutOf1OrTerminationB(
         long waitMsL)
@@ -304,27 +304,27 @@ public class Shutdowner
           The ShutdownHook thread might, or might not, 
           be waiting for this notification at this time.    
 
-				If this method is able to return, the app should exit ASAP.
+        If this method is able to return, the app should exit ASAP.
 
         */
       {
-    	  toReturn: {
+        toReturn: {
           synchronized (this) {
-  	    		if ( finishVCalledB ) { // Exiting if executed before.  This is  re-entry.
+            if ( finishVCalledB ) { // Exiting if executed before.  This is  re-entry.
               theAppLog.error( "Shutdowner.finishAppShutdownV() finishAppShutdownV() already called." );
               break toReturn;
-          		}
-  	        finishVCalledB= true; // Do this in case this method is re-entered.
+              }
+            finishVCalledB= true; // Do this in case this method is re-entered.
             }
-	        reverseFireShutdownerListeners(); // Calling listeners in reverse.
+          reverseFireShutdownerListeners(); // Calling listeners in reverse.
           delegationDependentFinishingV();
-	        theAppLog.info( 
-	        	"Shutdowner.finishAppShutdownV() notify shutdown hook that shutdown is done, ending.");
+          theAppLog.info( 
+            "Shutdowner.finishAppShutdownV() notify shutdown hook that shutdown is done, ending.");
           theAppLog.setBufferedModeV( false ); // This closes log file because
             // shutdown hook might abruptly terminate this thread next.
-	    	  appShutdownDoneLockAndSignal.notifyingV(); // Signal shutdown hook.
-	    	    // Flow might end here if JVM initiated shutdown.
-  			} // toReturn:
+          appShutdownDoneLockAndSignal.notifyingV(); // Signal shutdown hook.
+            // Flow might end here if JVM initiated shutdown.
+        } // toReturn:
         }
 
     public void delegationDependentFinishingV()

@@ -42,7 +42,7 @@ public class MetaFile { // For app's meta-data files.
       null;
     private int indentLevelI; // Indent level of cursor in text file.
     private int columnI;  // Column of cursor  in text file.
-	  private int linesI= 0; // Number of lines.
+    private int linesI= 0; // Number of lines.
 
     /* Saved stream state.  This is used for rewinding the file 
       in lazy-load node searches.  */
@@ -98,12 +98,12 @@ public class MetaFile { // For app's meta-data files.
           theAppLog.error(
               "lazyLoadFileMetaNode( ) closing theRandomAccessFile : "+e
               );
-        	}
+          }
         catch ( NumberFormatException e ) {
           theAppLog.error(
               "lazyLoadFileMetaNode( ) aborting load : "+e
               );
-        	}
+          }
 
         return loadedMetaNode;
         }
@@ -146,30 +146,30 @@ public class MetaFile { // For app's meta-data files.
        *   This is considered a loading error.
        */
       {
-	        RepeatDetector theRepeatDetector= new RepeatDetector();
-	        IDNumber resultIDNumber= null;
-	        int desiredI= inIDNumber.getTheI(); // Cache the ID #.
-	        //Misc.DbgOut( "MetaFile.readAndConvertIDNumber("+desiredI+") begin");  // Debug.
+          RepeatDetector theRepeatDetector= new RepeatDetector();
+          IDNumber resultIDNumber= null;
+          int desiredI= inIDNumber.getTheI(); // Cache the ID #.
+          //Misc.DbgOut( "MetaFile.readAndConvertIDNumber("+desiredI+") begin");  // Debug.
         goReturn: {
         goFail: {
-	        while (true) { // Searching state file for desired MetaNode.
-	          resultIDNumber=  // Setting tentative result to be next MetaNode.
-	            readFlatWithWrapMetaNode( inIDNumber, parentDataNode );
-	          if ( resultIDNumber == null )  // Exiting if no MetaNode readable.
-	            break goFail; 
-	          if  // Exiting if node with desired ID number found.
-	            ( desiredI == resultIDNumber.getTheI() )
+          while (true) { // Searching state file for desired MetaNode.
+            resultIDNumber=  // Setting tentative result to be next MetaNode.
+              readFlatWithWrapMetaNode( inIDNumber, parentDataNode );
+            if ( resultIDNumber == null )  // Exiting if no MetaNode readable.
+              break goFail; 
+            if  // Exiting if node with desired ID number found.
+              ( desiredI == resultIDNumber.getTheI() )
               break goReturn;
-	          if  // Exiting if every node in file was checked once. 
-	            ( theRepeatDetector.repeatedB( resultIDNumber.getTheI() ) )
-		          { theAppLog.error(
-		          		"MetaFile.readAndConvertIDNumber(.) repeat detected.");
-		            break goFail;
-		          	}
-	          } // while (true) Searching state file for desired MetaNode.
-      	} // goFail:
+            if  // Exiting if every node in file was checked once. 
+              ( theRepeatDetector.repeatedB( resultIDNumber.getTheI() ) )
+              { theAppLog.error(
+                  "MetaFile.readAndConvertIDNumber(.) repeat detected.");
+                break goFail;
+                }
+            } // while (true) Searching state file for desired MetaNode.
+        } // goFail:
           resultIDNumber= inIDNumber;  // Return original IDNumber node.
-      	} // goReturn:
+        } // goReturn:
         return resultIDNumber;
         }
 
@@ -249,7 +249,7 @@ public class MetaFile { // For app's meta-data files.
         */
       {
         if ( theRandomAccessFile != null )
-        	theRandomAccessFile.close();
+          theRandomAccessFile.close();
         }
 
   // Method to read or write entire file, depending on context.
@@ -268,15 +268,15 @@ public class MetaFile { // For app's meta-data files.
         or the one which was read.
         */
       {
-	      theAppLog.debug("MetaFile","MetaFile.rwFileMetaNode(.) begins, "
-	      		+theMode+", "+getRwStructure());
+        theAppLog.debug("MetaFile","MetaFile.rwFileMetaNode(.) begins, "
+            +theMode+", "+getRwStructure());
         if // Do nothing or process depending on conditions.
           ( ( theMode == MetaFileManager.Mode.WRITING ) &&
             ( inRootMetaNode == null )
             ) 
-	        { // Do nothing because there is nothing to write.
-        		theAppLog.debug("MetaFile.rwFileMetaNode(.) null operation.");
-	          }
+          { // Do nothing because there is nothing to write.
+            theAppLog.debug("MetaFile.rwFileMetaNode(.) null operation.");
+            }
           else
           { // Read or write.
             indentLevelI= 0;  // Initialize indent level of text in file.
@@ -296,7 +296,7 @@ public class MetaFile { // For app's meta-data files.
                 );
             } // Read or write process.
 
-	      theAppLog.debug("MetaFile","MetaFile.rwFileMetaNode(.) ends, linesI="+linesI);
+        theAppLog.debug("MetaFile","MetaFile.rwFileMetaNode(.) ends, linesI="+linesI);
         return inRootMetaNode;  // Return the new or old root.
         }
 
@@ -445,7 +445,7 @@ public class MetaFile { // For app's meta-data files.
     public void rwIndentedWhiteSpace( )
       /* Goes to a new line if needed, and indents to the correct level.  */
       { 
-    	  linesI++; // Increment number of lines.
+        linesI++; // Increment number of lines.
         if // Go to a new line if...
           ( columnI > indentLevelI )  // ...past indent level.
           { // Go to a new line.

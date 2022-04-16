@@ -8,14 +8,14 @@ public class NetcasterPacket
 
   // These are packets associated with particular peer Unicaster.
 
-	{
+  {
 
     public NetcasterPacket(  // Constructor.
         DatagramPacket theDatagramPacket,
         IPAndPort theIPAndPort
         )
       {
-	    	super( theDatagramPacket, theIPAndPort );
+        super( theDatagramPacket, theIPAndPort );
         }
     
     public String toString()
@@ -23,4 +23,4 @@ public class NetcasterPacket
         return "(NetcasterPacket:" + super.toString() + ")";
         }
 
-		}
+    }

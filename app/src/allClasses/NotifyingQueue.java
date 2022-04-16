@@ -6,26 +6,26 @@ import static allClasses.SystemSettings.NL;
 
 
 public class NotifyingQueue<E> // Queue inter-thread communication.
-	
-	//extends ConcurrentLinkedQueue<E>
-	extends LinkedBlockingQueue<E>
-	
-	/* This convenience class combines the following was created to make easier
-	  the passing of streams of objects between threads.
-	  It has changed over time as needs have changed 
-	  and problems encountered and solved.
-	  It has the following features:
+  
+  //extends ConcurrentLinkedQueue<E>
+  extends LinkedBlockingQueue<E>
+  
+  /* This convenience class combines the following was created to make easier
+    the passing of streams of objects between threads.
+    It has changed over time as needs have changed 
+    and problems encountered and solved.
+    It has the following features:
 
-	  * It is a subclass of either the thread-safe 
-	    * LinkedBlockingQueue<E> or
-	    * ConcurrentLinkedQueue<E>
-	    classes depending on whether queue size limitations and blocking 
-	    are needed.
-	  * A LockAndSignal monitor-lock variable that producer threads
-	    can use to notify a single consumer thread 
-	    when new input is available, of which adding to the queue is an example.
-	  * Methods that combine addition of new data elements to the queue with 
-	    notification of the consumer thread of those additions using the LockAndSignal.
+    * It is a subclass of either the thread-safe 
+      * LinkedBlockingQueue<E> or
+      * ConcurrentLinkedQueue<E>
+      classes depending on whether queue size limitations and blocking 
+      are needed.
+    * A LockAndSignal monitor-lock variable that producer threads
+      can use to notify a single consumer thread 
+      when new input is available, of which adding to the queue is an example.
+    * Methods that combine addition of new data elements to the queue with 
+      notification of the consumer thread of those additions using the LockAndSignal.
 
     Summary of superclass BlockingQueue methods:
     
@@ -40,18 +40,18 @@ public class NotifyingQueue<E> // Queue inter-thread communication.
     * Blocking can be used by consumer threads to throttle producer threads.
     * Blocking can make app behavior be more unpredictable.
 
-	  Normally a single consumer thread will use one or more of these queues,
-	  and perhaps other types of inputs, 
-	  all linked to the same LockAndSignal object to detect 
-	  the availability and receive data produced by producer threads.
+    Normally a single consumer thread will use one or more of these queues,
+    and perhaps other types of inputs, 
+    all linked to the same LockAndSignal object to detect 
+    the availability and receive data produced by producer threads.
 
-		Interface BlockingQueue<E> methods take() and poll(time, unit)
-		should not be used externally.  
-		When used they block the current thread 
-		until their conditions are satisfied.  
-		However they are incompatible with the use of the class LockAndSignal.
-		Instead of these methods, use methods poll() or peek() instead, 
-		in a LockAndSignal wait loop.  See class LockAndSignal for more information.
+    Interface BlockingQueue<E> methods take() and poll(time, unit)
+    should not be used externally.  
+    When used they block the current thread 
+    until their conditions are satisfied.  
+    However they are incompatible with the use of the class LockAndSignal.
+    Instead of these methods, use methods poll() or peek() instead, 
+    in a LockAndSignal wait loop.  See class LockAndSignal for more information.
 
     This file had contained another class, JobQueue,
     whose addAndWait( E anE ) method did not return until
@@ -62,53 +62,53 @@ public class NotifyingQueue<E> // Queue inter-thread communication.
     * InputQueue.
     * SignalingQueue?
 
-	  */
-	
-	{
-	  private LockAndSignal consumerThreadLockAndSignal;  // The monitor-lock.
-	  private int logSizeLimitI; // Size which triggers warning log message.
-	  private String logIdString= null;
-	  
-	  NotifyingQueue(   // Constructor. 
-	      LockAndSignal consumerThreadLockAndSignal, 
-	      int capacityI, 
-	      String logIdString 
-	  		)
-	    {
-	      super(Integer.MAX_VALUE); // Construct superclass with no size limit.
-	  	  /// this.sizeLimitI= capacityI; // Set size limit to capacity parameter.
-	      this.logSizeLimitI= 4;  // 0; // Use 0 to test logic.
-	      this.consumerThreadLockAndSignal= consumerThreadLockAndSignal;
-	      this.logIdString= logIdString;
-	      }
-		
-	  public LockAndSignal getLockAndSignal()
-	    // Returns the ThreadLockAndSignal associated with this queue,
-	    // mainly for debugging.
-	    { return consumerThreadLockAndSignal; }
-	  
-	  /*  /// Don't use this.  It doesn't have the capacity limit checking.
-	  public boolean add( E anE )
-	    /* 
-	      If this method returns true then:
-	      * It added anE to the queue.
-	      * It notified the consumer thread of the new element.
-	      * It did not wait for anE to be processed by the destination thread.
+    */
+  
+  {
+    private LockAndSignal consumerThreadLockAndSignal;  // The monitor-lock.
+    private int logSizeLimitI; // Size which triggers warning log message.
+    private String logIdString= null;
+    
+    NotifyingQueue(   // Constructor. 
+        LockAndSignal consumerThreadLockAndSignal, 
+        int capacityI, 
+        String logIdString 
+        )
+      {
+        super(Integer.MAX_VALUE); // Construct superclass with no size limit.
+        /// this.sizeLimitI= capacityI; // Set size limit to capacity parameter.
+        this.logSizeLimitI= 4;  // 0; // Use 0 to test logic.
+        this.consumerThreadLockAndSignal= consumerThreadLockAndSignal;
+        this.logIdString= logIdString;
+        }
+    
+    public LockAndSignal getLockAndSignal()
+      // Returns the ThreadLockAndSignal associated with this queue,
+      // mainly for debugging.
+      { return consumerThreadLockAndSignal; }
+    
+    /*  /// Don't use this.  It doesn't have the capacity limit checking.
+    public boolean add( E anE )
+      /* 
+        If this method returns true then:
+        * It added anE to the queue.
+        * It notified the consumer thread of the new element.
+        * It did not wait for anE to be processed by the destination thread.
 
-	      If this method throws an IllegalStateException then:
-	      * It means that there was not enough space in the queue for 
-	        the new element.
+        If this method throws an IllegalStateException then:
+        * It means that there was not enough space in the queue for 
+          the new element.
 
-				It never returns false.  This is the spec. of Queue.add(E).
-	     	*/
-	   /*  ///
-	    {
-	      boolean resultB= super.add( anE );
-	      consumerThreadLockAndSignal.notifyingV();
-	      return resultB;
-	      }
-	    */  ///
-	  
+        It never returns false.  This is the spec. of Queue.add(E).
+         */
+     /*  ///
+      {
+        boolean resultB= super.add( anE );
+        consumerThreadLockAndSignal.notifyingV();
+        return resultB;
+        }
+      */  ///
+    
     public void put( E anE )
       /* This method
         * Logs a warning if the size limit it being exceeded.
@@ -165,55 +165,55 @@ public class NotifyingQueue<E> // Queue inter-thread communication.
         }
 
     /*  ///  Blocking put(..).
-	  public void put( E anE )
-	    /* If there is no space available in the queue 
-	      then it blocks until there is.  When there is space:
-	      * It adds anE to the queue.
-	      * It notifies the consumer thread of the new element.
-	      * It does not wait for anE to be processed by the destination thread.
-	      It ignores but maintains Thread interrupt status for testing later.
-	      
-	      ///err Test for full queue and log message if so before putting?
-	     	*/
+    public void put( E anE )
+      /* If there is no space available in the queue 
+        then it blocks until there is.  When there is space:
+        * It adds anE to the queue.
+        * It notifies the consumer thread of the new element.
+        * It does not wait for anE to be processed by the destination thread.
+        It ignores but maintains Thread interrupt status for testing later.
+        
+        ///err Test for full queue and log message if so before putting?
+         */
     /*  ///  Blocking put(..).
-	    {
-	  	  boolean interruptedB= false; // Assume no interruption will happen.
+      {
+        boolean interruptedB= false; // Assume no interruption will happen.
 
-	  	  if (! offer(anE)) { // Put on queue, logging block if needed.
-	        theAppLog.info("NotifyingQueue<E>.put(E) queue full, will now block.");
-  	  	  while (true) // Looping until element added to queue, meaning block ends.
-  		  	  {
-  			      try {
-  				  		super.put( anE ); // Adding element to queue.  This might block.
-  				  		break; // Exiting loop if put finished without interruption.
-  			        } 
-  			      catch( InterruptedException ex ) { // Block was interrupted.
-  			      	interruptedB= true; // Recording interrupt for restoring later.
-  			        }
-  			  	  }
-	  	    }
-	      consumerThreadLockAndSignal.notifyingV();
+        if (! offer(anE)) { // Put on queue, logging block if needed.
+          theAppLog.info("NotifyingQueue<E>.put(E) queue full, will now block.");
+          while (true) // Looping until element added to queue, meaning block ends.
+            {
+              try {
+                super.put( anE ); // Adding element to queue.  This might block.
+                break; // Exiting loop if put finished without interruption.
+                } 
+              catch( InterruptedException ex ) { // Block was interrupted.
+                interruptedB= true; // Recording interrupt for restoring later.
+                }
+              }
+          }
+        consumerThreadLockAndSignal.notifyingV();
 
-      	if // Restoring interrupt status if interrupt happened.
-	      	( interruptedB ) 
-	      	Thread.currentThread().interrupt();
-	      }
-	      */  ///  Blocking put(..).
+        if // Restoring interrupt status if interrupt happened.
+          ( interruptedB ) 
+          Thread.currentThread().interrupt();
+        }
+        */  ///  Blocking put(..).
 
-	  /*///
-	  public boolean XaddAll(Collection<? extends E> aCollection) 
-	    /* This method adds aCollection, all elements of it,
-	      to the queue and returns immediately.
-	      It also notifies the consumer thread of the new elements.
-	      It does not wait for those elements to be completely processed 
-	      by the destination thread.
- 	      */
-	  /*///
-	    {
-	      boolean resultB= super.addAll( aCollection );
-	      consumerThreadLockAndSignal.doNotifyV();
-	      return resultB;
-	      }
-	  *///
+    /*///
+    public boolean XaddAll(Collection<? extends E> aCollection) 
+      /* This method adds aCollection, all elements of it,
+        to the queue and returns immediately.
+        It also notifies the consumer thread of the new elements.
+        It does not wait for those elements to be completely processed 
+        by the destination thread.
+        */
+    /*///
+      {
+        boolean resultB= super.addAll( aCollection );
+        consumerThreadLockAndSignal.doNotifyV();
+        return resultB;
+        }
+    *///
 
-	  }
+    }

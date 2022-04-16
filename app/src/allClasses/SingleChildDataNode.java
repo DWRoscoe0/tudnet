@@ -2,7 +2,7 @@ package allClasses;
 
 public class SingleChildDataNode
 
-	extends NamedList
+  extends NamedList
   
   /* This class is a DataNode that has only a single child DataNode.
     It serves as a parent of the root of the DataNode DAG.
@@ -25,9 +25,9 @@ public class SingleChildDataNode
 
       public SingleChildDataNode( DataNode InDataNode )
         {
-      		super.initializeV(
+          super.initializeV(
             "PARENT-OF:" +  // ...this and...
-            	InDataNode.getNameString( ),
+              InDataNode.getNameString( ),
             new DataNode[] { InDataNode }
             );
           }

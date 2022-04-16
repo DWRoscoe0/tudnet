@@ -33,7 +33,7 @@ public class ListLiteratorOfIDNumber
     */
 
   {
-	
+  
     // Instance variables.
 
     MetaFileManager theMetaFileManager;
@@ -77,19 +77,19 @@ public class ListLiteratorOfIDNumber
        * Any IOExceptions are treated as load failures.
        */
       {
-    	  IDNumber resultIDNumber;
+        IDNumber resultIDNumber;
         try {
           resultIDNumber=  // Try lazy-loading MetaNode
               theMetaFileManager.getLazyLoadMetaFile().
-              	readAndConvertIDNumber(
-              		inIDNumber, // with this ID number
+                readAndConvertIDNumber(
+                  inIDNumber, // with this ID number
                   theParentDataNode // using this for parent-child name lookup.
                   );
           }
         catch ( IOException theIOException ) {
           theAppLog.error(
-          	"ListLiteratorOfIDNumber.tryLoadingIDNumber().", theIOException);
-      	  resultIDNumber= inIDNumber; // Treat exception as failure.
+            "ListLiteratorOfIDNumber.tryLoadingIDNumber().", theIOException);
+          resultIDNumber= inIDNumber; // Treat exception as failure.
           };
       return resultIDNumber;
       }
@@ -109,74 +109,74 @@ public class ListLiteratorOfIDNumber
         * replaces IDNumber place-holders by their loaded MetaNode equivalents,
         * ignores nodes that can't be loaded by skipping over them,
         * removes skipped IDNumber place-holders from the nested iterator.
-       	*/
+         */
       {
-      	  boolean resultB; IDNumber iterIDNumber; IDNumber loadedIDNumber;
-    	  toReturn: { toSuccess: { toCache: { toLoaded: { toFail: { // labels. 
-      	  while (true) { // Loop until node gotten or end of iterator reached.
+          boolean resultB; IDNumber iterIDNumber; IDNumber loadedIDNumber;
+        toReturn: { toSuccess: { toCache: { toLoaded: { toFail: { // labels. 
+          while (true) { // Loop until node gotten or end of iterator reached.
             if (cachedIDNumber!=null) break toSuccess; // Have cached node.
-      	  	if (! theListIteratorOfIDNumber.hasNext()) break toFail; // At end.
-      	  	iterIDNumber= theListIteratorOfIDNumber.next(); // Get next node.
-      	  	if (iterIDNumber.getClass() != IDNumber.class) // Iterator node is   
-      	  		break toCache; // already a loaded node, not a place holder.
+            if (! theListIteratorOfIDNumber.hasNext()) break toFail; // At end.
+            iterIDNumber= theListIteratorOfIDNumber.next(); // Get next node.
+            if (iterIDNumber.getClass() != IDNumber.class) // Iterator node is   
+              break toCache; // already a loaded node, not a place holder.
             loadedIDNumber= tryLoadingIDNumber(iterIDNumber); // Try loading.
             if (iterIDNumber!=loadedIDNumber) break toLoaded; // Load success.
             theListIteratorOfIDNumber.remove(); // Remove node that failed load.
-      	  	} /* while(true) */ // Try for another node by looping.
+            } /* while(true) */ // Try for another node by looping.
         } /* toFail: */ resultB= false; break toReturn; // Return failure value.
         } // toLoaded:  // Success with loaded node.
           theListIteratorOfIDNumber.set(loadedIDNumber); // Store loaded node.
-      	  iterIDNumber= loadedIDNumber;
+          iterIDNumber= loadedIDNumber;
         } /* toCache : */ cachedIDNumber= iterIDNumber; // Cache iterator node.
-        } /* toSuccess: */ 	resultB= true; // Set Success return value.
+        } /* toSuccess: */   resultB= true; // Set Success return value.
         } /* toReturn: */ return resultB;
         }  
 
     public IDNumber next() 
       {
-    	  toReturn: {
-       		if ( cachedIDNumber != null ) // Element already cached. 
-       			break toReturn; // Return the cached element.
-       		if (hasNext()) // Use hadNext() to do any needed loading and caching. 
-       			break toReturn; // Return newly loaded cached element.
+        toReturn: {
+           if ( cachedIDNumber != null ) // Element already cached. 
+             break toReturn; // Return the cached element.
+           if (hasNext()) // Use hadNext() to do any needed loading and caching. 
+             break toReturn; // Return newly loaded cached element.
           throw new NoSuchElementException(); // Load failure.
-    	  } // toReturn:
-	    		IDNumber resultIDNumber= // Copy cached element to result. 
-	    				cachedIDNumber;
-	  			cachedIDNumber= null; // Clear cache.
-	        return resultIDNumber;
+        } // toReturn:
+          IDNumber resultIDNumber= // Copy cached element to result. 
+              cachedIDNumber;
+          cachedIDNumber= null; // Clear cache.
+          return resultIDNumber;
         }  
 
     public int nextIndex()
       {
-    		unsupportedMethodV(); 
+        unsupportedMethodV(); 
         return 0;
         }  
 
     public boolean hasPrevious() 
       {
-    		unsupportedMethodV();
-    		return false;
+        unsupportedMethodV();
+        return false;
         }  
 
     public IDNumber previous() 
       {
-    		unsupportedMethodV();
-    		return null;
+        unsupportedMethodV();
+        return null;
         }  
 
     public int previousIndex() 
       {
-    		unsupportedMethodV(); 
-    		return 0;
+        unsupportedMethodV(); 
+        return 0;
         }  
 
     private void unsupportedMethodV()
       { 
-    		throw new Error(
-    		  "ListLiteratorOfIDNumber.unsupportedMethodV()." 
-    			);
-      	}
+        throw new Error(
+          "ListLiteratorOfIDNumber.unsupportedMethodV()." 
+          );
+        }
     
     public void remove() 
       {
@@ -188,4 +188,4 @@ public class ListLiteratorOfIDNumber
         theListIteratorOfIDNumber.set(inIDNumber);
         }  
 
-		}
+    }

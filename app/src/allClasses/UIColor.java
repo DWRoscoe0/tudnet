@@ -28,27 +28,27 @@ public class UIColor
 
   {
       
-  	// Colors for non-selected cells.
-  	
-  	  // Non-selected foreground colors.
-  			public static final Color normalForgroundColor= Color.BLACK;
+    // Colors for non-selected cells.
+    
+      // Non-selected foreground colors.
+        public static final Color normalForgroundColor= Color.BLACK;
   
-  		// Non-selected background colors.
+      // Non-selected background colors.
         public static final Color inactiveColor= 
             new Color(160,160,160); // dark gray.
         public static final Color activeColor= 
             new Color(192,192,192); // light gray.
           //  new Color(255,191,255); // light purple.
-  			  // Color.YELLOW; // Active, non-State.
-  			  // This is rarely seen, but is very noticeable when used.
+          // Color.YELLOW; // Active, non-State.
+          // This is rarely seen, but is very noticeable when used.
   
-    	// Non-selected background state colors used in StateList class.
-  			// public static final Color inactiveStateColor=
+      // Non-selected background state colors used in StateList class.
+        // public static final Color inactiveStateColor=
         //    new Color(191,191,255); // light blue.
-  			public static final Color inactiveStateColor=
-  			    inactiveColor;
+        public static final Color inactiveStateColor=
+            inactiveColor;
             // new Color(191,191,191); // light gray, or is this actually dark gray?
-  			// Active colors.
+        // Active colors.
         public static final Color activeStateColor=
             activeColor;
             /// new Color(255,191,255); // light purple.
@@ -71,9 +71,9 @@ public class UIColor
               // Example: Disconnected unintentionally, trying to reestablish.
         
   
-  	// Colors for selected cells.
+    // Colors for selected cells.
   
-  		// Set by swapping foreground and background colors in setColorsV(.) method.
+      // Set by swapping foreground and background colors in setColorsV(.) method.
   
   
     // Methods.
@@ -91,33 +91,33 @@ public class UIColor
         the preferred background color, which might depend on the DataNode state.
         */
       {
-    		Color backgroundColor, foregroundColor;
+        Color backgroundColor, foregroundColor;
         setColors: { 
-    			// Calculating colors based on various conditions.
-      		{ // Set most probable colors.
+          // Calculating colors based on various conditions.
+          { // Set most probable colors.
             backgroundColor= Color.YELLOW; // Bright color to show failure to define.
             if (valueObject instanceof DataNode) {
               DataNode theDataNode= (DataNode)valueObject;
-          	  backgroundColor= // Set default background. 
-          	  		theDataNode.getBackgroundColor(defaultBackgroundColor);
-          	        // This gets DataNode's preferred color, if it has one,
-          	  			// or defaultBackgroundColor if not.
+              backgroundColor= // Set default background. 
+                  theDataNode.getBackgroundColor(defaultBackgroundColor);
+                    // This gets DataNode's preferred color, if it has one,
+                    // or defaultBackgroundColor if not.
               }
-          	foregroundColor= // Set default foreground.
-          			UIColor.normalForgroundColor;
-      			}
+            foregroundColor= // Set default foreground.
+                UIColor.normalForgroundColor;
+            }
           if ( ! hasFocusB ) break setColors; // Cell is not focused so change nothing.
           if ( ! isSelectedB ) break setColors; // Same if cell is not selected.
             { // Cell is both selected and focused, so set special colors.
-            	// Do this by swapping the present background and foreground colors.
-            	Color tmpColor= backgroundColor;
+              // Do this by swapping the present background and foreground colors.
+              Color tmpColor= backgroundColor;
               backgroundColor= foregroundColor;
               foregroundColor= tmpColor; 
-            	}
+              }
         } // setColors:
-  	  		// We've decided on the colors to use, now set them in component.
-  		    theRenderComponent.setBackground( backgroundColor );
-  		    theRenderComponent.setForeground( foregroundColor );
-  		  }
+          // We've decided on the colors to use, now set them in component.
+          theRenderComponent.setBackground( backgroundColor );
+          theRenderComponent.setForeground( foregroundColor );
+        }
   
-  	}
+    }

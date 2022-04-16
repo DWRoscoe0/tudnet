@@ -128,8 +128,8 @@ public class MetaFileManager {
 
         try { // Try doing a lazy-load of flat file root node.
           //appLogger.debug("MetaFileManager.start() attemptying load.");
-        	loadedMetaNode= lazyLoadWholeMetaNode( );
-        	}
+          loadedMetaNode= lazyLoadWholeMetaNode( );
+          }
         catch ( NumberFormatException e ) {  // Logging any errors.
           theAppLog.error(
               "MetaFileManager.start() Exception: "+e
@@ -189,7 +189,7 @@ public class MetaFileManager {
         if   // Closing lazy-loading file if open.
           ( lazyLoadMetaFile != null )
           try { // Closing it.
-          	lazyLoadMetaFile.closeV( );
+            lazyLoadMetaFile.closeV( );
             //appLogger.debug( "MetaFileManager.finish() lazyLoadMetaFile closed.");
             }
           catch ( IOException e ) {  // Processing any errors.
@@ -224,7 +224,7 @@ public class MetaFileManager {
     public void doMyShutdown() {  // ShutdownerListener method.
       theAppLog.debug("MetaFileManager",
           "MetaFileManager.Finisher.doMyShutdown() calling finish()"
-      		);
+          );
 
       theMetaFileManager.finish(   // Finishing MetaFile operations.
         theMetaRoot

@@ -9,7 +9,7 @@ import static allClasses.AppLog.theAppLog;
 public abstract class PacketManager< 
     K, // Key.
     E extends KeyedPacket<K> // Packets it manages. 
-		>
+    >
 
   /* The class manages KeyedPackets.
     Presently it allocates them and their buffers from the heap.
@@ -34,190 +34,190 @@ public abstract class PacketManager<
     ///enh Add and use a pool for ability to allow recycle and reuse packets.
     */
   {
-	  abstract E produceKeyedPacketE(DatagramPacket theDatagramPacket );
-	    /* This method must be provided by a subclass.
-	      Its purpose is to do a new-operation, because 
-	      new E() is not allowed in this generic class. 
-	     */
+    abstract E produceKeyedPacketE(DatagramPacket theDatagramPacket );
+      /* This method must be provided by a subclass.
+        Its purpose is to do a new-operation, because 
+        new E() is not allowed in this generic class. 
+       */
 
-		protected static final int DEFAULT_BUFFER_SIZE = 1024;
+    protected static final int DEFAULT_BUFFER_SIZE = 1024;
 
-		// Injected variables.
+    // Injected variables.
     protected final K theKeyK;
 
-		public PacketManager( K theK ) // Constructor.
-			{
-			  this.theKeyK= theK;
-				}
+    public PacketManager( K theK ) // Constructor.
+      {
+        this.theKeyK= theK;
+        }
 
 
-	  // KeyedPacket producers.
+    // KeyedPacket producers.
 
-	  public E produceKeyedPacket()
-	    // Produces a KeyedPacket with a default size empty buffer.
-	    { 
-	  	  byte[] bufferBytes= produceDefaultSizeBufferBytes();
-			  E theKeyedPacketE= produceKeyedPacketE( 
-			  		bufferBytes, 
-			  		bufferBytes.length
-			  		);
-			  return theKeyedPacketE;
-	  	  }
+    public E produceKeyedPacket()
+      // Produces a KeyedPacket with a default size empty buffer.
+      { 
+        byte[] bufferBytes= produceDefaultSizeBufferBytes();
+        E theKeyedPacketE= produceKeyedPacketE( 
+            bufferBytes, 
+            bufferBytes.length
+            );
+        return theKeyedPacketE;
+        }
 
-	  public E produceKeyedPacketE( byte[] bufferBytes, int sizeI )
-	    /* Produces a KeyedPacket with a buffer bufferBytes 
-	       with only the first sizeI bytes significant.
-	       The buffer might or might not be empty, depending on context.
-	       */
-	    { 
-			  DatagramPacket theDatagramPacket= new DatagramPacket(
-			  		bufferBytes, 0, sizeI
-			  		);
-			  E theKeyedPacketE= // Calling overridden abstract method to execute new. 
-			  		produceKeyedPacketE( theDatagramPacket );
-			  return theKeyedPacketE;
-	  	  }
+    public E produceKeyedPacketE( byte[] bufferBytes, int sizeI )
+      /* Produces a KeyedPacket with a buffer bufferBytes 
+         with only the first sizeI bytes significant.
+         The buffer might or might not be empty, depending on context.
+         */
+      { 
+        DatagramPacket theDatagramPacket= new DatagramPacket(
+            bufferBytes, 0, sizeI
+            );
+        E theKeyedPacketE= // Calling overridden abstract method to execute new. 
+            produceKeyedPacketE( theDatagramPacket );
+        return theKeyedPacketE;
+        }
 
-		
-		// Buffer array producers.
-		
-	  public byte[] produceDefaultSizeBufferBytes()
-	    // Produces a byte buffer array of the default size.
-	    { return produceBufferBytes( DEFAULT_BUFFER_SIZE ); }
+    
+    // Buffer array producers.
+    
+    public byte[] produceDefaultSizeBufferBytes()
+      // Produces a byte buffer array of the default size.
+      { return produceBufferBytes( DEFAULT_BUFFER_SIZE ); }
 
-	  public byte[] produceBufferBytes( int sizeI )
-	  	// Produces a byte buffer array of size sizeI.
-	    { return new byte[ sizeI ]; }
+    public byte[] produceBufferBytes( int sizeI )
+      // Produces a byte buffer array of size sizeI.
+      { return new byte[ sizeI ]; }
 
 
-	  // Methods for packet logging, mostly for debugging.
+    // Methods for packet logging, mostly for debugging.
 
-		public static void logUnconnectedReceiverPacketV( 
-				DatagramPacket theDatagramPacket 
-				)
-			{
-			  if (theAppLog.logB(Config.packetLogLevel)) 
-			  	theAppLog.logV(
-			  			Config.packetLogLevel,
-	      		PacketManager.gettingDirectedPacketString(
-	      				theDatagramPacket, false
-	      				)
-			  		);
-	    	}
+    public static void logUnconnectedReceiverPacketV( 
+        DatagramPacket theDatagramPacket 
+        )
+      {
+        if (theAppLog.logB(Config.packetLogLevel)) 
+          theAppLog.logV(
+              Config.packetLogLevel,
+            PacketManager.gettingDirectedPacketString(
+                theDatagramPacket, false
+                )
+            );
+        }
 
-		public static void logSenderPacketV( 
-				DatagramPacket theDatagramPacket 
-				)
-			{
-			  if (theAppLog.logB(Config.packetLogLevel)) 
-			  	theAppLog.logV(
-			  	  Config.packetLogLevel,
-	      		PacketManager.gettingDirectedPacketString(
-	      				theDatagramPacket, true
-	      				)
-	      		);
-	    	}
+    public static void logSenderPacketV( 
+        DatagramPacket theDatagramPacket 
+        )
+      {
+        if (theAppLog.logB(Config.packetLogLevel)) 
+          theAppLog.logV(
+            Config.packetLogLevel,
+            PacketManager.gettingDirectedPacketString(
+                theDatagramPacket, true
+                )
+            );
+        }
 
-		public static void logMulticastReceiverPacketV( 
-				DatagramPacket theDatagramPacket 
-				)
-			{
-			  if (theAppLog.logB(Config.packetLogLevel)) 
-			  	theAppLog.logV(
-			  		Config.packetLogLevel,
-	      		PacketManager.gettingDirectedPacketString(
-	      				theDatagramPacket, false
-	      				)
-	      		);
-	    	}
+    public static void logMulticastReceiverPacketV( 
+        DatagramPacket theDatagramPacket 
+        )
+      {
+        if (theAppLog.logB(Config.packetLogLevel)) 
+          theAppLog.logV(
+            Config.packetLogLevel,
+            PacketManager.gettingDirectedPacketString(
+                theDatagramPacket, false
+                )
+            );
+        }
 
-	  // Methods for converting packets to Strings for display.
+    // Methods for converting packets to Strings for display.
 
-		public static String gettingDirectedPacketString( 
-				DatagramPacket theDatagramPacket, boolean sentB 
-				)
-		  /* This method returns a String representation of theDatagramPacket
-		    along with it's direction: 
-		    * sentB==true means packet was being sent.
-		    * sentB==false means packet was being received.
-		    */
-		  {
-		    String resultString= sentB ? "  to " : "from ";
-	    	resultString+= gettingPacketAddressString(theDatagramPacket);
-	    	resultString+= sentB ? " send " : " recv ";
-	    	resultString+= new String(
-		          theDatagramPacket.getData()
-		          ,theDatagramPacket.getOffset()
-		          ,theDatagramPacket.getLength()
-		          );
-		  	return resultString; // Returning present and final value.
-		    }
+    public static String gettingDirectedPacketString( 
+        DatagramPacket theDatagramPacket, boolean sentB 
+        )
+      /* This method returns a String representation of theDatagramPacket
+        along with it's direction: 
+        * sentB==true means packet was being sent.
+        * sentB==false means packet was being received.
+        */
+      {
+        String resultString= sentB ? "  to " : "from ";
+        resultString+= gettingPacketAddressString(theDatagramPacket);
+        resultString+= sentB ? " send " : " recv ";
+        resultString+= new String(
+              theDatagramPacket.getData()
+              ,theDatagramPacket.getOffset()
+              ,theDatagramPacket.getLength()
+              );
+        return resultString; // Returning present and final value.
+        }
 
-		public static String gettingPacketString( 
-				DatagramPacket theDatagramPacket 
-				)
-		  /* This method returns a String representation of theDatagramPacket.
-		    If theDatagramPacket is null then null is returned.
-		    */
-		  {
-		    String resultString= null; // Setting default null value.
-		    calculatingString: {
-		    	if ( theDatagramPacket == null) // Exiting if there is no packet.
-		    		break calculatingString;// Exiting to use default value.
-		    	resultString= // Calculating String from packet.
-		    			gettingPacketAddressString(theDatagramPacket)
-  	          +";" 
-		      		+ new String(
-			          theDatagramPacket.getData()
-			          ,theDatagramPacket.getOffset()
-			          ,theDatagramPacket.getLength()
-			          );
-		      } // calculatingString: 
-		  	return resultString; // Returning present and final value.
-		    }
-	 
-		private static String gettingPacketAddressString( 
-				DatagramPacket theDatagramPacket 
-				)
-		  /* This method returns a String representation of 
-		    theDatagramPacket IP and port.
-		    If theDatagramPacket is null then null is returned.
-		    */
-		  {
-		    String resultString= null; // Setting default null value.
-		    calculatingString: {
-		    	if ( theDatagramPacket == null) // Exiting if there is no packet.
-		    		break calculatingString;// Exiting to use default value.
-		    	resultString= "";
-		    	resultString+= gettingString(theDatagramPacket.getAddress());
-		    	resultString+= ":";
-		    	resultString+= theDatagramPacket.getPort();
-		      } // calculatingString: 
-		  	return resultString; // Returning present and final value.
-		    }
-		 
-		private static String gettingString( 
-				InetAddress theInetAddress 
-				)
-		  /* This method returns a String representation of theInetAddress.
-		    This address representation is fixed for columnar alignment.
-		    */
-		  {
-				String resultString= "";
-				if ( theInetAddress == null )
-					resultString+= "!null-InetAddress!";
-				else
-					{
-						byte[] addressBytes= theInetAddress.getAddress();
-				    for (int indexI= 0; indexI < addressBytes.length; indexI++)
-					    {
-					    	if (indexI != 0) resultString+= ".";
-					    	resultString+= String.format(
-					    			"%03d", addressBytes[indexI] & 0xFF
-					    			);
-					    	}
-						}
-		  	return resultString; // Returning present and final value.
-		    }
+    public static String gettingPacketString( 
+        DatagramPacket theDatagramPacket 
+        )
+      /* This method returns a String representation of theDatagramPacket.
+        If theDatagramPacket is null then null is returned.
+        */
+      {
+        String resultString= null; // Setting default null value.
+        calculatingString: {
+          if ( theDatagramPacket == null) // Exiting if there is no packet.
+            break calculatingString;// Exiting to use default value.
+          resultString= // Calculating String from packet.
+              gettingPacketAddressString(theDatagramPacket)
+              +";" 
+              + new String(
+                theDatagramPacket.getData()
+                ,theDatagramPacket.getOffset()
+                ,theDatagramPacket.getLength()
+                );
+          } // calculatingString: 
+        return resultString; // Returning present and final value.
+        }
+   
+    private static String gettingPacketAddressString( 
+        DatagramPacket theDatagramPacket 
+        )
+      /* This method returns a String representation of 
+        theDatagramPacket IP and port.
+        If theDatagramPacket is null then null is returned.
+        */
+      {
+        String resultString= null; // Setting default null value.
+        calculatingString: {
+          if ( theDatagramPacket == null) // Exiting if there is no packet.
+            break calculatingString;// Exiting to use default value.
+          resultString= "";
+          resultString+= gettingString(theDatagramPacket.getAddress());
+          resultString+= ":";
+          resultString+= theDatagramPacket.getPort();
+          } // calculatingString: 
+        return resultString; // Returning present and final value.
+        }
+     
+    private static String gettingString( 
+        InetAddress theInetAddress 
+        )
+      /* This method returns a String representation of theInetAddress.
+        This address representation is fixed for columnar alignment.
+        */
+      {
+        String resultString= "";
+        if ( theInetAddress == null )
+          resultString+= "!null-InetAddress!";
+        else
+          {
+            byte[] addressBytes= theInetAddress.getAddress();
+            for (int indexI= 0; indexI < addressBytes.length; indexI++)
+              {
+                if (indexI != 0) resultString+= ".";
+                resultString+= String.format(
+                    "%03d", addressBytes[indexI] & 0xFF
+                    );
+                }
+            }
+        return resultString; // Returning present and final value.
+        }
 
-  	}
+    }

@@ -10,10 +10,10 @@ public class NetcasterQueue
   {
 
     NetcasterQueue(  // Constructor.
-    		LockAndSignal destinationThreadLockAndSignal, 
-    		int capacityI, 
-    		String logIdString
-    		)
+        LockAndSignal destinationThreadLockAndSignal, 
+        int capacityI, 
+        String logIdString
+        )
       {
         super( destinationThreadLockAndSignal, capacityI, logIdString);
         }

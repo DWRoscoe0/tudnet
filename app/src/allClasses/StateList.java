@@ -16,20 +16,20 @@ import static allClasses.SystemSettings.NL;
 
 public class StateList extends MutableList implements Runnable {
 
-	/*  This class is the base class for all state objects and state-machines.
+  /*  This class is the base class for all state objects and state-machines.
 
-	  States are hierarchical.  A state can be both:
-	  * a sub-state of a larger state-machine 
-	  * a state-machine with its own sub-states
+    States are hierarchical.  A state can be both:
+    * a sub-state of a larger state-machine 
+    * a state-machine with its own sub-states
 
     Here are the classes in this file and their relationships:
       * StateList
-		    * SentinelState
-		    * LeafState   ///org to be added?
-		    * AndOrState
-			    * OrState 
-			    * AndState
-	    
+        * SentinelState
+        * LeafState   ///org to be added?
+        * AndOrState
+          * OrState 
+          * AndState
+      
     Here are descriptions of the classes in this file.
     * StateList: This is the base class of all states.
       It is also typically used as machine states with no children.
@@ -37,45 +37,45 @@ public class StateList extends MutableList implements Runnable {
         faster code organized by subclasses.
     * SentinelState: This class is used as an initial sentinel-state 
       for OrState state machines to reduce the number of null checks needed.
-		* AndOrState: a superclass of the OrState and AndState classes.
+    * AndOrState: a superclass of the OrState and AndState classes.
     * OrState: OrState machines have sub-states, only one of which 
       can be active at a time.  A state-machine based on this class
       behaves like a classical finite state machine,
       unless some of it sub-states have sub-states of their own.
     * AndState: AndState machines also have sub-states, but unlike OrStates,
-	  	all AndState sub-states are active at the same time.
-	  	There is concurrency in an AndState machine, at least at this level.
+      all AndState sub-states are active at the same time.
+      There is concurrency in an AndState machine, at least at this level.
 
 
-		Machine Initialization:
+    Machine Initialization:
 
     Many, maybe most, state-machine states are simple leaf states.
     Many have few, if any, dependency inputs at construction time.
-		To reduce boilerplate code in these low-level states, 
-		constructor source code has been eliminated.  
-		There are constructors, but they are the default, 0-argument constructors.
-		
-		For the states which require dependency inputs, setter injection is used.
-		Instance variables are initialized using various initialization methods,
-		such as initializeV(..) and initializeWithIOExceptionStateList(..).
-		This avoid the difficulties of exceptions thrown within constructors.
-		
-		Initialization uses a combination of eager-evaluation and lazy-evaluation.
-		For each [root?] state machine, initialization should proceed as follows:
-		
-		* The state-machine's default 0-argument constructor is called.
+    To reduce boilerplate code in these low-level states, 
+    constructor source code has been eliminated.  
+    There are constructors, but they are the default, 0-argument constructors.
+    
+    For the states which require dependency inputs, setter injection is used.
+    Instance variables are initialized using various initialization methods,
+    such as initializeV(..) and initializeWithIOExceptionStateList(..).
+    This avoid the difficulties of exceptions thrown within constructors.
+    
+    Initialization uses a combination of eager-evaluation and lazy-evaluation.
+    For each [root?] state machine, initialization should proceed as follows:
+    
+    * The state-machine's default 0-argument constructor is called.
 
-	  * The state machine's initialization method is called.  
-	    It does the following.
-	    * It assigns all instance variables that need assigning.
-	    * If the state-machine has sub-states then 
-	      it constructs, initializes, and adds them to the state-machine.
-			* If the machine is an OrState machine subclass,
-			  the machine's initial sub-state is set.
-			* If a sub-state needs references to another sub-state
-			  which wasn't created until later, the reference is injected now. 
+    * The state machine's initialization method is called.  
+      It does the following.
+      * It assigns all instance variables that need assigning.
+      * If the state-machine has sub-states then 
+        it constructs, initializes, and adds them to the state-machine.
+      * If the machine is an OrState machine subclass,
+        the machine's initial sub-state is set.
+      * If a sub-state needs references to another sub-state
+        which wasn't created until later, the reference is injected now. 
 
-	  At this point the state-machine is fully constructed and ready to run.
+    At this point the state-machine is fully constructed and ready to run.
     Machine activation is all that remains.
     The doOnEntry(..) method of the state-machine is called.
     This recursively calls the doOnEntry(..) method of sub-machines 
@@ -89,17 +89,17 @@ public class StateList extends MutableList implements Runnable {
       void initializeV()
     Eliminate one or better document their different roles.
     
-		Threads:
+    Threads:
 
-		Most state machines don't have threads of their own. 
-		Their handler code is called by external threads.  
-		The exception is the single root state of a hierarchical state machine.
-		
-		There are 2 types of state machine threads:
-		* The thread that drives the root machine of a hierarchical state machine.
-		  It is similar to an event dispatch loop.
-		  It waits for and receives one or more 
-		  different types of ordinary inputs 
+    Most state machines don't have threads of their own. 
+    Their handler code is called by external threads.  
+    The exception is the single root state of a hierarchical state machine.
+    
+    There are 2 types of state machine threads:
+    * The thread that drives the root machine of a hierarchical state machine.
+      It is similar to an event dispatch loop.
+      It waits for and receives one or more 
+      different types of ordinary inputs 
       and passes them to the root state-machine handler.
       The handler returns when those inputs, 
       and possibly some newly arriving ones, have been handled.
@@ -108,26 +108,26 @@ public class StateList extends MutableList implements Runnable {
       These timers are created or called-upon by states as needed.
 
     State-machine handler methods are synchronized,
-		so only one thread at one time may execute a state's handler code.
+    so only one thread at one time may execute a state's handler code.
 
-		State machine handler code should not do busy-waits, 
-		or contain long loops, because doing so could disable 
-		other parts of the hierarchical state machine of which it is a part.
+    State machine handler code should not do busy-waits, 
+    or contain long loops, because doing so could disable 
+    other parts of the hierarchical state machine of which it is a part.
 
 
     Handler Methods:
 
-		State machines run when their handler methods are called.
-		A handler's main job is to process events, usually inputs.
-		In doing so they might change the machine's [sub]state
-		or produce some outputs, or both. 
-   	
-   	There are two sets of state-machine handler methods in this file.
-   	* Final handler methods are the methods called to execute 
-   	  a state's code.  These may not be overridden.
-   	* Override-able handler methods may be overridden by state subclasses.
-   	  These methods are called by the 
-   	  above-mentioned non-override-able final handler methods.
+    State machines run when their handler methods are called.
+    A handler's main job is to process events, usually inputs.
+    In doing so they might change the machine's [sub]state
+    or produce some outputs, or both. 
+     
+     There are two sets of state-machine handler methods in this file.
+     * Final handler methods are the methods called to execute 
+       a state's code.  These may not be overridden.
+     * Override-able handler methods may be overridden by state subclasses.
+       These methods are called by the 
+       above-mentioned non-override-able final handler methods.
 
 
     Hierarchical state machine major states: 
@@ -149,53 +149,53 @@ public class StateList extends MutableList implements Runnable {
       waiting for the next input event.
 
 
-		Signals, also known as events:
+    Signals, also known as events:
 
     Signals carry information between parts of 
     the hierarchical state machine, and between 
     the state machine and the external world.
     Signals can be of several types.
 
-	  * Continuous time vs. discrete time:
-	  	* A continuous time signal can change at any time,
-	  	  like the value of a Java variable.
-	  	  The only way to know it has changed is to examine it.
-	  	  A continuous time signal can change at any time.
-	  	  It's possible not all changes will be seen,
-	  	  depending on when and how often it is examined.
-	  	  An example of a continuous time signal is a thermometer reading.
-	  	* A discrete time signal is a sequence of data values
-	  	  that become available at known times.
-	  	  Every datum is accompanied by a notification of its arrival.
-	  	  If makes no sense to read it more than once per notification.
-	  	  An example of a discrete time signal is 
-	  	  a stream of email messages arriving in an In-Box.
+    * Continuous time vs. discrete time:
+      * A continuous time signal can change at any time,
+        like the value of a Java variable.
+        The only way to know it has changed is to examine it.
+        A continuous time signal can change at any time.
+        It's possible not all changes will be seen,
+        depending on when and how often it is examined.
+        An example of a continuous time signal is a thermometer reading.
+      * A discrete time signal is a sequence of data values
+        that become available at known times.
+        Every datum is accompanied by a notification of its arrival.
+        If makes no sense to read it more than once per notification.
+        An example of a discrete time signal is 
+        a stream of email messages arriving in an In-Box.
 
     * Input signals vs. output signals: 
-    	* An input signal is one that is produced outside of a machine,
-    	  and read or consumed inside of the machine.
-	 		* An output signal is one that is produced inside of a machine,
-    	  and read or consumed outside of the machine.
-    	This property is contextual.  A signal which is
-    	an output of one machine might be an input to another machine.
+      * An input signal is one that is produced outside of a machine,
+        and read or consumed inside of the machine.
+       * An output signal is one that is produced inside of a machine,
+        and read or consumed outside of the machine.
+      This property is contextual.  A signal which is
+      an output of one machine might be an input to another machine.
 
     The following is a list of some signals of interest to these state machines,
     signals that are checked by the base state-machine infrastructure, 
     and how these signals should be handled:
-  	* A state change request: 
-  	  A state machine can make this request to its ancestor state machines.
-  	  In most cases, the ancestor state that should respond is the parent.
-  	  The appropriate ancestor state responds by changing its state 
-  	  to the sub-state requested, and calling its handler.
+    * A state change request: 
+      A state machine can make this request to its ancestor state machines.
+      In most cases, the ancestor state that should respond is the parent.
+      The appropriate ancestor state responds by changing its state 
+      to the sub-state requested, and calling its handler.
     * A timer being triggered.  
       The affected state handler will take an appropriate action.
     * Discrete data objects inputs.  These can be:
       * queued objects such as received network packets,
-    	* strings or other objects parsed from those packets, 
-    	* bytes in those strings.
-    	An affected state handler will take an appropriate action.
-    	Very possibly it will read additional data from the same input stream
-    	and act on the entire sequence as a whole.
+      * strings or other objects parsed from those packets, 
+      * bytes in those strings.
+      An affected state handler will take an appropriate action.
+      Very possibly it will read additional data from the same input stream
+      and act on the entire sequence as a whole.
     * Handler method return codes.
       When a return code is true, it means that 
       some other otherwise undocumented signal has been produced.  
@@ -203,31 +203,31 @@ public class StateList extends MutableList implements Runnable {
       handler methods and return codes.
 
 
-		Handler methods and their protocol (return status values):
+    Handler methods and their protocol (return status values):
 
-		To review, the purpose of a state machine handler method 
-		is to process one or more inputs to its state machine.
-		A state machine's handler method is called whenever it is possible that 
-		one or more of the state machine's inputs has changed or appeared.
-		The processing might include internal state transitions.
-		passing of signals between internal sub-machines,
-		and/or the production of one or more outputs.
+    To review, the purpose of a state machine handler method 
+    is to process one or more inputs to its state machine.
+    A state machine's handler method is called whenever it is possible that 
+    one or more of the state machine's inputs has changed or appeared.
+    The processing might include internal state transitions.
+    passing of signals between internal sub-machines,
+    and/or the production of one or more outputs.
 
-		A state handler method may return at any time.
-		The way the caller responds to a return depends on
-		the handler method's return code.  Details follow.
+    A state handler method may return at any time.
+    The way the caller responds to a return depends on
+    the handler method's return code.  Details follow.
 
-		There are several ways that a state can pass information/signals.
-		* state [change] request: This is a signal requesting that
-		  the state machine activate a particular state.
-		  Usually it is a request from one state to its parent
-		  to change the parent's sub-state to be
-		  a sibling of the requesting state,
-		  but other requests are possible.
-		* discrete object inputs:
-		  * A discrete object input is passed by 
-		    setting a state input variable for that purpose to contain
-		    a reference to that object, and calling the state's input handler.
+    There are several ways that a state can pass information/signals.
+    * state [change] request: This is a signal requesting that
+      the state machine activate a particular state.
+      Usually it is a request from one state to its parent
+      to change the parent's sub-state to be
+      a sibling of the requesting state,
+      but other requests are possible.
+    * discrete object inputs:
+      * A discrete object input is passed by 
+        setting a state input variable for that purpose to contain
+        a reference to that object, and calling the state's input handler.
       * The state may act on the input, or may ignore it, 
         as appropriate to the application.
       * The state may consume the input, or not consume it, 
@@ -240,23 +240,23 @@ public class StateList extends MutableList implements Runnable {
         * that the input was processed by the state that did not consume it but
           this is a broadcast type of input that may be processed by 
           multiple states.
-		  * Generally a state will offer the input to one or more of its children
-		    before trying to process the input itself.
-		    This makes it possible for sub-states to override 
-		    the default behavior of their parent. 
-		  * If the state's handler processes and consumes the discrete input, 
-		    it sets the input variable to null to indicate this.
-		    The setter of the variable interprets this to mean
-		    that the input was consumed and no further processing of it needed.
-		  * If the state's handler does not consume a discrete input then 
-		    the input datum remains in the state's input register variable.
-		    The setter interprets this to mean that the input was not consumed.
-		    In this case the setter will set the variable to null
-		    and one-at-a-time store the value to the input variable of 
-		    other sub-states that should receive it and call their handlers.
-		    The setter might also try to process the input itself.
-		* handler return code:  State handers methods return a boolean value. 
-		  This value has the following meanings.
+      * Generally a state will offer the input to one or more of its children
+        before trying to process the input itself.
+        This makes it possible for sub-states to override 
+        the default behavior of their parent. 
+      * If the state's handler processes and consumes the discrete input, 
+        it sets the input variable to null to indicate this.
+        The setter of the variable interprets this to mean
+        that the input was consumed and no further processing of it needed.
+      * If the state's handler does not consume a discrete input then 
+        the input datum remains in the state's input register variable.
+        The setter interprets this to mean that the input was not consumed.
+        In this case the setter will set the variable to null
+        and one-at-a-time store the value to the input variable of 
+        other sub-states that should receive it and call their handlers.
+        The setter might also try to process the input itself.
+    * handler return code:  State handers methods return a boolean value. 
+      This value has the following meanings.
       * false: This means that no progress was possible.
         The current state's handler and the handlers of 
         the current state's descendant states, if any, 
@@ -278,76 +278,76 @@ public class StateList extends MutableList implements Runnable {
           until it finally returns false indicating no further work is possible.
 
 
-		Exception Handling:
+    Exception Handling:
 
-		It is common for a state-machine to receive input from InputStreams,
-		and InputStreams produce IOExceptions.  These exceptions must be handled.
-		* Most state-machine handler methods handle IOExceptions by 
-			declaring that they may throw them.  But not all threads 
-			that execute state-machine code can handle exceptions.
-			An example of this is the Timer thread.
-			To accommodate such threads, methods are provided that,
-			instead of throwing an IOException, they record the IOException,
-			so it can be re-thrown later by a different thread that can handle it.
-		* Originally it was thought that IOExceptions must be handled
-		  when a state object is constructed, but this is difficult to do.
-		  So initialization was moved from constructors to initialization methods.
-		  initializeWithIOExceptionStateList() was created for this purpose.
-		  However it might be possible to eliminate this eventually.
+    It is common for a state-machine to receive input from InputStreams,
+    and InputStreams produce IOExceptions.  These exceptions must be handled.
+    * Most state-machine handler methods handle IOExceptions by 
+      declaring that they may throw them.  But not all threads 
+      that execute state-machine code can handle exceptions.
+      An example of this is the Timer thread.
+      To accommodate such threads, methods are provided that,
+      instead of throwing an IOException, they record the IOException,
+      so it can be re-thrown later by a different thread that can handle it.
+    * Originally it was thought that IOExceptions must be handled
+      when a state object is constructed, but this is difficult to do.
+      So initialization was moved from constructors to initialization methods.
+      initializeWithIOExceptionStateList() was created for this purpose.
+      However it might be possible to eliminate this eventually.
 
 
-		Other Notes:
+    Other Notes:
 
-	  When writing state-machine code it is important to distinguish between
-	  * the current State object, designated by "this", and
-	  * its current sub-state object, or child state, 
-	    designated by "this.presentSubStateList".
+    When writing state-machine code it is important to distinguish between
+    * the current State object, designated by "this", and
+    * its current sub-state object, or child state, 
+      designated by "this.presentSubStateList".
 
-		///enh At first, StateList and its subclasses AndState and OrState
-		  do not [yet] provide behavioral inheritance, which is
-		  the most important benefit of hierarchical state machines.
-		  Note, this is now being added.
+    ///enh At first, StateList and its subclasses AndState and OrState
+      do not [yet] provide behavioral inheritance, which is
+      the most important benefit of hierarchical state machines.
+      Note, this is now being added.
 
-		///opt Presently a discrete input is never passed up from a state
-		  unless it was passed down and went unprocessed.
-		  This can be inefficient if a nested state processes much input
-		  because it must be passed down through its ancestors first.
-		  Maybe discrete input can be made to originate in any state
-		  and be passed either up or down as conditions require it.
-		  This would assume a model in which input can be consumed by
-		  any state designed to handle it.
-		  An extra input loop could be added to any state that inputs a lot.
-		  Maybe an input looping method could be added to StateList.
+    ///opt Presently a discrete input is never passed up from a state
+      unless it was passed down and went unprocessed.
+      This can be inefficient if a nested state processes much input
+      because it must be passed down through its ancestors first.
+      Maybe discrete input can be made to originate in any state
+      and be passed either up or down as conditions require it.
+      This would assume a model in which input can be consumed by
+      any state designed to handle it.
+      An extra input loop could be added to any state that inputs a lot.
+      Maybe an input looping method could be added to StateList.
 
-		  The only complication I see is synchronized sections.
-		  A message loop would use the timer associated with 
-		  a LockAndSignal instance.  Normally the wait() unlocks
-		  to allow entry to another synchronized method containing a notify() call.  
-		  Unfortunately this would allow entry by other threads also.
-		  Maybe for those classes, the timer thread could call notify().
+      The only complication I see is synchronized sections.
+      A message loop would use the timer associated with 
+      a LockAndSignal instance.  Normally the wait() unlocks
+      to allow entry to another synchronized method containing a notify() call.  
+      Unfortunately this would allow entry by other threads also.
+      Maybe for those classes, the timer thread could call notify().
 
-	  */
+    */
 
-	
-	/* Variables used for all states.  */
+  
+  /* Variables used for all states.  */
 
-	protected StateList parentStateList= null; // Our parent state.
-	  ///opt It might be worthwhile combining this field 
-	  // with DataNode.parentNamedList, but we would need a way to
-	  // identify State children during state operations.
-	  //
-	  ///opt To eliminate null checks, make this be be a Sentinel state.
+  protected StateList parentStateList= null; // Our parent state.
+    ///opt It might be worthwhile combining this field 
+    // with DataNode.parentNamedList, but we would need a way to
+    // identify State children during state operations.
+    //
+    ///opt To eliminate null checks, make this be be a Sentinel state.
 
-	private int pathLevelI; // Distance from root node.
-	  // This, along with the link to the parent node,
-	  // was added to speed the finding of Lowest Common Ancestors (LCAs),
-	  // without needing to traverse the tree from the root.
-	  // But so far it has not been used for that yet.
-	  // Presently this variable is only globally down-propagated.
-	  ///opt This could be cached, but it wouldn't save much.
-	  //  If it was, down-invalidation would be setting it to -MAXINT.
+  private int pathLevelI; // Distance from root node.
+    // This, along with the link to the parent node,
+    // was added to speed the finding of Lowest Common Ancestors (LCAs),
+    // without needing to traverse the tree from the root.
+    // But so far it has not been used for that yet.
+    // Presently this variable is only globally down-propagated.
+    ///opt This could be cached, but it wouldn't save much.
+    //  If it was, down-invalidation would be setting it to -MAXINT.
 
-	/// elim protected Color theColor= UIColor.initializerStateColor;
+  /// elim protected Color theColor= UIColor.initializerStateColor;
 
   protected List<StateList> theListOfSubStateLists= // Our sub-states.
       new ArrayList<StateList>(); // Initially empty list.
@@ -360,9 +360,9 @@ public class StateList extends MutableList implements Runnable {
         the state handler's caller immediately before 
         the handler is called to try to process the input
       * set to null.
-    	  * This is done by the handler immediately after processing the input if
-    	    the input was fully processed.  Setting to null in this case
-    	    indicates to the caller that the input was consumed.
+        * This is done by the handler immediately after processing the input if
+          the input was fully processed.  Setting to null in this case
+          indicates to the caller that the input was consumed.
         * This is done by the handler's caller after a handler returns
           without setting it to null before returning.
           This means either that the handler failed to process the input 
@@ -375,22 +375,22 @@ public class StateList extends MutableList implements Runnable {
           it may be restored to the current state.
       */
 
-	private IOException delayedIOException= null; /* Storage for an exception
-	  thrown in a thread, such as a Timer thread which can't handle it,
-	  for re-throwing later in a thread that can handle it. 
-	  */
+  private IOException delayedIOException= null; /* Storage for an exception
+    thrown in a thread, such as a Timer thread which can't handle it,
+    for re-throwing later in a thread that can handle it. 
+    */
 
-	/* Variables used only for OrState behavior.. */
+  /* Variables used only for OrState behavior.. */
 
-	// Sentinel states which can simplify other code by eliminating null checks.
+  // Sentinel states which can simplify other code by eliminating null checks.
   // Sentinel states are used by OrState machines. 
-	protected static final SentinelState initialSentinelState;
+  protected static final SentinelState initialSentinelState;
 
-	static { // Static initialization.
-		initialSentinelState= new SentinelState(); 
-		initialSentinelState.initializeV();
-		}
-	
+  static { // Static initialization.
+    initialSentinelState= new SentinelState(); 
+    initialSentinelState.initializeV();
+    }
+  
   protected StateList presentSubStateList= null; /* Machine's qualitative state.
         This is used to select between and-state and or-state behavior
         This will be null when the state is behaving as an and-state.
@@ -399,14 +399,14 @@ public class StateList extends MutableList implements Runnable {
         */
 
   protected StateList nextSubStateList= null; /* Becomes non-null when 
-  	machine requests a new qualitative state.  
+    machine requests a new qualitative state.  
     It will eventually become the present state also, 
     which would cause state exit and re-entry when that happens.
     */
 
   private Boolean cachedActiveBoolean= null; // Initially invalid.
   
-	/* Methods used to build state objects. */
+  /* Methods used to build state objects. */
 
   public StateList initializeWithIOExceptionStateList() throws IOException
     /* This method can also be used to initialize this state object.
@@ -424,11 +424,11 @@ public class StateList extends MutableList implements Runnable {
         If this continues to be true as this app matures,
         remove the throwing of IOException and the inclusion in 
         the method names. 
-     	*/
-	  {
-  	  initializeV(); // Use the other initialization method to do the work.
-  	  return this;
-	  	}
+       */
+    {
+      initializeV(); // Use the other initialization method to do the work.
+      return this;
+      }
 
   public void initializeV()
     /* This method initializes this state object and its super-classes.
@@ -436,14 +436,14 @@ public class StateList extends MutableList implements Runnable {
       This is not the same as the entryV() method, which
       does actions needed when the associated state-machine state is entered.
 
-			Like constructors, this method should be called first
-			from the sub-class versions of this method.
-  		*/
+      Like constructors, this method should be called first
+      from the sub-class versions of this method.
+      */
     {
       setNameV( // Set node name to be 
           getClass().getSimpleName()  // the name of this class.
           );
-    	}
+      }
 
   public void initAndAddStateListV(StateList theSubStateList) 
       throws IOException
@@ -456,33 +456,33 @@ public class StateList extends MutableList implements Runnable {
       In cases where initialization with parameters is needed,
       it should be done by doing what this method does but
       using the initializer with parameters instead of the default one.
-     	*/
-  	{ 
-  	  addStateListV( theSubStateList.initializeWithIOExceptionStateList() );
-  	  }
+       */
+    { 
+      addStateListV( theSubStateList.initializeWithIOExceptionStateList() );
+      }
 
   public void addStateListV(StateList theSubStateList)
     /* This method adds one sub-state to this state.
-			It is part of the StateList building process.  
+      It is part of the StateList building process.  
       It adds theSubState to the state's sub-state list,
       including setting the parent of the sub-state to be this state.
 
       It also adds this state as a child DataNode to 
       this state's DataNode subclass's list of child DataNodes.
       */
-  	{ 
+    { 
       /// appLogger.debug( 
       ///    "addStateListV(StateList theSubStateList) begins with "+pathLevelI);
       { // Add as StateList child.
-    	  theListOfSubStateLists.add( theSubStateList ); // Add theSubState to
-    	    // this state's list of sub-states.
+        theListOfSubStateLists.add( theSubStateList ); // Add theSubState to
+          // this state's list of sub-states.
         theSubStateList.propagateIntoSubtreeB( pathLevelI );
-    	  theSubStateList.setParentStateListV( this ); // Store this state as
-    	  	// the sub-state's parent state.
+        theSubStateList.setParentStateListV( this ); // Store this state as
+          // the sub-state's parent state.
         } // Add as StateList child.
-  	  
-  	  addAtEndV( theSubStateList ); // Add as DataNode child.
-  	  }
+      
+      addAtEndV( theSubStateList ); // Add as DataNode child.
+      }
 
   protected boolean propagateIntoSubtreeB( int pathLevelI )
     /* This method propagates pathLevelI into 
@@ -514,92 +514,92 @@ public class StateList extends MutableList implements Runnable {
       This is not the same as the onExitV() method, which
       does actions needed when the associated state-machine state is exited.
       */
-	  {
-	  	for (StateList subStateList : theListOfSubStateLists)
-		  	{
-	  			subStateList.finalizeV();
-		  		}
+    {
+      for (StateList subStateList : theListOfSubStateLists)
+        {
+          subStateList.finalizeV();
+          }
       }
 
-	public void setParentStateListV( StateList parentStateList )
-	  // Stores parentStateList as the parent state of this state.
-		{ this.parentStateList= parentStateList; }
+  public void setParentStateListV( StateList parentStateList )
+    // Stores parentStateList as the parent state of this state.
+    { this.parentStateList= parentStateList; }
 
   public StateList getpresentSubStateList()
     /* This method returns the present machine sub-state.
       It is meaningful only for OrStates.
       */
-  	{ 
-  		return presentSubStateList; 
-  		}
+    { 
+      return presentSubStateList; 
+      }
 
-	
-	/*  Methods for AndState behavior.  */
+  
+  /*  Methods for AndState behavior.  */
 
-	public synchronized boolean andStateOnInputsB() throws IOException
-	  /* This method handles AndState and 
-	    state-machines that want to behave like an AndState machine 
-	    by cycling all of their sub-machines
-	    until none of them makes progress as indicated by its return code.
-	    It scans the sub-machines in order until one does.
-	    Then it restarts the scan.
-	    It is done this way to prioritized the sub-machines.
-	    If one sub-machine produces an output signal 
-	    which is an input signal to other sub-machines,
-	    then earlier machines have the first change to process it.
-	    It keeps scanning until none of the sub-machines' handlers return true. 
-	    This method returns true if any sub-machine returned true during any scan, 
-	    false otherwise.
-	    */
-	  { 
-			throwDelayedExceptionV(); // Throw exception if one was saved earlier.
-		  boolean stateProgressB= false;
-  	  substateScansUntilNoProgress: while(true) {
- 	  		for (StateList subStateList : theListOfSubStateLists)
-   	  		{
-   	  		  boolean substateProgressB= doOnInputsToSubstateB(subStateList); 
-  	  	  	if (substateProgressB) 
-  		  	  	{
-  		  	  		stateProgressB= true;
-  		  	  		continue substateScansUntilNoProgress; // Restart scan.
-  		  	  		}
-   	  		  }
- 	  		break substateScansUntilNoProgress; // No progress was made in this final scan.
-  	  	} // substateScansUntilNoProgress:
-			return stateProgressB; 
-			}
+  public synchronized boolean andStateOnInputsB() throws IOException
+    /* This method handles AndState and 
+      state-machines that want to behave like an AndState machine 
+      by cycling all of their sub-machines
+      until none of them makes progress as indicated by its return code.
+      It scans the sub-machines in order until one does.
+      Then it restarts the scan.
+      It is done this way to prioritized the sub-machines.
+      If one sub-machine produces an output signal 
+      which is an input signal to other sub-machines,
+      then earlier machines have the first change to process it.
+      It keeps scanning until none of the sub-machines' handlers return true. 
+      This method returns true if any sub-machine returned true during any scan, 
+      false otherwise.
+      */
+    { 
+      throwDelayedExceptionV(); // Throw exception if one was saved earlier.
+      boolean stateProgressB= false;
+      substateScansUntilNoProgress: while(true) {
+         for (StateList subStateList : theListOfSubStateLists)
+           {
+             boolean substateProgressB= doOnInputsToSubstateB(subStateList); 
+            if (substateProgressB) 
+              {
+                stateProgressB= true;
+                continue substateScansUntilNoProgress; // Restart scan.
+                }
+             }
+         break substateScansUntilNoProgress; // No progress was made in this final scan.
+        } // substateScansUntilNoProgress:
+      return stateProgressB; 
+      }
 
 
-	/* Methods for implementing OrState behavior.. */
+  /* Methods for implementing OrState behavior.. */
 
   public synchronized boolean orStateOnInputsB() throws IOException
-	  /* This handles the OrState by cycling it's machine.
-	    It does this by calling the handler method 
-	    associated with the present state-machine's sub-state.
+    /* This handles the OrState by cycling it's machine.
+      It does this by calling the handler method 
+      associated with the present state-machine's sub-state.
       The sub-state might change with each of these calls.
       It calls sub-state handlers until no computational progress is made.
       It returns true if at least one sub-state made computational progress.
-	    It returns false otherwise.
-	    Each sub-state handler gets a chance to process the discrete input,
-	    if one is available, until it is consumed. 
-	    
-	    ///enh Must check for sub-state validity vs. super-state 
-	      when and if behavioral inheritance is added.
+      It returns false otherwise.
+      Each sub-state handler gets a chance to process the discrete input,
+      if one is available, until it is consumed. 
+      
+      ///enh Must check for sub-state validity vs. super-state 
+        when and if behavioral inheritance is added.
       */
-	  { 
-			throwDelayedExceptionV(); // Throw exception if one was saved.
-	  	boolean stateProgressB= false;
-			while (true) { // Process sub-states until no new next one.
-	  	    boolean substateReturnB= // Call sub-state handler.
-	  	    		doOnInputsToSubstateB(presentSubStateList);
+    { 
+      throwDelayedExceptionV(); // Throw exception if one was saved.
+      boolean stateProgressB= false;
+      while (true) { // Process sub-states until no new next one.
+          boolean substateReturnB= // Call sub-state handler.
+              doOnInputsToSubstateB(presentSubStateList);
           if (substateReturnB) // Accumulate its return code
             stateProgressB= true; // in state return code.
           boolean stateChangedB= tryPreparingNextStateB();
           if (!stateChangedB) // If no next state
             break; // exit, we're done.
-	  	  	} // while (true)
-			return stateProgressB; // Returning accumulated state return code.
-			}
+          } // while (true)
+      return stateProgressB; // Returning accumulated state return code.
+      }
 
   private boolean tryPreparingNextStateB() throws IOException
     /* This method prepares to processes the next sibling state,
@@ -635,20 +635,20 @@ public class StateList extends MutableList implements Runnable {
 
   protected boolean requestSubStateChangeIfNeededB(
       StateList requestedStateList)
-	  /* This method does the same as requestSubStateListV(..) except that
-	    if will reject the state-change request and return false if 
-	    the present sub-state is the same as the requested state. 
-	    In this case the sub-state will not be exited and reentered.
-	    This method will return true if the request actually occurs, false otherwise.
-	    */
-	  {
-  	  boolean changeIsNeededB= // Calculate whether the state needs changing. 
-  	  		( presentSubStateList != requestedStateList );
-	  	if ( changeIsNeededB )
-	  		requestSubStateListV(requestedStateList); // Request the state change.
+    /* This method does the same as requestSubStateListV(..) except that
+      if will reject the state-change request and return false if 
+      the present sub-state is the same as the requested state. 
+      In this case the sub-state will not be exited and reentered.
+      This method will return true if the request actually occurs, false otherwise.
+      */
+    {
+      boolean changeIsNeededB= // Calculate whether the state needs changing. 
+          ( presentSubStateList != requestedStateList );
+      if ( changeIsNeededB )
+        requestSubStateListV(requestedStateList); // Request the state change.
       theAppLog.debug( "requestSubStateChangeIfNeededB(..) "+changeIsNeededB);
-	  	return changeIsNeededB; // Return whether request occurred.
-	  }	
+      return changeIsNeededB; // Return whether request occurred.
+    }  
 
   protected void requestAncestorSubStateV(StateList requestedStateList)
     /* This method requests a state change to requestedStateList,
@@ -665,31 +665,31 @@ public class StateList extends MutableList implements Runnable {
   private Throwable oldThrowable= null;
 
   protected void requestSubStateListV(StateList requestedStateList)
-	  /* This method requests the next state-machine state,
-	    which is the same thing as this state's next sub-state.
-	    
-	    Though the requestedSubStateList variable changes immediately,
-	    control is not transfered to the new sub-state until
-	    the handler of the present sub-state exits.
-	    
-	    Requesting a state change is considered making progress
-	    for purposes of deciding whether to retry a state's doOnInputsB().
-	    
-	    If the machine is already in the requested sub-state,
-	    the sub-state will be exited and reentered.
-	    ///org Is this a good idea?
-	    
-	    ///enh Being modified to request state changes 
-	      in ancestor state machines.
-	       
-	    */
-	  {
+    /* This method requests the next state-machine state,
+      which is the same thing as this state's next sub-state.
+      
+      Though the requestedSubStateList variable changes immediately,
+      control is not transfered to the new sub-state until
+      the handler of the present sub-state exits.
+      
+      Requesting a state change is considered making progress
+      for purposes of deciding whether to retry a state's doOnInputsB().
+      
+      If the machine is already in the requested sub-state,
+      the sub-state will be exited and reentered.
+      ///org Is this a good idea?
+      
+      ///enh Being modified to request state changes 
+        in ancestor state machines.
+         
+      */
+    {
       Throwable newThrowable= new Throwable("stack trace at call");
       if  // Detect and report if this is an excessive state change request.
-				( (nextSubStateList != null) // There is an old request, it's,
-					&& (nextSubStateList != StateList.initialSentinelState) // not the sentinel,
-		      && (nextSubStateList != requestedStateList) // and it's not a duplicate request.
-					)
+        ( (nextSubStateList != null) // There is an old request, it's,
+          && (nextSubStateList != StateList.initialSentinelState) // not the sentinel,
+          && (nextSubStateList != requestedStateList) // and it's not a duplicate request.
+          )
         synchronized(theAppLog) { // Must synchronize all output on AppLogger object. 
           theAppLog.debug(  // Log entry header, first line.
               "StateList.requestSubStateListV(..), already requested,");
@@ -704,49 +704,49 @@ public class StateList extends MutableList implements Runnable {
       oldThrowable= newThrowable; // Save new Throwable as old for next time.
 
       nextSubStateList= requestedStateList; // Now, finally, actually record the request.
-	  	}	
+      }  
 
-	/*  Methods for entry and exit of OrState or their sub-states.  */
+  /*  Methods for entry and exit of OrState or their sub-states.  */
 
-	public final void doOnEntryV() throws IOException
-	  /* This method is called when 
-		  the state associated with this object is entered.
-		  It is final so it can not be overridden.
-		  It calls onEntryV() which may be overridden.
-		  
-		  //enh: Presently this is called from orStateOnInputsB() only.
-		  	Maybe it should be called when andStateOnInputsB() is called?
-		  */
-		{ 
+  public final void doOnEntryV() throws IOException
+    /* This method is called when 
+      the state associated with this object is entered.
+      It is final so it can not be overridden.
+      It calls onEntryV() which may be overridden.
+      
+      //enh: Presently this is called from orStateOnInputsB() only.
+        Maybe it should be called when andStateOnInputsB() is called?
+      */
+    { 
       theAppLog.debug("StateList",
           "StateList.doOnEntryV() to"+ getFormattedStatePathString() );
 
-			onEntryV(); 
-			}
+      onEntryV(); 
+      }
 
-	public void onEntryV() throws IOException
-	  /* This method recursively enters each of its relevant sub-states.
+  public void onEntryV() throws IOException
+    /* This method recursively enters each of its relevant sub-states.
 
-	    It may be overridden in subclasses, but if it is, 
-	    those subclass methods should probably begin with a call to 
-	      super.onEntryV();
-			  
-			///opt  This method probably belongs in class AndOrState,
-			  and this method should be an empty method.
-			  Maybe there should be a class LeafState for use by leaf state subclasses.
-	    */
-	  { 
-			/// super.onEntryV();
-			
-			if ( ! isAndStateB() ) // This is an OrState.
-				presentSubStateList.doOnEntryV(); // Enter its only active sub-state.
-			else // This is an AndState.
-				for  // Enter all of its sub-states.
-				  (StateList subStateList : theListOfSubStateLists) 
-					{
-		  	  	subStateList.doOnEntryV();
-						}
-			}
+      It may be overridden in subclasses, but if it is, 
+      those subclass methods should probably begin with a call to 
+        super.onEntryV();
+        
+      ///opt  This method probably belongs in class AndOrState,
+        and this method should be an empty method.
+        Maybe there should be a class LeafState for use by leaf state subclasses.
+      */
+    { 
+      /// super.onEntryV();
+      
+      if ( ! isAndStateB() ) // This is an OrState.
+        presentSubStateList.doOnEntryV(); // Enter its only active sub-state.
+      else // This is an AndState.
+        for  // Enter all of its sub-states.
+          (StateList subStateList : theListOfSubStateLists) 
+          {
+            subStateList.doOnEntryV();
+            }
+      }
 
   public boolean logOrSubstatesB(String callerString)
     /* This method recursively logs any descendant OrState active sub-states.
@@ -775,111 +775,111 @@ public class StateList extends MutableList implements Runnable {
       return anyStateLoggedB;
       }
 
-	public final void doOnExitV() throws IOException
-	  /* This method is called when a state is exited.
-	    It does actions needed when a state is exited.
-		  It is final so it can not be overridden.
-		  It calls onExitV() which may be overridden.
-	    */
-	  { 
-			onExitV();
+  public final void doOnExitV() throws IOException
+    /* This method is called when a state is exited.
+      It does actions needed when a state is exited.
+      It is final so it can not be overridden.
+      It calls onExitV() which may be overridden.
+      */
+    { 
+      onExitV();
       theAppLog.debug("StateList",
           "StateList.doOnExitV() from"+ getFormattedStatePathString() );
-			}
+      }
 
-	public void onExitV() throws IOException
-	  /* This method recursively exits each of this states active sub-states.
-	    It handles both AndState and OrState cases.
-	    */
-	  { 
-			if ( ! isAndStateB() ) // this is an OrState.
-				presentSubStateList.doOnExitV(); // Exit its single active sub-state.
-			else // this is an AndState.
-	  		for // Exit all its active concurrent sub-states. 
-	  		  (StateList subStateList : theListOfSubStateLists) 
-	  	  	subStateList.doOnExitV();
-			
-			/// super.onExitV();
-			}
+  public void onExitV() throws IOException
+    /* This method recursively exits each of this states active sub-states.
+      It handles both AndState and OrState cases.
+      */
+    { 
+      if ( ! isAndStateB() ) // this is an OrState.
+        presentSubStateList.doOnExitV(); // Exit its single active sub-state.
+      else // this is an AndState.
+        for // Exit all its active concurrent sub-states. 
+          (StateList subStateList : theListOfSubStateLists) 
+          subStateList.doOnExitV();
+      
+      /// super.onExitV();
+      }
 
 
-	/* Methods containing general state handler code. */
-	
-	public synchronized void onInputsToReturnFalseV() throws IOException
-	  /* This is a code-saving method.
-	    A state class overrides either this method or onInputsB(), 
-	    but not both, as part of how it controls its handler's behavior.
-	    Overriding this method instead of onInputsB() can result in
-	    more compact code.  An override like this:
+  /* Methods containing general state handler code. */
+  
+  public synchronized void onInputsToReturnFalseV() throws IOException
+    /* This is a code-saving method.
+      A state class overrides either this method or onInputsB(), 
+      but not both, as part of how it controls its handler's behavior.
+      Overriding this method instead of onInputsB() can result in
+      more compact code.  An override like this:
 
-				public synchronized void onInputsReturnsFalseV() throws IOException
-				  { 
-				    some-code;
-				    }
+        public synchronized void onInputsReturnsFalseV() throws IOException
+          { 
+            some-code;
+            }
 
-			is a more compact version of, but equivalent to, this:
+      is a more compact version of, but equivalent to, this:
 
-				public synchronized boolean onInputsB() throws IOException
-				  { 
-				    some-code;
-				    return false;
-				    }
+        public synchronized boolean onInputsB() throws IOException
+          { 
+            some-code;
+            return false;
+            }
 
-			WARNING: Some states such as AndState, OrState, and their subclasses
-			already override the onInputsB() method.
-			In these cases, overriding the onInputsToReturnFalseV() method
-			will have no effect.
-			This method should only be overridden in state 
-			which extend the class StateList,
-			or other state classes which are leaves.
+      WARNING: Some states such as AndState, OrState, and their subclasses
+      already override the onInputsB() method.
+      In these cases, overriding the onInputsToReturnFalseV() method
+      will have no effect.
+      This method should only be overridden in state 
+      which extend the class StateList,
+      or other state classes which are leaves.
 
-			As with onInputsB(), because this method can be called from
-			multiple threads, such as timer threads, it and all sub-class overrides
-			should be synchronized.
+      As with onInputsB(), because this method can be called from
+      multiple threads, such as timer threads, it and all sub-class overrides
+      should be synchronized.
 
-		  See onInputsB() .
-	    */
-	  { 
-		  // This default version does nothing.
-	    }
-	
-	public synchronized boolean onInputsB() throws IOException
-	  /* A state class overrides either this method or onInputsToReturnFalseV(),
-	    but not both, as part of how it controls its behavior.
+      See onInputsB() .
+      */
+    { 
+      // This default version does nothing.
+      }
+  
+  public synchronized boolean onInputsB() throws IOException
+    /* A state class overrides either this method or onInputsToReturnFalseV(),
+      but not both, as part of how it controls its behavior.
 
-	    This method does nothing except return false unless 
-	    it or onInputsToReturnFalseV() is overridden.
-	    All overridden versions of this method should return 
-	    * true if any computational progress was made.
-	    * false otherwise.
-	    To return false without needing to code a return statement,
-	    override the onInputsToReturnFalseV() method instead.
+      This method does nothing except return false unless 
+      it or onInputsToReturnFalseV() is overridden.
+      All overridden versions of this method should return 
+      * true if any computational progress was made.
+      * false otherwise.
+      To return false without needing to code a return statement,
+      override the onInputsToReturnFalseV() method instead.
 
-	    An onInputsB() method should not return false until
-	    everything that can possibly be done has been done, meaning:
+      An onInputsB() method should not return false until
+      everything that can possibly be done has been done, meaning:
       * It was unable to process any new inputs or input changes.
       * It was unable to produce any new outputs or output changes.
       * It was unable to make a state transition in the qualitative state.
       * It was unable to change any extended state variables.
 
-			Because this method can be called from multiple threads, 
-			such as timer threads, it and all sub-class overrides
-			should be synchronized.
-	    
-	    */
-	  { 
-			onInputsToReturnFalseV(); // Call this in case it is overridden instead.
-			return false; // This default version returns false.
-		  }
-	
-	public final synchronized boolean doOnInputsB() throws IOException
-	  /* This is the method that should be called to invoke a state's handler.
-	    It can not be overridden.  
-	    It calls the override-able handler methods which 
-	    StateList sub-classes may override.
-	    */
-	  { 
-			boolean signalB= onInputsB();
+      Because this method can be called from multiple threads, 
+      such as timer threads, it and all sub-class overrides
+      should be synchronized.
+      
+      */
+    { 
+      onInputsToReturnFalseV(); // Call this in case it is overridden instead.
+      return false; // This default version returns false.
+      }
+  
+  public final synchronized boolean doOnInputsB() throws IOException
+    /* This is the method that should be called to invoke a state's handler.
+      It can not be overridden.  
+      It calls the override-able handler methods which 
+      StateList sub-classes may override.
+      */
+    { 
+      boolean signalB= onInputsB();
       stateChange: { // Detect and prepare left-over state change request.
         if ((nextSubStateList == null)) // Not requested.
           break stateChange;
@@ -889,103 +889,103 @@ public class StateList extends MutableList implements Runnable {
           nextSubStateList= null; // Consume our state-change request.
           }
         } // stateChange: 
-			return signalB;
-		  }
+      return signalB;
+      }
 
 
-	/* Methods for delaying and re-throwing exceptions.  */
+  /* Methods for delaying and re-throwing exceptions.  */
 
-	public void delayExceptionV( IOException theIOException )
-		/* 	This method is used to save an IOException that 
-		  occurred in a thread that couldn't handle it,
-		  such as a Timer thread.
-		  It can be re-thrown later on a thread that can handle it,
-		  by calling throwDelayedExceptionV().
-		  If there is already a saved exception then it is logged first. 
-		  */
-		{ 
-		  if  // Log any previously saved exception.
-	    	(delayedIOException != null) 
-		  	theAppLog.exception(
-		  			"StateList.delayExceptionV(..), previously saved exception: ",
-		  			theIOException
-		  			);
-			delayedIOException= theIOException;  // Save the new exception.
-		  }
+  public void delayExceptionV( IOException theIOException )
+    /*   This method is used to save an IOException that 
+      occurred in a thread that couldn't handle it,
+      such as a Timer thread.
+      It can be re-thrown later on a thread that can handle it,
+      by calling throwDelayedExceptionV().
+      If there is already a saved exception then it is logged first. 
+      */
+    { 
+      if  // Log any previously saved exception.
+        (delayedIOException != null) 
+        theAppLog.exception(
+            "StateList.delayExceptionV(..), previously saved exception: ",
+            theIOException
+            );
+      delayedIOException= theIOException;  // Save the new exception.
+      }
 
-	public void throwDelayedExceptionV() throws IOException
-		/* 	This method re-throws any IOException 
-		  that occurred and was saved earlier
-		  in a thread which could not fully process it, 
-		  such as a Timer thread.
-		  If there is no such saved exception then it simply returns. 
-		  */
-		{ 
-		  if  (delayedIOException != null) // There is a saved exception. 
-		  	throw delayedIOException; // Re-throw it.
-		  else
-		  	return;
-		  }
+  public void throwDelayedExceptionV() throws IOException
+    /*   This method re-throws any IOException 
+      that occurred and was saved earlier
+      in a thread which could not fully process it, 
+      such as a Timer thread.
+      If there is no such saved exception then it simply returns. 
+      */
+    { 
+      if  (delayedIOException != null) // There is a saved exception. 
+        throw delayedIOException; // Re-throw it.
+      else
+        return;
+      }
 
 
-	/* Methods for dealing with discrete input to state-machines.
+  /* Methods for dealing with discrete input to state-machines.
 
-	  Discrete input is input that arrives as discrete packets,
-	  though not packets in the network sense,
-	  as opposed to level-type inputs, represented by values in variables
-	  which can change at any time.
+    Discrete input is input that arrives as discrete packets,
+    though not packets in the network sense,
+    as opposed to level-type inputs, represented by values in variables
+    which can change at any time.
 
-	  Presently a discrete input is a String which identifies a message, 
-	  parsed from the network input stream,
-	  followed by additional data associated that that message
-	  that follows the String in the same input stream.
+    Presently a discrete input is a String which identifies a message, 
+    parsed from the network input stream,
+    followed by additional data associated that that message
+    that follows the String in the same input stream.
 
-	  The arrival of a discrete input is signaled 
-	  by the variable offeredInputString being set 
-	  by the handler's caller to the String input value.
-	  If the state machine processes the input then 
-	  it sets the variable to null, thereby consuming that input.
-	  If it does not process it then the caller withdraws the input
-	  by setting the variable to null so that the input
-	  may be presented to other sub-state machines,
-	  or discarded if no machine processes it.
-	  
-	  ///enh Create a better way of doing discrete input 
-	  so less copying is needed and kludges such as 
-	  passing sub-states into common state methods, such as
-	  LinkedMachineState.tryReceivingHelloB(StateList subStateList).
-	  Make it work with current state and controlling ancestor states?
-	  Maybe tie to InputStream?
-	  */
-	
-	protected final synchronized boolean doOnInputsToSubstateB( 
-			  StateList subStateList )
-		  throws IOException
-		/* This method calls subStateList's handler doOnInputsB().
-		  Because it is sub-state processing,
-		  it copies any discrete input to the sub-state first.
-		  It returns true if the sub-state's handler returned true 
-		    or a discrete input was consumed by the sub-state.
-			It returns false otherwise.
-			If a discrete input was consumed by the sub-state,
-			then it is erased from this StateList also so that 
-			it will not be processed by any other states.
-			If an existing discrete input was not consumed,
-			then it will remain stored in this state machine,
-			and it is the responsibility of the caller to deal with it,
-			either by removing it, trying to process it in a sibling state, 
-			or by calling this method again until the input is consumed.
-			*/
-		{
-			boolean signalB;
-			if ( ! hasOfferedInputB(this) ) // Discrete input not present.
-				signalB= // Process without passing the offered input.
-					subStateList.doOnInputsB();
-				else // Offered input is present.
-				{ // Process with passed input.
-				  moveOfferedInputV(this, subStateList);
+    The arrival of a discrete input is signaled 
+    by the variable offeredInputString being set 
+    by the handler's caller to the String input value.
+    If the state machine processes the input then 
+    it sets the variable to null, thereby consuming that input.
+    If it does not process it then the caller withdraws the input
+    by setting the variable to null so that the input
+    may be presented to other sub-state machines,
+    or discarded if no machine processes it.
+    
+    ///enh Create a better way of doing discrete input 
+    so less copying is needed and kludges such as 
+    passing sub-states into common state methods, such as
+    LinkedMachineState.tryReceivingHelloB(StateList subStateList).
+    Make it work with current state and controlling ancestor states?
+    Maybe tie to InputStream?
+    */
+  
+  protected final synchronized boolean doOnInputsToSubstateB( 
+        StateList subStateList )
+      throws IOException
+    /* This method calls subStateList's handler doOnInputsB().
+      Because it is sub-state processing,
+      it copies any discrete input to the sub-state first.
+      It returns true if the sub-state's handler returned true 
+        or a discrete input was consumed by the sub-state.
+      It returns false otherwise.
+      If a discrete input was consumed by the sub-state,
+      then it is erased from this StateList also so that 
+      it will not be processed by any other states.
+      If an existing discrete input was not consumed,
+      then it will remain stored in this state machine,
+      and it is the responsibility of the caller to deal with it,
+      either by removing it, trying to process it in a sibling state, 
+      or by calling this method again until the input is consumed.
+      */
+    {
+      boolean signalB;
+      if ( ! hasOfferedInputB(this) ) // Discrete input not present.
+        signalB= // Process without passing the offered input.
+          subStateList.doOnInputsB();
+        else // Offered input is present.
+        { // Process with passed input.
+          moveOfferedInputV(this, subStateList);
             // Move offered input from this state to sub-state.
-					signalB= subStateList.doOnInputsB(); // Process with offered input.
+          signalB= subStateList.doOnInputsB(); // Process with offered input.
           if // Process consumption of input by sub-state, if it happened.
             (! hasOfferedInputB(subStateList)) // It was consumed.
             { signalB= true; // Treat input consumption as progress.
@@ -993,9 +993,9 @@ public class StateList extends MutableList implements Runnable {
             else // Discrete input was not consumed by sub-state.
             moveOfferedInputV( // Move it back to this state.
                 subStateList, this);
-					}
-			return signalB;
-			}
+          }
+      return signalB;
+      }
 
   public synchronized boolean processInputB(String inputString) 
       throws IOException
@@ -1123,21 +1123,21 @@ public class StateList extends MutableList implements Runnable {
       this.offeredInputMapEpiNode= newOfferedInputMapEpiNode; // Store new input.
       }
 
-	public void resetOfferedInputV()
-		/* This method resets the offered input areas.
-		  It does this by setting the input variables to null.
-		  This method is needed only for reseting input that is being consumed.
-		  Non-consumed input is reset by moving it back to its parent state. 
-		 	*/
-		{
+  public void resetOfferedInputV()
+    /* This method resets the offered input areas.
+      It does this by setting the input variables to null.
+      This method is needed only for reseting input that is being consumed.
+      Non-consumed input is reset by moving it back to its parent state. 
+       */
+    {
       if ( ! hasOfferedInputB(this)) // Error check that there is input.
         theAppLog.error(
-    			"StateList.resetOfferedInputV(), input already consumed in"
-    			+ getFormattedStatePathString()
-    			);
+          "StateList.resetOfferedInputV(), input already consumed in"
+          + getFormattedStatePathString()
+          );
 
       this.offeredInputMapEpiNode= null; // Reset the input variable.
-  	  }
+      }
 
   private void moveOfferedInputV(
       StateList sourceStateList, StateList destinationStateList)
@@ -1169,60 +1169,60 @@ public class StateList extends MutableList implements Runnable {
         }
   
   protected String getFormattedStatePathString()
-	  /* Returns string with "state:" on first line, 
-	    and "  (state path)" on the second.
-	   */
-	  {
-		  return " state:" + NL + "  " + getStatePathString();
-	    }
+    /* Returns string with "state:" on first line, 
+      and "  (state path)" on the second.
+     */
+    {
+      return " state:" + NL + "  " + getStatePathString();
+      }
 
-	private String getStatePathString()
-	  /* Recursively calculates and returns a comma-separated list of state names
-	    from the root of the hierarchical state machine to this state.
-	   */
-	  {
-		  String resultString;
-		  
-		  if ( parentStateList == null )
-		  	resultString= getNameString();
-		  else
-		    resultString= 
-		  		parentStateList.getStatePathString()
-		  		+ ", "
-		  		+ getNameString(); 
+  private String getStatePathString()
+    /* Recursively calculates and returns a comma-separated list of state names
+      from the root of the hierarchical state machine to this state.
+     */
+    {
+      String resultString;
+      
+      if ( parentStateList == null )
+        resultString= getNameString();
+      else
+        resultString= 
+          parentStateList.getStatePathString()
+          + ", "
+          + getNameString(); 
 
-		  Nulls.fastFailNullCheckT(resultString);
-		  return resultString;
-	  	}
+      Nulls.fastFailNullCheckT(resultString);
+      return resultString;
+      }
 
 
-	/* Method for dealing with timer input.  */
+  /* Method for dealing with timer input.  */
 
-	public void run()
-	  /* This method is run by TimerInput to run 
-	    the doOnInputsB() method when the timer is triggered.
-	    If an IOException occurs then it is saved for processing later by
-	    a non-Timer thread.
-	    */
-		{
-			// appLogger.debug(  ///dbg
-  		//	"StateList.run() beginning of Timer tick to"
-  		//	+ getFormattedStatePathString() );
-			try { 
-				downAndUpDoOnInputsB(); // Try to process timer event with handler. 
-				}
-		  catch ( IOException theIOException) { 
-		    delayExceptionV( // Postpone exception processing to other thread.
-		    		theIOException
-		    		); 
-		    }
-			// appLogger.debug( ///dbg
-	  	//		"StateList.run() end of Timer tick to"+ getFormattedStatePathString() );
-		}
+  public void run()
+    /* This method is run by TimerInput to run 
+      the doOnInputsB() method when the timer is triggered.
+      If an IOException occurs then it is saved for processing later by
+      a non-Timer thread.
+      */
+    {
+      // appLogger.debug(  ///dbg
+      //  "StateList.run() beginning of Timer tick to"
+      //  + getFormattedStatePathString() );
+      try { 
+        downAndUpDoOnInputsB(); // Try to process timer event with handler. 
+        }
+      catch ( IOException theIOException) { 
+        delayExceptionV( // Postpone exception processing to other thread.
+            theIOException
+            ); 
+        }
+      // appLogger.debug( ///dbg
+      //    "StateList.run() end of Timer tick to"+ getFormattedStatePathString() );
+    }
 
-	
-	/* Method for logging conditionals.  */
-	
+  
+  /* Method for logging conditionals.  */
+  
   public boolean testAndLogIfTrueB(boolean theB, String messageString)
     /* This method logs a message and the current state if theB is true.
       In either case it also returns theB.
@@ -1280,22 +1280,22 @@ public class StateList extends MutableList implements Runnable {
       return true;
       }
   
-	public String decoratedCellString()
+  public String decoratedCellString()
     /* This method returns a decorated name String.
       The decoration prefixes indicate that this node is a state,
       and whether the state is active.
       */
-		{
-			String resultString;
-			if ( (parentStateList != null) // Calculate state prefix.
-					&& (parentStateList.getpresentSubStateList() == this)
-					)
-				resultString= "*-"; // Active state.
-				else
-				resultString= " -"; // Inactive state.
+    {
+      String resultString;
+      if ( (parentStateList != null) // Calculate state prefix.
+          && (parentStateList.getpresentSubStateList() == this)
+          )
+        resultString= "*-"; // Active state.
+        else
+        resultString= " -"; // Inactive state.
       resultString+= getNameString(); // Append normal name.
-	  	return resultString;
-	  	}
+      return resultString;
+      }
 
   /* Methods for UI coloring.  */
 
@@ -1336,18 +1336,18 @@ public class StateList extends MutableList implements Runnable {
       or one of its ancestors,
       becomes an active sub-state or stops being an active sub-state.
       */
-	  { 
-			if ( cachedActiveBoolean != null ) // Invalidate if a value is now valid. 
-				{ // Invalidate the value in this state and its descendants.
-					for // Invalidate descendants first.
-						(StateList subStateList : theListOfSubStateLists) // All of them. 
-						{
-			  	  	subStateList.invalidateActiveV(); // Invalidate in one subtree.
-			  	  	}
-					cachedActiveBoolean= null; // Invalidate here by assigning null.
-					signalChangeOfSelfV(); // Trigger eventual GUI redisplay.
-					}
-			}
+    { 
+      if ( cachedActiveBoolean != null ) // Invalidate if a value is now valid. 
+        { // Invalidate the value in this state and its descendants.
+          for // Invalidate descendants first.
+            (StateList subStateList : theListOfSubStateLists) // All of them. 
+            {
+              subStateList.invalidateActiveV(); // Invalidate in one subtree.
+              }
+          cachedActiveBoolean= null; // Invalidate here by assigning null.
+          signalChangeOfSelfV(); // Trigger eventual GUI redisplay.
+          }
+      }
 
   private boolean getActiveB()
     /* This method returns true if this state is active, false otherwise.
@@ -1359,132 +1359,132 @@ public class StateList extends MutableList implements Runnable {
       of the cachedActiveBoolean attribute.
       It caches the value if it was not cached already.
       */
-  	{ 
-			if ( cachedActiveBoolean != null ) // Reevaluate value if needed.
-				; // Do nothing because we can return the cached evaluation.
-	  		else
-	  		{ // Evaluate activity value and cache it.
-		  			boolean activeB;
-					evaluation: {
-		  		  StateList parentStateList= this.parentStateList;
-						if // There is no parent state so this is a root state.
-							(parentStateList == null)
-							{ activeB= true; break evaluation; } // Roots are always active.
-						if // Parent is an AndState and it is active.
-						  ( parentStateList.isAndStateB()
-								&& parentStateList.getActiveB() )
-							{ activeB= true; break evaluation; } // So this state is active.
-					  if // Parent is an OrState, active, and this is its sub-state.
-					    ( this == (parentStateList.getpresentSubStateList() )
-					    	&& parentStateList.getActiveB() )
-					  	{ activeB= true; break evaluation; } // So this state is active.
-					  activeB= false; // Anything else means this state is not active.
-			  		} // evaluation:
-		  		cachedActiveBoolean= Boolean.valueOf(activeB); // Cache evaluation.
-		  		}
-			return cachedActiveBoolean; 
-		  }
+    { 
+      if ( cachedActiveBoolean != null ) // Reevaluate value if needed.
+        ; // Do nothing because we can return the cached evaluation.
+        else
+        { // Evaluate activity value and cache it.
+            boolean activeB;
+          evaluation: {
+            StateList parentStateList= this.parentStateList;
+            if // There is no parent state so this is a root state.
+              (parentStateList == null)
+              { activeB= true; break evaluation; } // Roots are always active.
+            if // Parent is an AndState and it is active.
+              ( parentStateList.isAndStateB()
+                && parentStateList.getActiveB() )
+              { activeB= true; break evaluation; } // So this state is active.
+            if // Parent is an OrState, active, and this is its sub-state.
+              ( this == (parentStateList.getpresentSubStateList() )
+                && parentStateList.getActiveB() )
+              { activeB= true; break evaluation; } // So this state is active.
+            activeB= false; // Anything else means this state is not active.
+            } // evaluation:
+          cachedActiveBoolean= Boolean.valueOf(activeB); // Cache evaluation.
+          }
+      return cachedActiveBoolean; 
+      }
 
   protected boolean isAndStateB()
     /* This method returns true if this state is behaving as an AndState,
       false otherwise.
       */
-  	{ 
-  		return ( presentSubStateList == null) ; 
-  		}
+    { 
+      return ( presentSubStateList == null) ; 
+      }
   
-	}  // StateList class 
+  }  // StateList class 
 
 
 class SentinelState extends StateList {
 
-	/* This class overrides enough non-no-op methods in StateList
-	  that need to be no-ops so that this class can be used
-	  as an initial sentinel-state for OrState state machines.
-	  By doing this the actual desired first state 
-	  can be requested in normal way,
-	  after being requested with requestStateListV(..),
-	  and null checks can be avoided.
-	 	*/
+  /* This class overrides enough non-no-op methods in StateList
+    that need to be no-ops so that this class can be used
+    as an initial sentinel-state for OrState state machines.
+    By doing this the actual desired first state 
+    can be requested in normal way,
+    after being requested with requestStateListV(..),
+    and null checks can be avoided.
+     */
 
   protected void signalChangeOfSelfV()
-		/* This method does nothing because SentinelStates
-		  should never be part of display-able DAG.
-		 	*/
-  	{
-  		}
+    /* This method does nothing because SentinelStates
+      should never be part of display-able DAG.
+       */
+    {
+      }
 
-	} // class SentinelState
+  } // class SentinelState
 
 class AndOrState extends StateList {
 
-	/* The methods in this class use the value of 
-	  the variable presentSubStateList to determine at run-time whether 
-	  this state should act as an AndState or an OrState.
-	  It acts as an AndState until and unless setAsOrStateV(..) is called.
+  /* The methods in this class use the value of 
+    the variable presentSubStateList to determine at run-time whether 
+    this state should act as an AndState or an OrState.
+    It acts as an AndState until and unless setAsOrStateV(..) is called.
 
-	  This class, or the superclass StateList, includes the following methods:
-	    onEntryV(), onInputsB(), and onExitV().
-	    
-	  ///org, ///opt: Eliminate this class by eliminating references to it,
-	  replacing subclass references to either OrState or AndState,
-	  and moving code to those classes, until there is no code remaining. 
+    This class, or the superclass StateList, includes the following methods:
+      onEntryV(), onInputsB(), and onExitV().
+      
+    ///org, ///opt: Eliminate this class by eliminating references to it,
+    replacing subclass references to either OrState or AndState,
+    and moving code to those classes, until there is no code remaining. 
     */
   
   protected void setFirstOrSubStateV(StateList firstSubStateList)
-	  /* This method sets this state to behave as an OrState
-	    and requests the first state-machine state to be firstSubStateList. 
-	    */
-	  {
-			//requestSubStateListV( firstSubStateList );
-		  //presentSubStateList= StateList.initialSentinelState;
-  	
-		  presentSubStateList= firstSubStateList; // Assign present state.
-	  	}
-	
-	public synchronized boolean onInputsB() throws IOException
-	  /* This method acts as an AndState handler if presentSubStateList == null,
-	    otherwise it aces as an OrState handler.
-	    */
-	  { 
-		  boolean signalB;
-			if ( isAndStateB() )
-		  	signalB= andStateOnInputsB();
-		  	else
-		  	signalB= orStateOnInputsB();
-			return signalB;
-		  }
-	
-		}
+    /* This method sets this state to behave as an OrState
+      and requests the first state-machine state to be firstSubStateList. 
+      */
+    {
+      //requestSubStateListV( firstSubStateList );
+      //presentSubStateList= StateList.initialSentinelState;
+    
+      presentSubStateList= firstSubStateList; // Assign present state.
+      }
+  
+  public synchronized boolean onInputsB() throws IOException
+    /* This method acts as an AndState handler if presentSubStateList == null,
+      otherwise it aces as an OrState handler.
+      */
+    { 
+      boolean signalB;
+      if ( isAndStateB() )
+        signalB= andStateOnInputsB();
+        else
+        signalB= orStateOnInputsB();
+      return signalB;
+      }
+  
+    }
 
 class OrState extends AndOrState { //? StateList {
 
-	/* There are two ways to get "or" state-machine behavior.
-	  * Extend this class.
-	  * Extend StateList but call the "or" state handler method.
-	  
-	  OrState machines have sub-states, but unlike AndStates,
-	  only one sub-state can be active at a time.
+  /* There are two ways to get "or" state-machine behavior.
+    * Extend this class.
+    * Extend StateList but call the "or" state handler method.
+    
+    OrState machines have sub-states, but unlike AndStates,
+    only one sub-state can be active at a time.
 
-	  There is no concurrency in an OrState machine, at least not at this level.
-	  Its sub-states are active one at a time.
-		*/
+    There is no concurrency in an OrState machine, at least not at this level.
+    Its sub-states are active one at a time.
+    */
 
   public StateList initializeWithIOExceptionStateList() throws IOException
     {
-  		super.initializeV();
-  	  setFirstOrSubStateV( StateList.initialSentinelState );
-  	  /// elim theColor= UIColor.initialOrStateColor;
-  	  return this;
-    	}
+      super.initializeV();
+      setFirstOrSubStateV( StateList.initialSentinelState );
+      /// elim theColor= UIColor.initialOrStateColor;
+      return this;
+      }
 
   /*  //?
   public synchronized boolean onInputsB() throws IOException
-	  /* This method calls the default OrState handler.  */
+    /* This method calls the default OrState handler.  */
   /*  //?
-	  { 
-  		return orStateOnInputsB(); 
-  		}
+    { 
+      return orStateOnInputsB(); 
+      }
   */  //?
 
   Color getBackgroundColor( Color defaultBackgroundColor )
@@ -1495,30 +1495,30 @@ class OrState extends AndOrState { //? StateList {
       return presentSubStateList.getBackgroundColor( defaultBackgroundColor );
       }
 
-	}  // OrState 
+  }  // OrState 
 
 class AndState extends AndOrState { //? StateList {
 
-	/* There are two ways to get "and" state-machine behavior.
-	  * Extend this class.
-	  * Extend StateList but call the "and" state handler method.
+  /* There are two ways to get "and" state-machine behavior.
+    * Extend this class.
+    * Extend StateList but call the "and" state handler method.
 
-	  AndState machines have sub-states, but unlike OrStates,
-	  all AndState sub-states are active at the same time.
-	  There is concurrency in an AndState machine, at least at this level.
-	  */
+    AndState machines have sub-states, but unlike OrStates,
+    all AndState sub-states are active at the same time.
+    There is concurrency in an AndState machine, at least at this level.
+    */
 
   public StateList initializeWithIOExceptionStateList() throws IOException
     {
-  		super.initializeV();
-  	  return this;
-    	}
+      super.initializeV();
+      return this;
+      }
 
   /*  //?
-	public synchronized boolean onInputsB() throws IOException
-		{ 
-		  return andStateOnInputsB(); 
-		  }
+  public synchronized boolean onInputsB() throws IOException
+    { 
+      return andStateOnInputsB(); 
+      }
   */  //?
 
-	}  // AndState 
+  }  // AndState 

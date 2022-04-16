@@ -29,9 +29,9 @@ public class PortManager {
   private final Persistent thePersistent;
 
   public PortManager( final Persistent thePersistent )
-	  {
-	  	this.thePersistent= thePersistent;
-		  }
+    {
+      this.thePersistent= thePersistent;
+      }
 
   public int getMulticastPortI()
     /* Get port to be used for peer discovery.  
@@ -87,41 +87,41 @@ s     */
       If that fails then it generates a new value and stores it for later.
       The value is generated randomly in the interval 32768 to 65535.
     
-			The app's local port should rarely change.
-			This makes it easier to reestablish a connection after it is broken.
-			There is also no reason for it to be different if it moves to another IP.
-			Therefore only one value needs to be stored per node.  
+      The app's local port should rarely change.
+      This makes it easier to reestablish a connection after it is broken.
+      There is also no reason for it to be different if it moves to another IP.
+      Therefore only one value needs to be stored per node.  
 
       In some cases there might be a conflict with 
       other services on the network if it is behind a firewall.
       In these cases a new port might need to be generated. 
       */
     {  
-   	  toReturnValue: {
+       toReturnValue: {
         if (normalPortI != 0) break toReturnValue; // Exit if already defined.
-  	 	toGenerateNewValue: {
-		    String localPortString= 
-		    		thePersistent.getRootMapEpiNode().getEmptyOrString("Port");
-		    if ( localPortString.isEmpty() ) break toGenerateNewValue; 
-	      try { 
-	  	    normalPortI= Integer.parseInt( localPortString );
-	      	}
-	      catch ( NumberFormatException theNumberFormatException ) {
-	        theAppLog.error(
-	        		"getNormalPortI() corrupted port property="+localPortString);
-	      	break toGenerateNewValue;
-	      	}
+       toGenerateNewValue: {
+        String localPortString= 
+            thePersistent.getRootMapEpiNode().getEmptyOrString("Port");
+        if ( localPortString.isEmpty() ) break toGenerateNewValue; 
+        try { 
+          normalPortI= Integer.parseInt( localPortString );
+          }
+        catch ( NumberFormatException theNumberFormatException ) {
+          theAppLog.error(
+              "getNormalPortI() corrupted port property="+localPortString);
+          break toGenerateNewValue;
+          }
         theAppLog.info("getNormalPortI() reusing port: "+normalPortI);
-      	break toReturnValue;
-	  	} // toGenerateNewValue:
-	  	  normalPortI= (int)(System.currentTimeMillis()) & 32767 | 32768;
+        break toReturnValue;
+      } // toGenerateNewValue:
+        normalPortI= (int)(System.currentTimeMillis()) & 32767 | 32768;
         theAppLog.info(
-        		"getNormalPortI() generated new random port: "+normalPortI);
+            "getNormalPortI() generated new random port: "+normalPortI);
         /// thePersistent.putV("normalPort", ""+normalPortI); // Using old erroneous name.
         thePersistent.getRootMapEpiNode().putV(
             "Port", ""+normalPortI); // Make it persist.
-			} // toReturnValue:
-	  	  return normalPortI;
+      } // toReturnValue:
+        return normalPortI;
       }
 
   }

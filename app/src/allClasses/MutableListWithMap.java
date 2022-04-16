@@ -9,10 +9,10 @@ import static allClasses.AppLog.theAppLog;
 public class MutableListWithMap< 
     K, // Key for the map entries.
     V extends DataNodeWithKeyAndThreadValue< // Value for map entry. 
-    	D, // The DataNode part of value. 
+      D, // The DataNode part of value. 
       K  //The key stored within DataNode.
       >, 
-		D extends KeyedStateList< K > // DataNode within map entry value.
+    D extends KeyedStateList< K > // DataNode within map entry value.
     >
 
   extends MutableList
@@ -25,56 +25,56 @@ public class MutableListWithMap<
   
   {
 
-	  protected Map<K,V> childHashMap= // Map for fast child lookup.
-		    new ConcurrentHashMap<K,V>(); // Initializing map to empty.
+    protected Map<K,V> childHashMap= // Map for fast child lookup.
+        new ConcurrentHashMap<K,V>(); // Initializing map to empty.
 
     public MutableListWithMap (   // Constructor.
-	      String nameString,
+        String nameString,
         DataNode... inDataNodes 
-	      )
-	    {
-      	initializeV(
-	        nameString,
-	        inDataNodes
-      		);
-	      }
+        )
+      {
+        initializeV(
+          nameString,
+          inDataNodes
+          );
+        }
 
     public String getSummaryString( ) // This simply uses the number of List elements.
       {
-    	  return Integer.toString(getChildCount());
+        return Integer.toString(getChildCount());
         }
     
-	  protected synchronized void addingV( K childK, V childV )
-	    /* This adds childV to the HashMap and the DataNode part
-	      to this MutableList, keeping them synchronized.
-	      The entry added to the HashMap has childK as its key.
-	      */
-	    {
-	  		DataNode childDataNode= childV.getDataNodeD();
-	  		
-	    	childHashMap.put( childK, childV );  // Adding value to HashMap.
+    protected synchronized void addingV( K childK, V childV )
+      /* This adds childV to the HashMap and the DataNode part
+        to this MutableList, keeping them synchronized.
+        The entry added to the HashMap has childK as its key.
+        */
+      {
+        DataNode childDataNode= childV.getDataNodeD();
+        
+        childHashMap.put( childK, childV );  // Adding value to HashMap.
 
-	    	if  // Adding DataNode only to MutableList unless it's there already.
-	      	( ! addAtEndB( childDataNode ) )
-	      	theAppLog.error( // Logging error if already in list.
-	      			"MutableListWithMap.addingV(..): Already present."
-	      			);
-	      }
+        if  // Adding DataNode only to MutableList unless it's there already.
+          ( ! addAtEndB( childDataNode ) )
+          theAppLog.error( // Logging error if already in list.
+              "MutableListWithMap.addingV(..): Already present."
+              );
+        }
 
-	  public synchronized void removingV( D childD )
+    public synchronized void removingV( D childD )
       /* This method removes childV and its key from the HashMap 
         and the childD DataNode part from this MutableList, 
         keeping them synchronized.
         */
-	    {
-	    	if  // Removing from this DataNode's List if it's there.
-	    		( ! removeB( childD ) )
-	      	theAppLog.error(
-	      			"MutableListWithMap..removingV(..): removeB(..) failed"
-	      			);
+      {
+        if  // Removing from this DataNode's List if it's there.
+          ( ! removeB( childD ) )
+          theAppLog.error(
+              "MutableListWithMap..removingV(..): removeB(..) failed"
+              );
 
-	    	K childKeyK= childD.getKeyK();
-		    childHashMap.remove( childKeyK );  // Removing from Map.
-		    }
+        K childKeyK= childD.getKeyK();
+        childHashMap.remove( childKeyK );  // Removing from Map.
+        }
 
   }

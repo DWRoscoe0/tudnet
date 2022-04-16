@@ -181,7 +181,7 @@ public class TreeHelper
 
     // Constructor, initialization, and finalization.
       
-      public TreeHelper( 	// Constructor.
+      public TreeHelper(   // Constructor.
           JComponent inOwningJComponent,
           MetaRoot theMetaRoot,
           TreePath inWholeTreePath  // Eliminate this constructor injection.
@@ -201,10 +201,10 @@ public class TreeHelper
           }
       
       public void initializeHelperV( 
-      		TreePathListener coordinatingTreePathListener,
-      		FocusListener coordinatingFocusListener,
-      		DataTreeModel theDataTreeModel
-      		)
+          TreePathListener coordinatingTreePathListener,
+          FocusListener coordinatingFocusListener,
+          DataTreeModel theDataTreeModel
+          )
         /* This method is called after construction to do or finish initialization
           of both this TreeHelper and its associated TreeAware JComponent,
           This default version does the following:
@@ -221,10 +221,10 @@ public class TreeHelper
 
           This method can be overridden in a subclass, usually to add functionality.
           
-      	  See the sister method, finalizeHelperV(), which unsets the DataTreeModel.
-      	  */
+          See the sister method, finalizeHelperV(), which unsets the DataTreeModel.
+          */
         {
-      		// appLogger.debug("TreeHelper.initializeHelperV(.) begins.");
+          // appLogger.debug("TreeHelper.initializeHelperV(.) begins.");
           { // Do common listener registrations with owning JComponent.
             owningJComponent.addFocusListener(this); // Making this TreeHelper 
               // be a FocusListener of its owning JComponent.
@@ -241,23 +241,23 @@ public class TreeHelper
           setDataTreeModelV(theDataTreeModel); // Set the TreeModel.
             // This also sets JComponent as TreeModelListener.
           // appLogger.debug("TreeHelper.initializeHelperV(.) ends.");
-        	}
+          }
 
       public void finalizeHelperV() 
-  	  	/* This method, or its equivalent in a subclass, 
-    		  does JTreeHelper and TreeAware Component finalization. 
-      	  It exists mainly for undoing non-final listener registrations
-      	  to prevent listener leaks.
-      	  It does this by setting the TreeModel to null.
+        /* This method, or its equivalent in a subclass, 
+          does JTreeHelper and TreeAware Component finalization. 
+          It exists mainly for undoing non-final listener registrations
+          to prevent listener leaks.
+          It does this by setting the TreeModel to null.
 
-      	  Not all Listeners need to be unregistered.
-      	  The app's TreeModelListeners must be unregistered because
-      	  they are components with shorter scope than the TreeModel
-      	  and many of them can be created, used briefly, and then dereferenced.
-      	  Failure to unregister them would result in massive Listener memory leaks.
-    		  */
+          Not all Listeners need to be unregistered.
+          The app's TreeModelListeners must be unregistered because
+          they are components with shorter scope than the TreeModel
+          and many of them can be created, used briefly, and then dereferenced.
+          Failure to unregister them would result in massive Listener memory leaks.
+          */
         {
-        	setDataTreeModelV( null ); // Unregister TreeModelListener JComponent.
+          setDataTreeModelV( null ); // Unregister TreeModelListener JComponent.
           }
       
     // TreeModel code with Listener registration, etc.
@@ -348,16 +348,16 @@ public class TreeHelper
           the source in the FocusEvent that is received by this TreeHelper.
           */
         {
-      	  /* debug 
-		      appLogger.debug(
-		        "TreeHelper.focusGained(...) for "
-		      	+ Misc.componentInfoString(owningJComponent)
-		      	+ " begin," + NL + "  gained by "
-		        + Misc.componentInfoString(theFocusEvent.getComponent())
-		       	+", lost by "
-		        + Misc.componentInfoString(theFocusEvent.getOppositeComponent())
-		       	);
-		      */ 
+          /* debug 
+          appLogger.debug(
+            "TreeHelper.focusGained(...) for "
+            + Misc.componentInfoString(owningJComponent)
+            + " begin," + NL + "  gained by "
+            + Misc.componentInfoString(theFocusEvent.getComponent())
+             +", lost by "
+            + Misc.componentInfoString(theFocusEvent.getOppositeComponent())
+             );
+          */ 
           Enumeration<FocusListener> listeners = 
             focusListenerVector.elements();
           while ( listeners.hasMoreElements() ) 
@@ -366,13 +366,13 @@ public class TreeHelper
                 (FocusListener)listeners.nextElement(); // caste.
               listener.focusGained( theFocusEvent );
               }
-	        /* debug
-	        appLogger.debug(
-	          "TreeHelper.focusGained(...) for "
-	        	+ Misc.componentInfoString(owningJComponent)
-	        	+ " end."
-	          );
-	        */
+          /* debug
+          appLogger.debug(
+            "TreeHelper.focusGained(...) for "
+            + Misc.componentInfoString(owningJComponent)
+            + " end."
+            );
+          */
           }
 
       public void focusLost(FocusEvent theFocusEvent)
@@ -380,16 +380,16 @@ public class TreeHelper
           the event and the call to other listeners.
           */
         { 
-      		/* debug 
-		      appLogger.debug(
-		        "TreeHelper.focusLost(...) for "
-		      	+ Misc.componentInfoString(owningJComponent)
-		      	+ " begin," + NL + "  lost by "
-		        + Misc.componentInfoString(theFocusEvent.getComponent())
-		       	+", gained by "
-		        + Misc.componentInfoString(theFocusEvent.getOppositeComponent())
-		       	);
-		       */
+          /* debug 
+          appLogger.debug(
+            "TreeHelper.focusLost(...) for "
+            + Misc.componentInfoString(owningJComponent)
+            + " begin," + NL + "  lost by "
+            + Misc.componentInfoString(theFocusEvent.getComponent())
+             +", gained by "
+            + Misc.componentInfoString(theFocusEvent.getOppositeComponent())
+             );
+           */
           Enumeration<FocusListener> listeners = 
             focusListenerVector.elements();
           while ( listeners.hasMoreElements() ) 
@@ -398,13 +398,13 @@ public class TreeHelper
                 (FocusListener)listeners.nextElement();
               listener.focusLost( theFocusEvent );
               }
-      		/* debug 
-	        appLogger.debug(
-	           "TreeHelper.focusLost(...) for "
-	           + Misc.componentInfoString(owningJComponent)
-	           + " end."
-	           );
-	        */
+          /* debug 
+          appLogger.debug(
+             "TreeHelper.focusLost(...) for "
+             + Misc.componentInfoString(owningJComponent)
+             + " end."
+             );
+          */
           }
 
     // KeyListener methods.
@@ -578,21 +578,21 @@ public class TreeHelper
               break toReturn; // So exit with result.
 
             // Command execution begins.
-	          /* debug
-	          appLogger.debug(
-	             "TreeHelper.commandGoToChildB(...) command execution begin."
-	             );
-	          */
+            /* debug
+            appLogger.debug(
+               "TreeHelper.commandGoToChildB(...) command execution begin."
+               );
+            */
             setSelectionAndNotifyListenersV(  // Set new part path to be...
               getPartTreePath().pathByAddingChild( // ...present part plus...
                 childDataNode  // ...whatever child was found.
                 )
               );  // Using setPartTreePathV(..) here doesn't work.
-        	  /* debug 
-						appLogger.debug(
-	             "TreeHelper.commandGoToChildB(...) command execution end."
-	             );
-	          */
+            /* debug 
+            appLogger.debug(
+               "TreeHelper.commandGoToChildB(...) command execution end."
+               );
+            */
           } // toReturn end.
             return doableB;  // Return whether command is/was doable.
           }
@@ -857,7 +857,7 @@ public class TreeHelper
             if  // Handling case of no change in path.
               ( inTreePath.equals( thePartTreePath ) )
               //{ legalB= true; break goReturn; } // Exit, legal.
-            	{ legalB= false; break goReturn; } // Exit, not legal.
+              { legalB= false; break goReturn; } // Exit, not legal.
             TreePath parentTreePath=  // Getting parent of path.
               inTreePath.getParentPath();
             if  // Handling case of null parent of the root-parent.

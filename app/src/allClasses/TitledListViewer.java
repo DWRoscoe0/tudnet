@@ -177,21 +177,21 @@ public class TitledListViewer
           }
 
       public void buildAndAddJLabelV()
-	      {
-		      titleJLabel= new JLabel();
-		      titleJLabel.setOpaque( true );
-		      Font labelFont= titleJLabel.getFont();
-		      titleJLabel.setFont( labelFont.deriveFont( labelFont.getSize() * 1.5f) );
-		      //titleJLabel.setAlignmentX( Component.CENTER_ALIGNMENT );
-		      titleJLabel.setHorizontalAlignment( SwingConstants.CENTER );
-		      Border raisedetched = BorderFactory.createEtchedBorder(EtchedBorder.RAISED);
-		      titleJLabel.setBorder(raisedetched);
-		      add(titleJLabel,BorderLayout.NORTH); // Adding it to main JPanel.
-	      	}
+        {
+          titleJLabel= new JLabel();
+          titleJLabel.setOpaque( true );
+          Font labelFont= titleJLabel.getFont();
+          titleJLabel.setFont( labelFont.deriveFont( labelFont.getSize() * 1.5f) );
+          //titleJLabel.setAlignmentX( Component.CENTER_ALIGNMENT );
+          titleJLabel.setHorizontalAlignment( SwingConstants.CENTER );
+          Border raisedetched = BorderFactory.createEtchedBorder(EtchedBorder.RAISED);
+          titleJLabel.setBorder(raisedetched);
+          add(titleJLabel,BorderLayout.NORTH); // Adding it to main JPanel.
+          }
 
       private void buildAndAddJListV()
         {
-      		theJList= new JList<DataNode>();  // Construct JList.
+          theJList= new JList<DataNode>();  // Construct JList.
           theJList.setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
           theJList.setCellRenderer(   // Setting custom rendering.
             theTitledListCellRenderer 
@@ -199,18 +199,18 @@ public class TitledListViewer
           add(theJList,BorderLayout.CENTER); // Adding it to main JPanel.
           }
 
-	    private void setTitleTextV() // Sets text in titleJLabel.
-	      /* This method is called during initialization and DataNode change
-	        to update the displays title text.
-	       	*/
-		   	{
-	        titleJLabel.setText(
-	        		theTreeHelper.getWholeDataNode().getCellString( )
-	        		);
-		   	  }
+      private void setTitleTextV() // Sets text in titleJLabel.
+        /* This method is called during initialization and DataNode change
+          to update the displays title text.
+           */
+         {
+          titleJLabel.setText(
+              theTreeHelper.getWholeDataNode().getCellString( )
+              );
+           }
 
 
-	    /* ??
+      /* ??
       public void setPreferredSize( Dimension inDimension )
         // Use this so theJList will be full width.
         {
@@ -262,36 +262,36 @@ public class TitledListViewer
       which is itself also a TreeModelListener.
       */
 
-	    public void treeStructureChanged(TreeModelEvent theTreeModelEvent)
-	      { 
-	    		//appLogger.debug("TitledListViewer.treeStructureChanged()" + NL + "  "+theTreeModelEvent);
-		    	}
+      public void treeStructureChanged(TreeModelEvent theTreeModelEvent)
+        { 
+          //appLogger.debug("TitledListViewer.treeStructureChanged()" + NL + "  "+theTreeModelEvent);
+          }
 
-	    public void treeNodesRemoved(TreeModelEvent theTreeModelEvent) 
-	      { 
-	    		//appLogger.debug("TitledListViewer.treeNodesRemoved()" + NL + "  "+theTreeModelEvent);
-	      	}
-	
-	    public void treeNodesInserted(TreeModelEvent theTreeModelEvent) 
-	      { 
-	    		//appLogger.debug("TitledListViewer.treeNodesInserted()" + NL + "  "+theTreeModelEvent);
-	      	}
-	
-	    public void treeNodesChanged(TreeModelEvent theTreeModelEvent) 
-	      { 
-	        //appLogger.debug("TitledListViewer.treeNodesChanged()" + NL + "  "+theTreeModelEvent);
-	    	  if ( // Ignoring event if parent TreePath doesn't match our List's. 
-    	      	!theTreeHelper.getWholeTreePath().getParentPath().equals(
-    	      			theTreeModelEvent.getTreePath()
-    	      			)
-    	      	)
-	    	  	; // Ignoring.
-    	  	else
-    	  		for // Updating title text if our List matches a child. 
-    	  		  (Object childObject: theTreeModelEvent.getChildren()) 
-    	  			if ( childObject == theTreeHelper.getWholeDataNode())
-  				    	setTitleTextV(); // Updating title text.
-	      	}
+      public void treeNodesRemoved(TreeModelEvent theTreeModelEvent) 
+        { 
+          //appLogger.debug("TitledListViewer.treeNodesRemoved()" + NL + "  "+theTreeModelEvent);
+          }
+  
+      public void treeNodesInserted(TreeModelEvent theTreeModelEvent) 
+        { 
+          //appLogger.debug("TitledListViewer.treeNodesInserted()" + NL + "  "+theTreeModelEvent);
+          }
+  
+      public void treeNodesChanged(TreeModelEvent theTreeModelEvent) 
+        { 
+          //appLogger.debug("TitledListViewer.treeNodesChanged()" + NL + "  "+theTreeModelEvent);
+          if ( // Ignoring event if parent TreePath doesn't match our List's. 
+              !theTreeHelper.getWholeTreePath().getParentPath().equals(
+                  theTreeModelEvent.getTreePath()
+                  )
+              )
+            ; // Ignoring.
+          else
+            for // Updating title text if our List matches a child. 
+              (Object childObject: theTreeModelEvent.getChildren()) 
+              if ( childObject == theTreeHelper.getWholeDataNode())
+                setTitleTextV(); // Updating title text.
+          }
 
 
     /* ListSelectionListener interface method, 
@@ -327,7 +327,7 @@ public class TitledListViewer
     /* FocusListener interface methods.
       This was created initially to fix JTable cell-invalidate/repaint bug.
       It was later expanded to do nested focusing.
-			*/
+      */
 
       @Override
       public void focusGained(FocusEvent arg0)
@@ -337,14 +337,14 @@ public class TitledListViewer
          */
         {
           ensureJListSelectionVisibleV();
-    			Misc.requestFocusAndLogV(theJList);
+          Misc.requestFocusAndLogV(theJList);
           repaint();  // bug fix Kluge to display cell in correct color.  
           }
     
       @Override
       public void focusLost(FocusEvent arg0) 
         {
-      		//appLogger.debug("TitledListViewer.focusLost() adjusting JList.");
+          //appLogger.debug("TitledListViewer.focusLost() adjusting JList.");
           ensureJListSelectionVisibleV();
           repaint();  // bug fix Kluge to display cell in correct color.  
           }
@@ -352,17 +352,17 @@ public class TitledListViewer
     // List cell rendering.
 
       private ListCellRenderer<? super DataNode> theTitledListCellRenderer=
-      		new TitledListCellRendererOfDataNodes(); // for custom cell rendering.
+          new TitledListCellRendererOfDataNodes(); // for custom cell rendering.
 
       public class TitledListCellRendererOfDataNodes
         extends JLabel
         implements ListCellRenderer<DataNode>
         {
-      	  public TitledListCellRendererOfDataNodes() // Constructor.
-	      	  {
-	        		setOpaque(true);  // To display normally transparent background.
-	      	  	}
-      	  
+          public TitledListCellRendererOfDataNodes() // Constructor.
+            {
+              setOpaque(true);  // To display normally transparent background.
+              }
+          
           public Component getListCellRendererComponent
             ( JList<? extends DataNode> theJListOfDataNodes,
               DataNode theDataNode,
@@ -372,11 +372,11 @@ public class TitledListViewer
               )
             /* Returns a JLabel for displaying a DataNode in a JList. */
             {
-          		setText( theDataNode.toString() );
+              setText( theDataNode.toString() );
               UIColor.setColorsV(
                 this,
                 cachedJListBackgroundColor,
-              	theDataNode,
+                theDataNode,
                 isSelectedB,
                 hasFocusB
                 );

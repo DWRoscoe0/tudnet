@@ -7,8 +7,8 @@ public class RepeatDetector
     It works best on non-sparse ranges of integers.
    */
 
-	{
-		private int previousValueI= Integer.MIN_VALUE;
+  {
+    private int previousValueI= Integer.MIN_VALUE;
     private int minimumI= Integer.MAX_VALUE;
     private int maximumI= Integer.MIN_VALUE;
     private int downCountI= 1000;
@@ -27,23 +27,23 @@ public class RepeatDetector
         to true
         */
       {
-        	boolean RepeatedB= false;   // Set default result.
+          boolean RepeatedB= false;   // Set default result.
         goReturn: {
         goExpandInterval: {
-	        if ( previousValueI == inValueI )  // Quick check for previous value.
-	        	{ RepeatedB= true; break goReturn; } // Yes, return true result.
-	        if (inValueI > maximumI)
-	        	{ maximumI= inValueI; break goExpandInterval; }
-	        if (inValueI < minimumI)
-	        	{ minimumI= inValueI; break goExpandInterval; }
+          if ( previousValueI == inValueI )  // Quick check for previous value.
+            { RepeatedB= true; break goReturn; } // Yes, return true result.
+          if (inValueI > maximumI)
+            { maximumI= inValueI; break goExpandInterval; }
+          if (inValueI < minimumI)
+            { minimumI= inValueI; break goExpandInterval; }
           if ( downCountI == 0 ) // There must have been a repeat.
-          	{ RepeatedB= true; break goReturn; } // Yes, return true result.
+            { RepeatedB= true; break goReturn; } // Yes, return true result.
           --downCountI;  // Decrement search count for recorded value.
           previousValueI= inValueI;  // Save new repeat target.
           break goReturn;
           } // goExpandInterval:
         downCountI= maximumI-minimumI;
-	        } // goReturn:
+          } // goReturn:
         return RepeatedB;
         }
 

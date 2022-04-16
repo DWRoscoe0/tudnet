@@ -26,15 +26,15 @@ public class PiteratorOfMetaNode
     // Constructors.
       
       public PiteratorOfMetaNode( 
-      		Piterator<MetaNode> inNestedPiteratorOfMetaNode 
-      		)
+          Piterator<MetaNode> inNestedPiteratorOfMetaNode 
+          )
         {
           nestedPiteratorOfMetaNodes= inNestedPiteratorOfMetaNode;
           }
 
       public PiteratorOfMetaNode( 
-      		Collection<MetaNode> inCollectionOfMetaNode 
-      		)
+          Collection<MetaNode> inCollectionOfMetaNode 
+          )
         {
           this( 
             new Piterator<MetaNode>( inCollectionOfMetaNode.iterator() )

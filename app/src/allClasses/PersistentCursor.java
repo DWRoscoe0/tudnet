@@ -41,28 +41,28 @@ public class PersistentCursor
       previous versions of the data structure.
       These are used extensively in applicative languages.
        
-	  ///pos Should this be changed to support unsorted keys?
-	    Possibly, but not immediately.  Underway
-	    
-	  ///pos Make PersistentNode able to return one of these
-	    and eliminate absolute path support?
-	    
-	  Within each of the 2 major code groups, code is ordered by general use time.
-	  
-   	*/
+    ///pos Should this be changed to support unsorted keys?
+      Possibly, but not immediately.  Underway
+      
+    ///pos Make PersistentNode able to return one of these
+      and eliminate absolute path support?
+      
+    Within each of the 2 major code groups, code is ordered by general use time.
+    
+     */
 
-	{
+  {
 
-	  // Initialization.
+    // Initialization.
 
-	  // Constants.
-	
-		private final String EMPTY_STRING= "";
-	
-		
-		// State, generally from most significant to least significant.
+    // Constants.
+  
+    private final String EMPTY_STRING= "";
+  
+    
+    // State, generally from most significant to least significant.
 
-		protected final Persistent thePersistent; // Underlying dual-format storage structure.
+    protected final Persistent thePersistent; // Underlying dual-format storage structure.
 
     private String entryKeyString= EMPTY_STRING; // Key name String of 
       // presently selected entry in the outer map, the map being iterated.
@@ -79,45 +79,45 @@ public class PersistentCursor
       // It is the inner map which contains various data fields of that entry. 
 
 
-		public PersistentCursor( Persistent thePersistent ) // constructor
-			{
-				this.thePersistent= thePersistent;
-				}
+    public PersistentCursor( Persistent thePersistent ) // constructor
+      {
+        this.thePersistent= thePersistent;
+        }
 
 
-		// Service code.
+    // Service code.
 
-	  public PersistentCursor createEntryInPersistentCursor()
-	    /* This method creates a new entry in this PersistentCursor parent map 
-	      with no particular key but an empty MapEpiNode as its value.
-	      The key is low-value numerical key converted to a String,
-	      no greater than the size of the map.
-	      even though other keys in the map might not be numerical. 
-	      The PeersCursor is positioned to the new entry.
-	      */
-	    { 
+    public PersistentCursor createEntryInPersistentCursor()
+      /* This method creates a new entry in this PersistentCursor parent map 
+        with no particular key but an empty MapEpiNode as its value.
+        The key is low-value numerical key converted to a String,
+        no greater than the size of the map.
+        even though other keys in the map might not be numerical. 
+        The PeersCursor is positioned to the new entry.
+        */
+      { 
         theAppLog.debug("PersistentCursor.createEntryInPersistentCursor() called.");
         String newKeyString= parentMapEpiNode.createEmptyMapWithNewKeyString();
         setEntryKeyString( newKeyString ); // Point to the new entry.
-	      return this;
-	      } 
+        return this;
+        } 
 
-		public String setListFirstKeyString( String listKeyString )
-		  /* This method sets the list to be scanned for 
-		    scanning the list associated with listKeyString
-		    from the beginning in the forward direction.  
-		    It also initializes other variables used to scan the list,
-			  a scan starting with the first element, if there is one.
+    public String setListFirstKeyString( String listKeyString )
+      /* This method sets the list to be scanned for 
+        scanning the list associated with listKeyString
+        from the beginning in the forward direction.  
+        It also initializes other variables used to scan the list,
+        a scan starting with the first element, if there is one.
         It returns the key of the first list entry,
         or the empty string if the list is empty.
-			  */
-			{
-				// appLogger.debug(
-				// 		"PersistentCursor.setListPathV("+listPathString+") begins.");
+        */
+      {
+        // appLogger.debug(
+        //     "PersistentCursor.setListPathV("+listPathString+") begins.");
         parentMapEpiNode= 
           thePersistent.getRootMapEpiNode().getOrMakeMapEpiNode(listKeyString);
-	  		return moveToFirstKeyString();
-				}
+        return moveToFirstKeyString();
+        }
 
     public String moveToFirstKeyString()
       /* This method prepares for iterating over the list from the beginning.
@@ -140,54 +140,54 @@ public class PersistentCursor
         return setEntryKeyString(EMPTY_STRING);
         }
 
-		public String nextWithWrapKeyString()
-		  /* This does the same as nextKeyString() but
-		    tries to wrap around to beginning of list if the end is reached, 
-		    so it returns the empty string only if the list is empty.
-	      */
-			{
-				String keyString=  // Try moving to next and getting element key.
-						nextKeyString();
-				if ( keyString.isEmpty() ) // If now past end of list then
-					keyString= nextKeyString(); // try moving one more time to beginning.
-				// appLogger.debug(
-				// 	"PersistentCursor.nextWithWrapElementIDString(..) returning:"+keyString);
-			  return keyString; // Return name of this position.
-				}
+    public String nextWithWrapKeyString()
+      /* This does the same as nextKeyString() but
+        tries to wrap around to beginning of list if the end is reached, 
+        so it returns the empty string only if the list is empty.
+        */
+      {
+        String keyString=  // Try moving to next and getting element key.
+            nextKeyString();
+        if ( keyString.isEmpty() ) // If now past end of list then
+          keyString= nextKeyString(); // try moving one more time to beginning.
+        // appLogger.debug(
+        //   "PersistentCursor.nextWithWrapElementIDString(..) returning:"+keyString);
+        return keyString; // Return name of this position.
+        }
 
-		public String nextKeyString()
-		  /* Advances the piterator and returns the key of the new list entry.
-		    If the result is the empty string then the piterator is positioned
-		    on no element.  Either the position moved past the end of the list,
-		    or the list is empty.
-		    
-		    ///opt This could and should be improved by using
-		    an actual Iterator in this class, instead of calling
-		    MapEpiNode.getNextString(..) to using an iterator to
-		    search for the next string position.    
-		   	*/
-			{
+    public String nextKeyString()
+      /* Advances the piterator and returns the key of the new list entry.
+        If the result is the empty string then the piterator is positioned
+        on no element.  Either the position moved past the end of the list,
+        or the list is empty.
+        
+        ///opt This could and should be improved by using
+        an actual Iterator in this class, instead of calling
+        MapEpiNode.getNextString(..) to using an iterator to
+        search for the next string position.    
+         */
+      {
         String nextEntryKeyString= null;
         nextEntryKeyString= 
           parentMapEpiNode.getNextString(entryKeyString); /// This is slow.
-		    setEntryKeyString(  // Set cursor to this position
+        setEntryKeyString(  // Set cursor to this position
             Nulls.toEmptyString( // after converting possible null to empty string.
                 nextEntryKeyString ) );
         return entryKeyString; // Return name of the new position.
-				}
+        }
 
-		public String getEntryKeyString()
-		  /* This method returns the key of the presently selected list element/entry.
-				It returns the empty String if the piterator is 
-				not positioned on an element, which can be true either
-				after the end of the list or before the beginning of the list
-				or if the list is empty
-				*/
-			{
-				// appLogger.debug(
-				// 		"PersistentCursor.getEntryKeyString() returning:"+entryKeyString);
-				return entryKeyString;
-				}
+    public String getEntryKeyString()
+      /* This method returns the key of the presently selected list element/entry.
+        It returns the empty String if the piterator is 
+        not positioned on an element, which can be true either
+        after the end of the list or before the beginning of the list
+        or if the list is empty
+        */
+      {
+        // appLogger.debug(
+        //     "PersistentCursor.getEntryKeyString() returning:"+entryKeyString);
+        return entryKeyString;
+        }
 
     public void removeEntryV()
       /* This method removes the presently selected list element/entry.
@@ -228,4 +228,4 @@ public class PersistentCursor
         return childMapEpiNode; 
         }
 
-		}
+    }

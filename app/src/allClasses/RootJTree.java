@@ -116,12 +116,12 @@ public class RootJTree
   
     // Constants.
   
-  		static final String ExpandedAttributeString= "Expanded"; 
-  		static final String autoExpandedAttributeString= "AutoExpanded"; 
+      static final String ExpandedAttributeString= "Expanded"; 
+      static final String autoExpandedAttributeString= "AutoExpanded"; 
 
     // Variables.
 
-		  private static final long serialVersionUID = 1L;
+      private static final long serialVersionUID = 1L;
 
       // Injected dependencies.
       private JScrollPane theJScrollPane;  // Associated JScrollPane.
@@ -194,22 +194,22 @@ public class RootJTree
             It could here also, for consistency.
           */
         {
-      		TreePath subtreeTreePath=  // Get path to
-        		theMetaRoot.getTheDataRoot().
-        		  getParentOfRootTreePath( );  // to parent of root.
+          TreePath subtreeTreePath=  // Get path to
+            theMetaRoot.getTheDataRoot().
+              getParentOfRootTreePath( );  // to parent of root.
           MetaNode subtreeMetaNode=  // Get parent of root MetaNode.
             theMetaRoot.getParentOfRootMetaNode( );
           expandSubtreeV( // Expanding all nodes that need expanding.
-          		subtreeTreePath, subtreeMetaNode 
-          		);
+              subtreeTreePath, subtreeMetaNode 
+              );
   
           getTreeHelper()  // In TreeHelper...
-  	        .setPartTreePathB(  // ...select...
-  	          selectedTreePath  // ...current tree node.
-  	          );
-  		      // This JTree selection should trigger a series of events which
-  		      // load all the data-dependent sub-panel components
-  		      // and get them ready for display.  
+            .setPartTreePathB(  // ...select...
+              selectedTreePath  // ...current tree node.
+              );
+            // This JTree selection should trigger a series of events which
+            // load all the data-dependent sub-panel components
+            // and get them ready for display.  
           }
 
     // Post-initialization methods.
@@ -220,23 +220,23 @@ public class RootJTree
           */
         {
           KeyMetaPiteratorOfMetaNode // Creating iterator which does the search.  
-  		      childKeyMetaPiteratorOfMetaNode= 
-  		      		subtreeMetaNode.makeKeyMetaPiteratorOfMetaNode( 
-  		      				ExpandedAttributeString
-  		      				);
+            childKeyMetaPiteratorOfMetaNode= 
+                subtreeMetaNode.makeKeyMetaPiteratorOfMetaNode( 
+                    ExpandedAttributeString
+                    );
           scanner: while (true) { // Scan all nodes with attribute.
             MetaNode childMetaNode= // Test for a child with attribute key.
-            		childKeyMetaPiteratorOfMetaNode.getE();
+                childKeyMetaPiteratorOfMetaNode.getE();
             if  // No more children with the desired attribute.
               ( childMetaNode == null)
               break scanner;  // Exit Processor.
             DataNode childDataNode= // Get associated DataNode.
               childMetaNode.getDataNode();
             if // DataNode is an UnknownDataNode.
-            	( ! DataNode.isAUsableDataNodeB( childDataNode ) )
+              ( ! DataNode.isAUsableDataNodeB( childDataNode ) )
               break scanner;  // Exit Processor.
             TreePath childTreePath=  // Add DataNode to TreePath.
-            		subTreePath.pathByAddingChild( childDataNode );
+                subTreePath.pathByAddingChild( childDataNode );
             expandSubtreeChildV( childTreePath, childMetaNode );
             childKeyMetaPiteratorOfMetaNode.nextE(); // Advance Piterator to
               // next child with desired attribute key.
@@ -252,21 +252,21 @@ public class RootJTree
         its immediate children, and all its ancestors, viewable.
         */
       {
-      	boolean expandedB= // Saving attribute of whether this node is expanded. 
+        boolean expandedB= // Saving attribute of whether this node is expanded. 
           BooleanAttributeMetaTool.getNodeAttributeB(
-        		childMetaNode, ExpandedAttributeString
-        		);  // Saving because recursive expand might change the attribute.
-  	    expandSubtreeV( // Recursively expand child's children if needed.
-  	    		childTreePath, childMetaNode 
-  	    		);
-  	    if // Setting child expansion state according to saved attribute value.
-  	    	( expandedB ) 
-  	    	expandPath(childTreePath); // Expanding child node because
-  	        // all JTree nodes are initially collapsed.
-    	    else
-  	      collapsePath(childTreePath); // Collapsing child node because
-  	        // the above recursive expansion might have expanded this child.
-  	    }
+            childMetaNode, ExpandedAttributeString
+            );  // Saving because recursive expand might change the attribute.
+        expandSubtreeV( // Recursively expand child's children if needed.
+            childTreePath, childMetaNode 
+            );
+        if // Setting child expansion state according to saved attribute value.
+          ( expandedB ) 
+          expandPath(childTreePath); // Expanding child node because
+            // all JTree nodes are initially collapsed.
+          else
+          collapsePath(childTreePath); // Collapsing child node because
+            // the above recursive expansion might have expanded this child.
+        }
 
       private class MyTreePathListener 
         extends TreePathAdapter // so it implements TreePathListener
@@ -296,7 +296,7 @@ public class RootJTree
                 // Execution begins on fully checked path.
                 setSelectionPath(inTreePath);  // Select path in the this JTree.
                   // This could trigger TreeSelectionListener.
-              	} // toReturn:
+                } // toReturn:
               }
           }
 
@@ -332,11 +332,11 @@ public class RootJTree
           TreePath selectedTreePath= getLeadSelectionPath();
           if  // Expanding or collapsing it, whichever makes sense.
             (isExpanded( selectedTreePath ))  // Node is expanded now.
-          	collapsePath(selectedTreePath);  // Collapsing it.
+            collapsePath(selectedTreePath);  // Collapsing it.
             else  // Node is collapsed now.
             expandPath(selectedTreePath);  // Expanding the row.
           setAutoExpandedV(  // Forcing auto-expanded status...
-          		selectedTreePath , // ...for selected path...
+              selectedTreePath , // ...for selected path...
               false  // ... to be off.
               );
           theTreeHelper.notifyListenersAboutChangeV( );
@@ -351,49 +351,49 @@ public class RootJTree
         It is used to restore the selection state to what it was at shutdown.
         */
 
-		    public void treeStructureChanged(TreeModelEvent theTreeModelEvent) { }
-		
-		    public void treeNodesRemoved(TreeModelEvent theTreeModelEvent) { }
-		
-		    public void treeNodesInserted(TreeModelEvent theTreeModelEvent)
-		      /* This method checks whether an inserted node was selected before,
-		        and is a descendant of the presently selected node.
-		        If it is then it is selected.
-		        The purpose of this is to automatically select and display a node
-		        which was selected and was being displayed when the app shutdown.
-		        ///fix Isn't called?
-		        */
-		      {
-  		      theAppLog.debug("RootJTree.treeNodesInserted(TreeModelEvent) called.");
-		    	  processingEvent: {
-			    		//appLogger.debug("RootJTree.treeNodesInserted(..)");
-          	  TreePath parentTreePath= theTreeModelEvent.getTreePath();
-			    		if ( // Ignoring event if event's parent path isn't selected path. 
-			    	      	!theTreeHelper.getPartTreePath().equals(parentTreePath)
-			    	      	)
-			    	  	break processingEvent; // Ignoring.
-		          for 
-			          ( Object childObject: theTreeModelEvent.getChildren() )
-		          	{ // Selecting child if is meets requirements.
-		          	  DataNode childDataNode= (DataNode)childObject;
-		          	  TreePath childTreePath= 
-		          	  		parentTreePath.pathByAddingChild(childDataNode);
-		          	  PathAttributeMetaTool childPathAttributeMetaTool=
-		          	    theMetaRoot.makePathAttributeMetaTool( 
-		          	    		childTreePath, MetaRoot.selectionAttributeString 
-		                  );
-		          	  String valueString= // Getting selection path attribute value. 
-		          	  		(String)childPathAttributeMetaTool.get();
-		          	  if ( "IS".equals(valueString) )
-		                getTreeHelper()  // In TreeHelper...
-		        	        .setPartTreePathB(  // ...select...
-		        	          childTreePath  // ...child tree node.
-		        	          );
-		          		}
-		    			}
-		      	}
-		
-		    public void treeNodesChanged(TreeModelEvent theTreeModelEvent) { }
+        public void treeStructureChanged(TreeModelEvent theTreeModelEvent) { }
+    
+        public void treeNodesRemoved(TreeModelEvent theTreeModelEvent) { }
+    
+        public void treeNodesInserted(TreeModelEvent theTreeModelEvent)
+          /* This method checks whether an inserted node was selected before,
+            and is a descendant of the presently selected node.
+            If it is then it is selected.
+            The purpose of this is to automatically select and display a node
+            which was selected and was being displayed when the app shutdown.
+            ///fix Isn't called?
+            */
+          {
+            theAppLog.debug("RootJTree.treeNodesInserted(TreeModelEvent) called.");
+            processingEvent: {
+              //appLogger.debug("RootJTree.treeNodesInserted(..)");
+              TreePath parentTreePath= theTreeModelEvent.getTreePath();
+              if ( // Ignoring event if event's parent path isn't selected path. 
+                    !theTreeHelper.getPartTreePath().equals(parentTreePath)
+                    )
+                break processingEvent; // Ignoring.
+              for 
+                ( Object childObject: theTreeModelEvent.getChildren() )
+                { // Selecting child if is meets requirements.
+                  DataNode childDataNode= (DataNode)childObject;
+                  TreePath childTreePath= 
+                      parentTreePath.pathByAddingChild(childDataNode);
+                  PathAttributeMetaTool childPathAttributeMetaTool=
+                    theMetaRoot.makePathAttributeMetaTool( 
+                        childTreePath, MetaRoot.selectionAttributeString 
+                      );
+                  String valueString= // Getting selection path attribute value. 
+                      (String)childPathAttributeMetaTool.get();
+                  if ( "IS".equals(valueString) )
+                    getTreeHelper()  // In TreeHelper...
+                      .setPartTreePathB(  // ...select...
+                        childTreePath  // ...child tree node.
+                        );
+                  }
+              }
+            }
+    
+        public void treeNodesChanged(TreeModelEvent theTreeModelEvent) { }
 
       /* TreeSelectionListener method and its numerous exclusive helpers.
         There is a lot of code here.  The purpose of a lot of it is to do
@@ -715,16 +715,16 @@ public class RootJTree
                   ( ! scanBooleanAttributeMetaTool.getAttributeB( ) )
                   break;  // Exit loop.  We're past the last AutoExpanded node.
                 MetaNode childMetaNode=  // Get recently selected child MetaNode.
-                	theMetaRoot.getLastSelectedChildMetaNode(
+                  theMetaRoot.getLastSelectedChildMetaNode(
                     scanBooleanAttributeMetaTool.getMetaNode()
                     );
                 if ( childMetaNode == null ) // Exiting loop if no such child.
                   break;  // Exit loop.  Meta data is corrupted.
                 if // Exiting loop if child MetaNode contains UnknownDataNode. 
                   ( childMetaNode.eliminateAndTestForUnknownDataNodeB(
-                		scanBooleanAttributeMetaTool
-                		) )
-                	break;
+                    scanBooleanAttributeMetaTool
+                    ) )
+                  break;
                 Object childOfDataNode=  // Get associated child DataNode.
                   childMetaNode.getDataNode();
                 // Setup next possible iteration,
@@ -744,29 +744,29 @@ public class RootJTree
       
         @Override
         public void treeExpanded(TreeExpansionEvent e) {
-        	setTreeExpansionV( e, true );
-        	}
+          setTreeExpansionV( e, true );
+          }
 
         @Override
         public void treeCollapsed(TreeExpansionEvent e) {
-        	setTreeExpansionV( e, false );
-        	}
+          setTreeExpansionV( e, false );
+          }
 
         private void setTreeExpansionV(
-        		TreeExpansionEvent theTreeExpansionEvent, boolean valueB
-        		)
+            TreeExpansionEvent theTreeExpansionEvent, boolean valueB
+            )
           /* This helper method stores valueB
             as the boolean value of the Expanded attribute
             of the MetaNode associated with InTreePath.
             */
           { 
-	          TreePath theTreePath= theTreeExpansionEvent.getPath();
+            TreePath theTreePath= theTreeExpansionEvent.getPath();
             BooleanAttributeMetaTool theBooleanAttributeMetaTool=
-          		theMetaRoot.makeBooleanAttributeMetaTool(
-            		theTreePath, "Expanded" 
+              theMetaRoot.makeBooleanAttributeMetaTool(
+                theTreePath, "Expanded" 
                 ); 
             theBooleanAttributeMetaTool.putAttributeB( 
-            	valueB
+              valueB
               );
             }
 
@@ -774,37 +774,37 @@ public class RootJTree
       
         @Override
         public void keyPressed(KeyEvent TheKeyEvent) 
-	        /* This KeyListener method is used to intercept and to do 
-	          non-standard processing of some keys.
-	          The keys are those which would normally cause
-	          the expanding and collapsing of tree nodes.
-	          They are intercepted here in order to implement 
-	          auto-expand and auto-collapse.
-	          */
-	        { // keyPressed.
-	          int KeyCodeI = TheKeyEvent.getKeyCode();  // cache key pressed.
-	          
-	          boolean KeyProcessedB= // Assume the key will be processed here. 
-	            true;
-	          { // try to process the key event.
-	            if      (KeyCodeI == KeyEvent.VK_ENTER)  // Enter key.
-	              commandExpandOrCollapseV();  // expand or collapse node.
-	            else if (KeyCodeI == KeyEvent.VK_LEFT)  // left-arrow key.
-	              theTreeHelper.commandGoToParentB(true);  // go to parent folder.
-	            else if (KeyCodeI == KeyEvent.VK_RIGHT)  // right-arrow key.
-	              theTreeHelper.commandGoToChildB(true);  // go to child folder.
-	            //else if (KeyCodeI == KeyEvent.VK_X)  // X-key. For debugging.
-	            //  Misc.dbgEventDone(); // Debug.
-	            else
-	              KeyProcessedB= false;
-	            } // try to process the key event.
-	          if // Post process key,... 
-	            (KeyProcessedB)  // ...if it was processed earlier.
-	            { // Post process key.
-	              TheKeyEvent.consume();  // ...prevent more processing of it.
-	              Misc.dbgEventDone(); // Debug.
-	              } // Post process key.
-	          } // keyPressed.
+          /* This KeyListener method is used to intercept and to do 
+            non-standard processing of some keys.
+            The keys are those which would normally cause
+            the expanding and collapsing of tree nodes.
+            They are intercepted here in order to implement 
+            auto-expand and auto-collapse.
+            */
+          { // keyPressed.
+            int KeyCodeI = TheKeyEvent.getKeyCode();  // cache key pressed.
+            
+            boolean KeyProcessedB= // Assume the key will be processed here. 
+              true;
+            { // try to process the key event.
+              if      (KeyCodeI == KeyEvent.VK_ENTER)  // Enter key.
+                commandExpandOrCollapseV();  // expand or collapse node.
+              else if (KeyCodeI == KeyEvent.VK_LEFT)  // left-arrow key.
+                theTreeHelper.commandGoToParentB(true);  // go to parent folder.
+              else if (KeyCodeI == KeyEvent.VK_RIGHT)  // right-arrow key.
+                theTreeHelper.commandGoToChildB(true);  // go to child folder.
+              //else if (KeyCodeI == KeyEvent.VK_X)  // X-key. For debugging.
+              //  Misc.dbgEventDone(); // Debug.
+              else
+                KeyProcessedB= false;
+              } // try to process the key event.
+            if // Post process key,... 
+              (KeyProcessedB)  // ...if it was processed earlier.
+              { // Post process key.
+                TheKeyEvent.consume();  // ...prevent more processing of it.
+                Misc.dbgEventDone(); // Debug.
+                } // Post process key.
+            } // keyPressed.
 
         @Override
         public void keyReleased(KeyEvent TheKeyEvent) { }  // Does nothing.

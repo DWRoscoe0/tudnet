@@ -19,19 +19,19 @@ public class TreePathEvent extends TestEvent {
     
   private TreePath theTreePath;
 
-	public TreePathEvent(
+  public TreePathEvent(
     Object source, TreePath inTreePath, boolean inDoB)
-	{
-	  super(source,inDoB);
+  {
+    super(source,inDoB);
     theTreePath= inTreePath;
-	  }
+    }
 
-	public TreePathEvent(
+  public TreePathEvent(
     Object source, TreePath inTreePath)
-	{
-	  super(source,true);
+  {
+    super(source,true);
     theTreePath= inTreePath;
-	  }
+    }
 
   public void setTreePathV(TreePath inTreePath)
     {

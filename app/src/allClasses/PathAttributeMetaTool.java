@@ -162,7 +162,7 @@ public class PathAttributeMetaTool
               ( childMetaNode == null)
               break Processor;  // Exit Processor.
             if // Associated DataNode is an UnknownDataNode.
-	            ( UnknownDataNode.isOneB( childMetaNode.getDataNode() ) )
+              ( UnknownDataNode.isOneB( childMetaNode.getDataNode() ) )
               break Processor;  // Exit Processor.
             replaceIsWithWasInDescendents(   // Recurse in descendants.
               childMetaNode

@@ -11,7 +11,7 @@ import static allClasses.SystemSettings.NL;
 
 public class Outline
 
-	extends MutableList
+  extends MutableList
 
   /* The purpose of this class is to create 
     a large subtree for TUDNet demonstrations
@@ -28,9 +28,9 @@ public class Outline
   { // class Outline
 
     // static lock-protected variables.
-			static Object lockObject= new Object();
+      static Object lockObject= new Object();
       static RandomAccessFile theRandomAccessFile= // For random file access.
-      		null;
+          null;
   
     // instance variables.
       private long startingOffsetL;  // Nodes starting file offset.
@@ -71,98 +71,98 @@ public class Outline
           the reading of a line containing only a ".".
           */
         { // readLineV.
-      		synchronized (lockObject) {
-	      		if ( readLineReentryB ) // ?? catch 2nd thread at entrance.
-	      			{ readLineReentryB= false;             
-	      			  theAppLog.error( "Outline: readLineV() REENTRY Begin.");
-	      				}
-	      			else
-	      			readLineReentryB= true;
-	          int maxTriesI= 3;
-	          int triesI= 1;
-	          readlineRetryLoop: while (true) {
-	            if  // Checking and exiting if maximum retries were exceeded.
-	              ( triesI > maxTriesI )  // Maximum attempts exceeded.
-	              { // Terminating thread.
-	                theAppLog.error( "Outline.readLineV() retries failed." );
-	                break readlineRetryLoop; // Exiting with failure.
-	                }
-	            try { 
-	            	  doReadLineV( ); 
-	                break readlineRetryLoop; // Exiting with success.
-	            	  } 
-	              catch ( IOException e ) {
-	              	try {
-		                theAppLog.info( "Outline.readLineV() re-openning file." );
-	              		theRandomAccessFile.close(); // Closing bad file.
-	                  theRandomAccessFile=  // Re-opening it.
-	                      new RandomAccessFile( "Outline.tmp", "r" );
-	              		}
-		              catch ( IOException e1 ) {
-		                theAppLog.error( "Outline.readLineV() re-open failed." );
-		                }
-	              	};
-	    	      triesI++;
-	            } // readlineRetryLoop: 
-	      		if ( ! readLineReentryB ) // ?? catch 1st thread at exit.
-		    			{ readLineReentryB= true;
-		  			  	theAppLog.error( "Outline: readLineV() REENTRY End.");
-		    				}
-	      			else
-	      			readLineReentryB= false;
-      			}
+          synchronized (lockObject) {
+            if ( readLineReentryB ) // ?? catch 2nd thread at entrance.
+              { readLineReentryB= false;             
+                theAppLog.error( "Outline: readLineV() REENTRY Begin.");
+                }
+              else
+              readLineReentryB= true;
+            int maxTriesI= 3;
+            int triesI= 1;
+            readlineRetryLoop: while (true) {
+              if  // Checking and exiting if maximum retries were exceeded.
+                ( triesI > maxTriesI )  // Maximum attempts exceeded.
+                { // Terminating thread.
+                  theAppLog.error( "Outline.readLineV() retries failed." );
+                  break readlineRetryLoop; // Exiting with failure.
+                  }
+              try { 
+                  doReadLineV( ); 
+                  break readlineRetryLoop; // Exiting with success.
+                  } 
+                catch ( IOException e ) {
+                  try {
+                    theAppLog.info( "Outline.readLineV() re-openning file." );
+                    theRandomAccessFile.close(); // Closing bad file.
+                    theRandomAccessFile=  // Re-opening it.
+                        new RandomAccessFile( "Outline.tmp", "r" );
+                    }
+                  catch ( IOException e1 ) {
+                    theAppLog.error( "Outline.readLineV() re-open failed." );
+                    }
+                  };
+              triesI++;
+              } // readlineRetryLoop: 
+            if ( ! readLineReentryB ) // ?? catch 1st thread at exit.
+              { readLineReentryB= true;
+                theAppLog.error( "Outline: readLineV() REENTRY End.");
+                }
+              else
+              readLineReentryB= false;
+            }
           } // readLineV.
 
       private void doReadLineV( )
         throws IOException
         // Does readLine() except for setup and error recovery and retrying.
         {
-	    		lineString= null; // Clearing String accumulator.
-	    	  lineOffsetL= fileOffsetL;  // Saving file offset of line being read.
-	        try 
-	          {
-	        	  theRandomAccessFile.seek(fileOffsetL);  // Seeking read point.
-	            }
-	          catch (IOException e) { // Logging and re-throwing.
-	            theAppLog.error(
-	            		"Outline.readLineV() seek() "+fileOffsetL + NL + e
-	            		);
-	            throw e;
-	            } // Handle errors.
-	        try 
-		        {
-		      		lineString = theRandomAccessFile.readLine();  // Reading line.
-		          }
-	          catch (IOException e) { // Logging and re-throwing.
-		          theAppLog.error("Outline.readLineV() readline()" + NL + e);
-	            throw e;
-		          } // Handle errors.
-	        try 
-		        {
-		      	  fileOffsetL= // Saving end point.
-		      	  		theRandomAccessFile.getFilePointer(); 
-		          }
-	          catch (IOException e) { // Logging and re-throwing.
-		          theAppLog.error("Outline.readLineV() getFilePointer()" + NL +e);
-	            throw e;
-		          } // Handle errors.
-	        if (lineString == null) // Handling End of file (shouldn't happen).
-	          {
-	            //appLogger.info( "Outline: readLineV() replacing EOF with '.'");
-	        	  lineString= ".";  // Simulating read of a terminator line.
-	            }
-	        { // Measuring line indent level.
-	        	lineIndentI= 0;  // Clearing indent level.
-	          //appLogger.info( "Outline: readLineV(),lineString= "+lineString );
-	          while // Incrementing indent level for each leading space in line.
-	            ( ( lineIndentI < lineString.length() ) &&
-	              ( lineString.charAt( lineIndentI ) == ' ' )
-	              )
-	          	lineIndentI++;
-	          } // Measure indent level.
-	        lineString=  // Removing leading and trailing spaces from line.
-	        		lineString.trim( ); 
-	        }
+          lineString= null; // Clearing String accumulator.
+          lineOffsetL= fileOffsetL;  // Saving file offset of line being read.
+          try 
+            {
+              theRandomAccessFile.seek(fileOffsetL);  // Seeking read point.
+              }
+            catch (IOException e) { // Logging and re-throwing.
+              theAppLog.error(
+                  "Outline.readLineV() seek() "+fileOffsetL + NL + e
+                  );
+              throw e;
+              } // Handle errors.
+          try 
+            {
+              lineString = theRandomAccessFile.readLine();  // Reading line.
+              }
+            catch (IOException e) { // Logging and re-throwing.
+              theAppLog.error("Outline.readLineV() readline()" + NL + e);
+              throw e;
+              } // Handle errors.
+          try 
+            {
+              fileOffsetL= // Saving end point.
+                  theRandomAccessFile.getFilePointer(); 
+              }
+            catch (IOException e) { // Logging and re-throwing.
+              theAppLog.error("Outline.readLineV() getFilePointer()" + NL +e);
+              throw e;
+              } // Handle errors.
+          if (lineString == null) // Handling End of file (shouldn't happen).
+            {
+              //appLogger.info( "Outline: readLineV() replacing EOF with '.'");
+              lineString= ".";  // Simulating read of a terminator line.
+              }
+          { // Measuring line indent level.
+            lineIndentI= 0;  // Clearing indent level.
+            //appLogger.info( "Outline: readLineV(),lineString= "+lineString );
+            while // Incrementing indent level for each leading space in line.
+              ( ( lineIndentI < lineString.length() ) &&
+                ( lineString.charAt( lineIndentI ) == ' ' )
+                )
+              lineIndentI++;
+            } // Measure indent level.
+          lineString=  // Removing leading and trailing spaces from line.
+              lineString.trim( ); 
+          }
 
       public String getBodyString()
         /* This returns a String containing all the text
@@ -171,7 +171,7 @@ public class Outline
           It assumes that the line containing the name has already been read.
           */
         { // String p;( )
-      		readLineV( );  // Skipping line containing name.
+          readLineV( );  // Skipping line containing name.
           String totalString= "";  // Initialize String accumulator.
           while // Accumulate all lines in the section which...
             ( ( lineIndentI <= nodeIndentI ) && // ...are not indented more...
@@ -199,9 +199,9 @@ public class Outline
                 ; // Do nothing to skip and keep going.
               else if ( lineString.equals( "." ) )  // Line is a single '.'.
                 {
-	                //appLogger.info( "Outline: skipChild(), Done.");
-	                doneB= true;  // It is last child line, so terminate loop.
-	                }
+                  //appLogger.info( "Outline: skipChild(), Done.");
+                  doneB= true;  // It is last child line, so terminate loop.
+                  }
               readLineV( );  // Skip child line.
               } // Skip child lines but stop after last one.
           } // skipChild( )
@@ -209,8 +209,8 @@ public class Outline
       } // class Aid
 
     public Outline( 
-    		long offsetInL 
-    		) // Constructor.
+        long offsetInL 
+        ) // Constructor.
       /* Constructs an Outline node whose source can be found
         in Outline file at offset offsetInL.
         Normally the root node is constructed with Outline( 0 ).
@@ -219,7 +219,7 @@ public class Outline
         super(
           "Outline:TEMPORARY-NAME",
           new DataNode[]{} // Initially empty List for lazy-loaded children.
-	        );
+          );
         startingOffsetL= offsetInL;  // Save starting file offset.
         } // Outline(.)
 
@@ -230,40 +230,40 @@ public class Outline
           is more indented, indicating the start of a child.
           */
         {
-	      	preparePartiallyLoadedNodeV();
-	      	return (theLoadState == LoadState.LEAF );
+          preparePartiallyLoadedNodeV();
+          return (theLoadState == LoadState.LEAF );
           }
 
       public int getChildCount( ) 
         /* Returns the number of outline subsections of this section.  */
         {
-      		prepareFullyLoadedNodeV();
-      	  return super.getChildCount();
-      	  }
+          prepareFullyLoadedNodeV();
+          return super.getChildCount();
+          }
         
         public DataNode getChild( int indexI ) 
           // This returns the child with index indexI.
         {
-      		prepareFullyLoadedNodeV();
-      	  return super.getChild(indexI);
-        	}
+          prepareFullyLoadedNodeV();
+          return super.getChild(indexI);
+          }
         
     // Other getter methods.
 
       public String getNameString( )
-	      /* Returns String representing name of this Object.  */
-	      {
-	      	preparePartiallyLoadedNodeV();
-	        //return theAid.lineString;  // Return data from line read.
-	        return super.getNameString( );
-	        }
+        /* Returns String representing name of this Object.  */
+        {
+          preparePartiallyLoadedNodeV();
+          //return theAid.lineString;  // Return data from line read.
+          return super.getNameString( );
+          }
 
       public String getContentString( )
-	      // Returns String representing the body text of this Object.
-	      {
-	        Aid theAid= prepareAndGetAid( );
-	        return theAid.getBodyString( );
-	        }
+        // Returns String representing the body text of this Object.
+        {
+          Aid theAid= prepareAndGetAid( );
+          return theAid.getBodyString( );
+          }
 
       public String toString()
         /* Returns a String representing this object, for JList. */
@@ -295,67 +295,67 @@ public class Outline
       private void prepareFullyLoadedNodeV()
         // Prepares for accessing this Outline node as a fully loaded node.
         {
-      		stateLoop: while (true) {
-	      	  switch ( theLoadState ) {
-			    	  case CONSTRUCTED: 
-			    	  	preparePartiallyLoadedNodeV();
-			    	  	break;
-			    	  case EMPTY_BRANCH:
-			    	  	loadChildrenV();
-			      	  break;
-			    	  case LEAF: 
-			    	  	break stateLoop; // Exiting loop with terminal state.
-			    	  case FULL_BRANCH: 
-			    	  	break stateLoop; // Exiting loop with terminal state.
-		    	  	}
-      			} // stateLoop:
-      	  //if ( theLoadState.ordinal() < LoadState.FULL_BRANCH.ordinal() )
+          stateLoop: while (true) {
+            switch ( theLoadState ) {
+              case CONSTRUCTED: 
+                preparePartiallyLoadedNodeV();
+                break;
+              case EMPTY_BRANCH:
+                loadChildrenV();
+                break;
+              case LEAF: 
+                break stateLoop; // Exiting loop with terminal state.
+              case FULL_BRANCH: 
+                break stateLoop; // Exiting loop with terminal state.
+              }
+            } // stateLoop:
+          //if ( theLoadState.ordinal() < LoadState.FULL_BRANCH.ordinal() )
           }
 
-	  	private void loadChildrenV() 
-		  	{
-	        Aid theAid= prepareAndGetAid( );
-      		theAid.getBodyString( );  // Read past header.
+      private void loadChildrenV() 
+        {
+          Aid theAid= prepareAndGetAid( );
+          theAid.getBodyString( );  // Read past header.
           theAid.theChildCountI= 0;  // Initialize child count.
           while  // Processing all children indicated by indented first lines.
             ( theAid.lineIndentI > theAid.nodeIndentI )
             { // process this child.
-	            DataNode childDataNode= new Outline( // Constructing child node
-		            theAid.lineOffsetL //,  // for this file offset.
-	            	);
-	            addRawV(childDataNode); // Add to parent List, not on EDT. 
-	            //addB(childDataNode); // Add to parent List, on EDT.  Fails.
-	              // This causes a StackOverflowError.
-          		theAid.theChildCountI++;  // Count it.
+              DataNode childDataNode= new Outline( // Constructing child node
+                theAid.lineOffsetL //,  // for this file offset.
+                );
+              addRawV(childDataNode); // Add to parent List, not on EDT. 
+              //addB(childDataNode); // Add to parent List, on EDT.  Fails.
+                // This causes a StackOverflowError.
+              theAid.theChildCountI++;  // Count it.
               theAid.skipChild( );  // Skip past this child.
               } // process this child.
-      	  theLoadState= LoadState.FULL_BRANCH; // Recording new node state.
-	  	  	}
-	  	
+          theLoadState= LoadState.FULL_BRANCH; // Recording new node state.
+          }
+      
       private void preparePartiallyLoadedNodeV()
-      	/* Prepares for accessing this Outline node as a partially loaded node.
+        /* Prepares for accessing this Outline node as a partially loaded node.
           It return a helper Aid object. 
           */
         {
-      	  switch ( theLoadState ) {
-	      	  case CONSTRUCTED: ;
-		      	  { // Doing partial loading.
-	      	  		Aid theAid= prepareAndGetAid();
-		      	  	//// doSetNameV(  // Redefining name from 
-	      	  		setNameV(  // Redefining name from
-		      	  			theAid.lineString  // first line read from node text.
-		      	  			);
-		        	  theAid.getBodyString( );  // Read past header section.
-		            if ( // Setting the LoadState based on whether  
-			              ! ( theAid.lineIndentI > theAid.nodeIndentI ) 
-			              ) // line's indent is not greater than node's.
-		            	theLoadState= LoadState.LEAF;
-		            	else
-		            	theLoadState= LoadState.EMPTY_BRANCH;
-		      	  	}
-	      	    break;
-	      	  default:
-	      	  }
+          switch ( theLoadState ) {
+            case CONSTRUCTED: ;
+              { // Doing partial loading.
+                Aid theAid= prepareAndGetAid();
+                //// doSetNameV(  // Redefining name from 
+                setNameV(  // Redefining name from
+                    theAid.lineString  // first line read from node text.
+                    );
+                theAid.getBodyString( );  // Read past header section.
+                if ( // Setting the LoadState based on whether  
+                    ! ( theAid.lineIndentI > theAid.nodeIndentI ) 
+                    ) // line's indent is not greater than node's.
+                  theLoadState= LoadState.LEAF;
+                  else
+                  theLoadState= LoadState.EMPTY_BRANCH;
+                }
+              break;
+            default:
+            }
           }
 
       private Aid prepareAndGetAid()
@@ -366,9 +366,9 @@ public class Outline
           This is the original Aid getter before lazy loading.
           */
         { // prepareAndGetAid( )
-      		Aid theAid= makeAid();  // Create theAid.
-      	  theAid.fileOffsetL= startingOffsetL;
-      	  prepareFileV();
+          Aid theAid= makeAid();  // Create theAid.
+          theAid.fileOffsetL= startingOffsetL;
+          prepareFileV();
           theAid.readLineV( );  // Read first line.
           theAid.debugString= theAid.lineString;  // Save first line as ID for debugging.
           theAid.nodeIndentI= theAid.lineIndentI;  // Save indent level of section.
@@ -376,20 +376,20 @@ public class Outline
           } // prepareAndGetAid( )
 
       private Aid makeAid()
-	    	/* Makes and returns a helper Aid object.  */
+        /* Makes and returns a helper Aid object.  */
         { // prepareAndGetAid( )
-      		Aid theAid= new Aid();  // Create theAid.
+          Aid theAid= new Aid();  // Create theAid.
           return theAid;
           }
   
-  	  private void prepareFileV()
-  	    // Prepares theRandomAccessFile if it was not done already.
-	  	  {
-		  		synchronized (lockObject) { // Thread-safe creation of file.
-		        if ( theRandomAccessFile == null )  // Open the file if needed.
-		          createTheRandomAccessFileV();
-		  			}
-		  	  }
+      private void prepareFileV()
+        // Prepares theRandomAccessFile if it was not done already.
+        {
+          synchronized (lockObject) { // Thread-safe creation of file.
+            if ( theRandomAccessFile == null )  // Open the file if needed.
+              createTheRandomAccessFileV();
+            }
+          }
 
       private void createTheRandomAccessFileV()
         /* This grouping method prepares the RandomAccessFile by
@@ -427,7 +427,7 @@ public class Outline
           { // copy bytes from ResourceInputStream to theRandomAccessFile.
             int byteI;
             try {
-            	theRandomAccessFile.setLength(0); // Empty the file.
+              theRandomAccessFile.setLength(0); // Empty the file.
               while ( ( byteI= resourceInputStream.read() ) != -1) 
                 theRandomAccessFile.write( byteI );
               }

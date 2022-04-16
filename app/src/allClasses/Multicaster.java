@@ -57,26 +57,26 @@ import static allClasses.SystemSettings.NL;
   ///enh Changes to reduce packet traffic.  No rush on these items
     until # of nodes on a LAN becomes large.
 
-	  ///enh Reduce rate of beacons and responses by some combination of:
-	     * round-robin role changing?
-	     * delaying by delay time times number of nodes
-	     * doing in random time slot divided by number of nodes
+    ///enh Reduce rate of beacons and responses by some combination of:
+       * round-robin role changing?
+       * delaying by delay time times number of nodes
+       * doing in random time slot divided by number of nodes
 
-  	///enh Make more like Simple Service Discovery Protocol (SSDP).
-  	   = MC-ALIVE sent on device-app startup and end of sleep mode. 
-  	   = BYEBYE sent on shutdown, entering sleep mode, or any service termination.
-  	   Because nodes are peers, both clients and servers,
-  	   the above two should be enough to function.
-  	   = MC-QUERY, might be needed, even if above 2 are used for cases when
-  	     * a neighbor disappears and a replacement is needed, 
-  	       unless new neighbors can be found in cache.
-  	     * an MC-ALIVE message was lost.
-  	   ? Add a time parameter to query message to allow
-  	     receiving only updates since the node's most recent BYEBYE.
-  	   ? Storms will not be a problem because
-  	     * Neighboring is the service and neighbors are interchangeable. 
-  	     * Replies are multicast, so pending replies by later replying nodes
-  	       can be aborted after some replies are sent.
+    ///enh Make more like Simple Service Discovery Protocol (SSDP).
+       = MC-ALIVE sent on device-app startup and end of sleep mode. 
+       = BYEBYE sent on shutdown, entering sleep mode, or any service termination.
+       Because nodes are peers, both clients and servers,
+       the above two should be enough to function.
+       = MC-QUERY, might be needed, even if above 2 are used for cases when
+         * a neighbor disappears and a replacement is needed, 
+           unless new neighbors can be found in cache.
+         * an MC-ALIVE message was lost.
+       ? Add a time parameter to query message to allow
+         receiving only updates since the node's most recent BYEBYE.
+       ? Storms will not be a problem because
+         * Neighboring is the service and neighbors are interchangeable. 
+         * Replies are multicast, so pending replies by later replying nodes
+           can be aborted after some replies are sent.
 
     ///enh Or, a more general solution:
       Instead of having separate command packets, have a single one,
@@ -108,87 +108,87 @@ import static allClasses.SystemSettings.NL;
 
 public class Multicaster
 
-	extends Netcaster
-	
-	{
-	  // Injected dependencies.
-	  private MulticastSocket theMulticastSocket; /* For receiving multicast 
-	    datagrams.  Multicast datagrams are sent using 
-	    a different DatagramSocket, an unconnected DatagramSocket because:
-	      * That works.
-	      * It's a way to specify a source/local port number.
-	    */ 
-	  private IPAndPort theIPAndPort;
-	  private final NetcasterQueue // Receive output.
-	    multicasterToConnectionManagerNetcasterQueue;  // SockPackets for ConnectionManager to note.
+  extends Netcaster
+  
+  {
+    // Injected dependencies.
+    private MulticastSocket theMulticastSocket; /* For receiving multicast 
+      datagrams.  Multicast datagrams are sent using 
+      a different DatagramSocket, an unconnected DatagramSocket because:
+        * That works.
+        * It's a way to specify a source/local port number.
+      */ 
+    private IPAndPort theIPAndPort;
+    private final NetcasterQueue // Receive output.
+      multicasterToConnectionManagerNetcasterQueue;  // SockPackets for ConnectionManager to note.
 
-  	private final NetcasterPacketManager multicastReceiverNetcasterPacketManager;
+    private final NetcasterPacketManager multicastReceiverNetcasterPacketManager;
 
-	  public InetAddress groupInetAddress; /* Multicast group IPAddress.   
-	    This, combined with the port, determines 
-	    the set of peers that are able to discover each other.
-	
-	    RFC2365, "Administratively Scoped IP Multicast", allocates
-	    239.0.0.0 to 239.255.255.255 for use local and organizational
-	    scopes for multicast addresses.  They are not meant to be used
-	    outside of those scopes.  There are two expandable scopes:
-	      Local Scope -- 239.255.0.0/16
-	      Organization Local Scope -- 239.192.0.0/14
-	    Routers are supposed to block packets outside of these ranges.
-	    Should be a valid multicast address, 
-	    i.e.: in the range 224.0.0.1 to 239.255.255.255 inclusive.
-	    */
-	
-	  public int multicastPortI;  // Multicast port number used with IP.
-	
-	  int ttl;  /* ttl: The time-to-live for multicast packets. 
-	    0 = restricted to the same host, 
-	    1 = Restricted to the same subnet, 
-	    <32 = Restricted to the same site, organization or department, 
-	    <64 = Restricted to the same region, 
-	    <128 = Restricted to the same continent,
-	    <255 = unrestricted
-	    */
-	
-	  public Multicaster(  // Constructor.
-	      LockAndSignal netcasterLockAndSignal,
-	      NetcasterInputStream theNetcasterInputStream,
-	  		NetcasterOutputStream theNetcasterOutputStream,
+    public InetAddress groupInetAddress; /* Multicast group IPAddress.   
+      This, combined with the port, determines 
+      the set of peers that are able to discover each other.
+  
+      RFC2365, "Administratively Scoped IP Multicast", allocates
+      239.0.0.0 to 239.255.255.255 for use local and organizational
+      scopes for multicast addresses.  They are not meant to be used
+      outside of those scopes.  There are two expandable scopes:
+        Local Scope -- 239.255.0.0/16
+        Organization Local Scope -- 239.192.0.0/14
+      Routers are supposed to block packets outside of these ranges.
+      Should be a valid multicast address, 
+      i.e.: in the range 224.0.0.1 to 239.255.255.255 inclusive.
+      */
+  
+    public int multicastPortI;  // Multicast port number used with IP.
+  
+    int ttl;  /* ttl: The time-to-live for multicast packets. 
+      0 = restricted to the same host, 
+      1 = Restricted to the same subnet, 
+      <32 = Restricted to the same site, organization or department, 
+      <64 = Restricted to the same region, 
+      <128 = Restricted to the same continent,
+      <255 = unrestricted
+      */
+  
+    public Multicaster(  // Constructor.
+        LockAndSignal netcasterLockAndSignal,
+        NetcasterInputStream theNetcasterInputStream,
+        NetcasterOutputStream theNetcasterOutputStream,
         Shutdowner theShutdowner,
-	  		IPAndPort theIPAndPort,
-	  		MulticastSocket theMulticastSocket,
-	      NetcasterQueue multicasterToConnectionManagerNetcasterQueue,
-		  	NetcasterPacketManager multicastReceiverNetcasterPacketManager,
-	      NamedLong initialRetryTimeOutMsNamedLong
-		  	)
-	    /* Constructs a Multicaster object and prepares it for
-	      UDP multicast communications duties.  
-	      Those duties are to help peers discover each other by
-	      sending and receiving multicast packets on the LAN.
-	      */
-	    {
-	      super(  // Superclass Netcaster List constructor with some dependencies. 
-	          netcasterLockAndSignal,
-	  	      theNetcasterInputStream,
-	  	      theNetcasterOutputStream,
-	          theShutdowner,
-	  	  		theIPAndPort,
-		        "Multicaster",
-			      initialRetryTimeOutMsNamedLong,
-			      new DefaultBooleanLike(false)
-	      		);
+        IPAndPort theIPAndPort,
+        MulticastSocket theMulticastSocket,
+        NetcasterQueue multicasterToConnectionManagerNetcasterQueue,
+        NetcasterPacketManager multicastReceiverNetcasterPacketManager,
+        NamedLong initialRetryTimeOutMsNamedLong
+        )
+      /* Constructs a Multicaster object and prepares it for
+        UDP multicast communications duties.  
+        Those duties are to help peers discover each other by
+        sending and receiving multicast packets on the LAN.
+        */
+      {
+        super(  // Superclass Netcaster List constructor with some dependencies. 
+            netcasterLockAndSignal,
+            theNetcasterInputStream,
+            theNetcasterOutputStream,
+            theShutdowner,
+            theIPAndPort,
+            "Multicaster",
+            initialRetryTimeOutMsNamedLong,
+            new DefaultBooleanLike(false)
+            );
 
-	  		// Store remaining injected dependencies.
-	  		this.theMulticastSocket= theMulticastSocket;
-	  	  this.theIPAndPort= theIPAndPort;
-	      this.multicasterToConnectionManagerNetcasterQueue= multicasterToConnectionManagerNetcasterQueue;
-		  	this.multicastReceiverNetcasterPacketManager=
-		  			multicastReceiverNetcasterPacketManager;
-	      }
+        // Store remaining injected dependencies.
+        this.theMulticastSocket= theMulticastSocket;
+        this.theIPAndPort= theIPAndPort;
+        this.multicasterToConnectionManagerNetcasterQueue= multicasterToConnectionManagerNetcasterQueue;
+        this.multicastReceiverNetcasterPacketManager=
+            multicastReceiverNetcasterPacketManager;
+        }
 
-	  
-	  /* The following is new code that uses the MulticastReceier thread.  */
-	  
+    
+    /* The following is new code that uses the MulticastReceier thread.  */
+    
     private EpiThread theMulticastReceiverEpiThread; // its thread.
 
     public static class MulticastReceiver
@@ -199,9 +199,9 @@ public class Multicaster
         multicast DatagramPackets from a MulticastSocket.
         The packets are queued to a NetcasterQueue for consumption by 
         the main Multicaster thread.
-			
-			  After construction and initialization, 
-			  data for this thread passes through the following:
+      
+        After construction and initialization, 
+        data for this thread passes through the following:
         * theMulticastSocket: DatagramPackets from the network.
         * receiverToMulticasterNetcasterQueue: packets to the Multicaster. 
         
@@ -229,11 +229,11 @@ public class Multicaster
               * receiverToMulticasterNetcasterQueue: the output queue.
             */
           {
-	          this.receiverToMulticasterNetcasterQueue= 
-	          		receiverToMulticasterNetcasterQueue;
-	          this.theMulticastSocket= theMulticastSocket;
-	          this.theNetcasterPacketManager= theNetcasterPacketManager;
-	          }
+            this.receiverToMulticasterNetcasterQueue= 
+                receiverToMulticasterNetcasterQueue;
+            this.theMulticastSocket= theMulticastSocket;
+            this.theNetcasterPacketManager= theNetcasterPacketManager;
+            }
         
 
         public void run() 
@@ -242,36 +242,36 @@ public class Multicaster
             for consumption by the main multicaster thread.
             */
           {
-        		theAppLog.info("run() begins.");
-	          try { // Operations that might produce an IOException.
-	            while  // Receiving and queuing packets unless termination is
-	              ( ! EpiThread.testInterruptB() ) // requested.
-	              { // Receiving and queuing one packet.
-	                try {
-	                  NetcasterPacket receiverNetcasterPacket=
-	                  		theNetcasterPacketManager.produceKeyedPacket();
-	                  DatagramPacket receiverDatagramPacket= 
-	                  		receiverNetcasterPacket.getDatagramPacket(); 
-	                  theMulticastSocket.receive( receiverDatagramPacket );
-	                  PacketManager.logMulticastReceiverPacketV(
-	                  		receiverDatagramPacket
-	                  		);
-	                  receiverToMulticasterNetcasterQueue.put( // Queuing packet.
-                  		receiverNetcasterPacket
-                  		);
-	                	}
-	                catch( SocketException soe ) {
-	                  theAppLog.info("run(): " + soe );
-	                  Thread.currentThread().interrupt(); // Translating 
-	                    // exception into request to terminate this thread.
-	                  }
-	                } // Receiving and queuing one packet.
-	            }
-	            catch( IOException e ) {
-				  			Misc.logAndRethrowAsRuntimeExceptionV( 
-				  					"run() IOException: ", e
-				  					);
-	            }
+            theAppLog.info("run() begins.");
+            try { // Operations that might produce an IOException.
+              while  // Receiving and queuing packets unless termination is
+                ( ! EpiThread.testInterruptB() ) // requested.
+                { // Receiving and queuing one packet.
+                  try {
+                    NetcasterPacket receiverNetcasterPacket=
+                        theNetcasterPacketManager.produceKeyedPacket();
+                    DatagramPacket receiverDatagramPacket= 
+                        receiverNetcasterPacket.getDatagramPacket(); 
+                    theMulticastSocket.receive( receiverDatagramPacket );
+                    PacketManager.logMulticastReceiverPacketV(
+                        receiverDatagramPacket
+                        );
+                    receiverToMulticasterNetcasterQueue.put( // Queuing packet.
+                      receiverNetcasterPacket
+                      );
+                    }
+                  catch( SocketException soe ) {
+                    theAppLog.info("run(): " + soe );
+                    Thread.currentThread().interrupt(); // Translating 
+                      // exception into request to terminate this thread.
+                    }
+                  } // Receiving and queuing one packet.
+              }
+              catch( IOException e ) {
+                Misc.logAndRethrowAsRuntimeExceptionV( 
+                    "run() IOException: ", e
+                    );
+              }
             theAppLog.info("run() ends.");
             }
 
@@ -293,7 +293,7 @@ public class Multicaster
 
           ?? This thread will probably be extensively changed,
           but for now, for development on  small networks, it works fine.
-         	*/
+           */
         {
           if (theAppLog.testAndLogDisabledB( 
               Config.multicasterThreadsDisableB, 
@@ -303,9 +303,9 @@ public class Multicaster
           EpiThread.interruptibleSleepB( Config.multicastDelayMsL );
             // Initial delay to allow reconnection of Unicast peers.
           theAppLog.info( "run() initial delay ends." );
-	      	try { // Operations that might produce an IOException requiring redo.
-          	initializeWithIOExceptionV();  // Do non-injection initialization.
-  	      	startingMultcastReceiverThreadV();
+          try { // Operations that might produce an IOException requiring redo.
+            initializeWithIOExceptionV();  // Do non-injection initialization.
+            startingMultcastReceiverThreadV();
 
             while (true) // Repeating until thread termination is requested.
               {
@@ -313,26 +313,26 @@ public class Multicaster
                   ( EpiThread.testInterruptB() ) 
                   break;
                 // Code to be repeated goes here.
-              	
+                
                 while  // Processing while thread termination is not requested...
-                	( ! EpiThread.testInterruptB() )
-    	            { // Send and receive multicast packets.
-    	              try {
+                  ( ! EpiThread.testInterruptB() )
+                  { // Send and receive multicast packets.
+                    try {
                       mcSendWordAsMapMessageV("MC-QUERY");
-    	                receivingPacketsV( ); // Receiving packets until done.
-    	                }
-    	              catch( SocketException soe ) {
-    	                // Someone may have called disconnect() or closed socket.
-    	                theAppLog.info( 
-    	                  "Multicaster.run() Terminating loop because of" + NL + "  " + soe
-    	                  );
+                      receivingPacketsV( ); // Receiving packets until done.
+                      }
+                    catch( SocketException soe ) {
+                      // Someone may have called disconnect() or closed socket.
+                      theAppLog.info( 
+                        "Multicaster.run() Terminating loop because of" + NL + "  " + soe
+                        );
                       Thread.currentThread().interrupt(); // Terminating loop 
-    	                }
-    	              } // Send and receive multicast packets.
-    	
-    	          theMulticastSocket.disconnect();  // Stopping filtering?  Filtering?
-    	          stoppingMulticastReceiverThreadV();
-    	          }
+                      }
+                    } // Send and receive multicast packets.
+      
+                theMulticastSocket.disconnect();  // Stopping filtering?  Filtering?
+                stoppingMulticastReceiverThreadV();
+                }
             for(int i=3; i>0; i--){ // Say goodbye 3 times...
               mcSendWordAsMapMessageV("MC-GOODBYE");
               }
@@ -346,24 +346,24 @@ public class Multicaster
 
     private void startingMultcastReceiverThreadV()
       {
-    		theMulticastReceiverEpiThread= // Constructing thread.
-    				AppFactory.makeMulticastReceiverEpiThread(
-	            theEpiInputStreamI.getNotifyingQueueQ(),
-	            theMulticastSocket,
-				   		multicastReceiverNetcasterPacketManager
-	            );
+        theMulticastReceiverEpiThread= // Constructing thread.
+            AppFactory.makeMulticastReceiverEpiThread(
+              theEpiInputStreamI.getNotifyingQueueQ(),
+              theMulticastSocket,
+               multicastReceiverNetcasterPacketManager
+              );
         theMulticastReceiverEpiThread.startV();  // Starting thread.
-	      }
+        }
 
     private void stoppingMulticastReceiverThreadV()
-	    {
-	      theMulticastReceiverEpiThread.stopV();  // Requesting termination of
-			    // theMulticastReceiver thread.
-	      theMulticastSocket.close(); // Causing immediate unblock of
-			    // theMulticastSocket.receive() in that thread.
-			  theMulticastReceiverEpiThread.joinV();  // Waiting for termination of
-	        // theMulticastReceiver thread.
-	      }
+      {
+        theMulticastReceiverEpiThread.stopV();  // Requesting termination of
+          // theMulticastReceiver thread.
+        theMulticastSocket.close(); // Causing immediate unblock of
+          // theMulticastSocket.receive() in that thread.
+        theMulticastReceiverEpiThread.joinV();  // Waiting for termination of
+          // theMulticastReceiver thread.
+        }
 
     private void receivingPacketsV() 
       throws IOException 
@@ -379,25 +379,25 @@ public class Multicaster
         */
       {
         theAppLog.debug("MC","receivingPacketsV() begins.");
-    		long delayMsL= // Minimum time between multicasts. 
-    				// 3600000; // 1 hour for testing to disable multicasting.
-    				Config.multicastPeriodMsL;
-    		LockAndSignal.Input theInput;  // Type of input that ends waits.
+        long delayMsL= // Minimum time between multicasts. 
+            // 3600000; // 1 hour for testing to disable multicasting.
+            Config.multicastPeriodMsL;
+        LockAndSignal.Input theInput;  // Type of input that ends waits.
         processorLoop: while (true) { // Processing messages until exit request.
-        	{ // Processing messages or exiting.
+          { // Processing messages or exiting.
             theAppLog.debug("MC","receivingPacketsV() at processorLoop beginning.");
-        	  long baseTimeMsL= System.currentTimeMillis();
-          	theInput=  // Awaiting next input.
-          	  waitingForSubnotificationOrIntervalOrInterruptE(
-          	    baseTimeMsL, delayMsL);
-	          inputDecoder: switch ( theInput ) { // Decoding the input type.
-	          	case TIME: // Handling a time-out.
-	              multicastActivityLoggerV( false );
-	              break processorLoop;  // Exiting loop.
-	            case INTERRUPTION: // Handling a thread exit request.
-	              break processorLoop;  // Exiting loop.
-	            case SUBNOTIFICATION: // Handling a message.
-	            	messageDecoder: {
+            long baseTimeMsL= System.currentTimeMillis();
+            theInput=  // Awaiting next input.
+              waitingForSubnotificationOrIntervalOrInterruptE(
+                baseTimeMsL, delayMsL);
+            inputDecoder: switch ( theInput ) { // Decoding the input type.
+              case TIME: // Handling a time-out.
+                multicastActivityLoggerV( false );
+                break processorLoop;  // Exiting loop.
+              case INTERRUPTION: // Handling a thread exit request.
+                break processorLoop;  // Exiting loop.
+              case SUBNOTIFICATION: // Handling a message.
+                messageDecoder: {
                   MapEpiNode messageMapEpiNode= // Parse a map.
                       MapEpiNode.tryMapEpiNode(theEpiInputStreamI);
                   if (null == messageMapEpiNode) { // If not gotten
@@ -409,33 +409,33 @@ public class Multicaster
                   MapEpiNode valueMapEpiNode= // Try for "MC-QUERY". 
                       messageMapEpiNode.getMapEpiNode("MC-QUERY");
                   if (null != valueMapEpiNode) // If got it, process.
-			        			{ 
+                    { 
                       mcSendWordAsMapMessageV("MC-ALIVE");
-			        			  processingPossibleNewUnicasterV(); 
-			        			  multicastActivityLoggerV(true);
+                      processingPossibleNewUnicasterV(); 
+                      multicastActivityLoggerV(true);
                       break messageDecoder;
-				              }
+                      }
                   valueMapEpiNode= // Try for "MC-ALIVE". 
                       messageMapEpiNode.getMapEpiNode("MC-ALIVE");
                   if (null != valueMapEpiNode) // If got it, process.
-				            { processingPossibleNewUnicasterV(); 
-  				            multicastActivityLoggerV(true);
+                    { processingPossibleNewUnicasterV(); 
+                      multicastActivityLoggerV(true);
                       break messageDecoder; 
                       }
-		          		// Ignoring anything else.
+                  // Ignoring anything else.
                   theAppLog.debug( "receivingPacketsV() ignoring unexpected: "
                       + messageMapEpiNode);
-	            		} // messageDecoder:
-	            	break inputDecoder;
-	            default: // Handling anything else as an error.
-		            theAppLog.error( 
-		            		"receivingPacketsV(): Unknown LockAndSignal.Input" 
-		            		);
-		            break inputDecoder;
-	            } // inputDecoder: 
-          	  theAppLog.debug("MC","receivingPacketsV() have exited inputDecoder.");
+                  } // messageDecoder:
+                break inputDecoder;
+              default: // Handling anything else as an error.
+                theAppLog.error( 
+                    "receivingPacketsV(): Unknown LockAndSignal.Input" 
+                    );
+                break inputDecoder;
+              } // inputDecoder: 
+              theAppLog.debug("MC","receivingPacketsV() have exited inputDecoder.");
             } // Processing packets until exit.
-        	} // processorLoop:  // Processing packet or exiting.
+          } // processorLoop:  // Processing packet or exiting.
         theAppLog.debug("MC","receivingPacketsV() ends.");
         }
 
@@ -453,41 +453,41 @@ public class Multicaster
       /* This method passes the present packet of theNetcasterInputStream
        to the ConnectionManager.
        */
-	    {
+      {
         NetcasterPacket theNetcasterPacket= // Copying packet from this InputStream.
             theEpiInputStreamI.getKeyedPacketE();
         multicasterToConnectionManagerNetcasterQueue.put( // Passing to CM.
             theNetcasterPacket
             );
-	      }
+        }
 
-	  public void initializeWithIOExceptionV()
-	    throws IOException
-	    {
-  	  	super.initializeV();
+    public void initializeWithIOExceptionV()
+      throws IOException
+      {
+        super.initializeV();
 
-  	  	NetworkInterface gatewayNetworkInterface=
-  	  	  determineGatewayNetworkInterface();
-  	  	this.groupInetAddress = theIPAndPort.getInetAddress();
-		    this.multicastPortI = theIPAndPort.getPortI();
-		    this.ttl= 1;  // Set Time-To-Live to 1 to discover LAN peers only.
-		  
-		    { // Fix MulticastSocket.setTimeToLive() bug for IPv4 + IPv6 systems.
-		      Properties props = System.getProperties();
-		      props.setProperty( "java.net.preferIPv4Stack", "true" );
-		      System.setProperties( props );
-		      }
-		    theMulticastSocket.setLoopbackMode( true );  // Disable loopback.
-		    theMulticastSocket.setTimeToLive( ttl );
-		    theMulticastSocket.setNetworkInterface(gatewayNetworkInterface);
+        NetworkInterface gatewayNetworkInterface=
+          determineGatewayNetworkInterface();
+        this.groupInetAddress = theIPAndPort.getInetAddress();
+        this.multicastPortI = theIPAndPort.getPortI();
+        this.ttl= 1;  // Set Time-To-Live to 1 to discover LAN peers only.
+      
+        { // Fix MulticastSocket.setTimeToLive() bug for IPv4 + IPv6 systems.
+          Properties props = System.getProperties();
+          props.setProperty( "java.net.preferIPv4Stack", "true" );
+          System.setProperties( props );
+          }
+        theMulticastSocket.setLoopbackMode( true );  // Disable loopback.
+        theMulticastSocket.setTimeToLive( ttl );
+        theMulticastSocket.setNetworkInterface(gatewayNetworkInterface);
         theAppLog.debug("MC",
             "initializeWithIOExceptionV()" + NL
             + "  gatewayNetworkInterface= " + gatewayNetworkInterface 
             );
-		    theMulticastSocket.joinGroup( // To receive multicast packets, join...
-	          groupInetAddress  // ...this group IPAddress.
-	          );
-	        }
+        theMulticastSocket.joinGroup( // To receive multicast packets, join...
+            groupInetAddress  // ...this group IPAddress.
+            );
+          }
 
     private NetworkInterface determineGatewayNetworkInterface()
       /* This method tries to determine the single best NetworkInterface
@@ -524,20 +524,20 @@ public class Multicaster
         return theNetworkInterface;
         }
 
-	  private boolean multicastActiveB= false;
-	  
+    private boolean multicastActiveB= false;
+    
     private void multicastActivityLoggerV( boolean activeB )
       /* This method logs when bidirectional multicast communication
         either begins or ends.  Activity ending is defined as
         no received multicast packets for the multicast period.
        */
-    	{
-    	  if ( multicastActiveB != activeB ) // Has activity changed? 
-      	  { // Yes.
-      	  	multicastActiveB= activeB; // Record new activity state.
+      {
+        if ( multicastActiveB != activeB ) // Has activity changed? 
+          { // Yes.
+            multicastActiveB= activeB; // Record new activity state.
             theAppLog.debug("MC", // Log new state. 
                 "multicastActivityLoggerV(..) multicastActiveB= " + multicastActiveB );
             }
-    	  }
+        }
     
-	  }
+    }

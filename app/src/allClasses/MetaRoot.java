@@ -59,8 +59,8 @@ public class MetaRoot {
       if // Calculating rootMetaNode based on load result.
         ( ( loadedMetaNode != null) && // Meta-data was loaded, and
           !UnknownDataNode.isOneB( // load error. 
-          		loadedMetaNode.getDataNode( ) 
-          		)
+              loadedMetaNode.getDataNode( ) 
+              )
           )
         {
           rootMetaNode= // Storing as root MetaNode
@@ -217,7 +217,7 @@ public class MetaRoot {
           */
         {
           TreePath scanTreePath=  // Point scanTreePath accumulator...
-          		theDataRoot.getParentOfRootTreePath( );  // ...to parent of root.
+              theDataRoot.getParentOfRootTreePath( );  // ...to parent of root.
           MetaNode scanMetaNode=  // Get root MetaNode.
             getParentOfRootMetaNode( );
           scanner: while (true) { // Scan all nodes with "IS".
@@ -229,7 +229,7 @@ public class MetaRoot {
             DataNode theDataNode= // Get associated DataNode.
               childMetaNode.getDataNode();
             if // DataNode is an UnknownDataNode.
-            	( ! DataNode.isAUsableDataNodeB( theDataNode ) )
+              ( ! DataNode.isAUsableDataNodeB( theDataNode ) )
               break scanner;  // Exit Processor.
             scanTreePath=  // Add DataNode to TreePath.
               scanTreePath.pathByAddingChild( theDataNode );
@@ -293,8 +293,8 @@ public class MetaRoot {
           It exists mainly to help method-calling code be self-documenting.
           */
         {
-      	  setSelectionPathAndReturnMetaNode( // Update with TreePath. 
-      	      inTreePath );
+          setSelectionPathAndReturnMetaNode( // Update with TreePath. 
+              inTreePath );
           }
 
       public DataNode setSelectionPathAndReturnDataNode( TreePath inTreePath )

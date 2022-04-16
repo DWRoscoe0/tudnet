@@ -69,21 +69,21 @@ public class Sender // Uunicast and multicast sender thread.
   {
 
     // Injected dependency instance variables.  Define.
-	  private DatagramSocket theDatagramSocket;
-	  	// Unconnected socket through which packets are sent.
-		private NetcasterQueue netcasterToSenderNetcasterQueue;
-		  // Queue from which this thread inputs packets to be sent.
-		private LockAndSignal senderLockAndSignal;  
-			// LockAndSignal for inputs to this thread.  It should be the same 
-		  // LockAndSignal instance in netcasterToSenderNetcasterQueue construction. 
-		
-		// Other variables.
-		private ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor=
-				new ScheduledThreadPoolExecutor(1); ///? Inject this dependency.
-		private Random theRandom= new Random(1);
-		  // Seed is not zero so first DISCOVER packet is sent.  
+    private DatagramSocket theDatagramSocket;
+      // Unconnected socket through which packets are sent.
+    private NetcasterQueue netcasterToSenderNetcasterQueue;
+      // Queue from which this thread inputs packets to be sent.
+    private LockAndSignal senderLockAndSignal;  
+      // LockAndSignal for inputs to this thread.  It should be the same 
+      // LockAndSignal instance in netcasterToSenderNetcasterQueue construction. 
+    
+    // Other variables.
+    private ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor=
+        new ScheduledThreadPoolExecutor(1); ///? Inject this dependency.
+    private Random theRandom= new Random(1);
+      // Seed is not zero so first DISCOVER packet is sent.  
 
-		Sender( // Constructor. 
+    Sender( // Constructor. 
         DatagramSocket theDatagramSocket,
         NetcasterQueue netcasterToSenderNetcasterQueue,
         LockAndSignal senderLockAndSignal
@@ -108,16 +108,16 @@ public class Sender // Uunicast and multicast sender thread.
           theAppLog.info("run() begins.");
           // ((String)null).charAt(0); // Test DefaultExceptionHandler.
 
-	  	  beforeReturn: while (true) { // Processing packets until terminated.
+        beforeReturn: while (true) { // Processing packets until terminated.
           if ( tryingToProcessOneQueuedSockPacketB() ) // Try sending one. 
-          	continue beforeReturn; // Looping if success.
+            continue beforeReturn; // Looping if success.
 
-      		if // Exiting loop if thread termination is requested.
-      		  ( EpiThread.testInterruptB() ) 
-      			break beforeReturn;
+          if // Exiting loop if thread termination is requested.
+            ( EpiThread.testInterruptB() ) 
+            break beforeReturn;
 
           senderLockAndSignal.waitingForInterruptOrNotificationE();
-	        } // while (true) beforeReturn:
+          } // while (true) beforeReturn:
           
           theAppLog.info("run() ends.");
         }
@@ -142,17 +142,17 @@ public class Sender // Uunicast and multicast sender thread.
 
         beforeReturn: { // Processing maximum of one queued packet.
           NetcasterPacket theNetcasterPacket= // Trying to get next packet.
-          		netcasterToSenderNetcasterQueue.poll();
+              netcasterToSenderNetcasterQueue.poll();
           if (theNetcasterPacket == null)  // Exiting if no queued packets. 
-          	break beforeReturn;
+            break beforeReturn;
           packetsProcessedB= true; // Recording a packet to be processed.
-        	DatagramPacket theDatagramPacket= 
-        			theNetcasterPacket.getDatagramPacket();
+          DatagramPacket theDatagramPacket= 
+              theNetcasterPacket.getDatagramPacket();
           IPAndPort theIPAndPort= theNetcasterPacket.getKeyK();
           theDatagramPacket.setAddress(theIPAndPort.getInetAddress());
           theDatagramPacket.setPort(theIPAndPort.getPortI());
 
-         	sendDropOrDelayPacketV( theDatagramPacket );
+           sendDropOrDelayPacketV( theDatagramPacket );
           } // beforeReturn: 
         return packetsProcessedB;
         }
@@ -164,35 +164,35 @@ public class Sender // Uunicast and multicast sender thread.
         it might mean also:
         * dropping the packet
         * delaying the packet.
-       	*/
-	    {
-    	  goReturn: {
+         */
+      {
+        goReturn: {
           PacketManager.logSenderPacketV(theDatagramPacket);
             // Logging before sending, droping, or delaying,
             // so log order is always correct.
-			    if  // If dropping a fraction of packets to test retry logic.
-			    	( testingForDropOfPacketB( theDatagramPacket ) )
-				    { ; // Drop this packet by doing nothing.
-				    	break goReturn;
-				    	}
-			    long zeroL= 0L; // Prevent "Comparing identical" warning in next if...
-	        if ( Config.packetSendDelayMsL != zeroL ) // Send after delay
-          	{ // Send the packet after a delay.  This need not delay other packets.
-          	  theScheduledThreadPoolExecutor.schedule( // Send after delay.
-            		new Runnable() { 
-          					public void run() {
-            					sendingDatagramPacketV( theDatagramPacket );
-            					} 
-          					},
-          				Config.packetSendDelayMsL,
-          				TimeUnit.MILLISECONDS
-          				);
+          if  // If dropping a fraction of packets to test retry logic.
+            ( testingForDropOfPacketB( theDatagramPacket ) )
+            { ; // Drop this packet by doing nothing.
               break goReturn;
-          		}
+              }
+          long zeroL= 0L; // Prevent "Comparing identical" warning in next if...
+          if ( Config.packetSendDelayMsL != zeroL ) // Send after delay
+            { // Send the packet after a delay.  This need not delay other packets.
+              theScheduledThreadPoolExecutor.schedule( // Send after delay.
+                new Runnable() { 
+                    public void run() {
+                      sendingDatagramPacketV( theDatagramPacket );
+                      } 
+                    },
+                  Config.packetSendDelayMsL,
+                  TimeUnit.MILLISECONDS
+                  );
+              break goReturn;
+              }
           sendingDatagramPacketV( theDatagramPacket ); // Send packet immediately.
           break goReturn;
-  				} // goReturn:
-	    	}
+          } // goReturn:
+        }
 
     boolean testingForDropOfPacketB( DatagramPacket theDatagramPacket )
       /* This method, when its code is enabled,
@@ -201,25 +201,25 @@ public class Sender // Uunicast and multicast sender thread.
         if the caller should drop the packet.
         It returns true if the packet should be dropped, false otherwise.
        */
-	    {
-    	  boolean droppingB= 
-    	  		(theRandom.nextInt(2) == 0); // Debug.
-    	  		// false;
-    	  droppingB= false;  // Comment this out cause drop packets.
-		    if ( droppingB )
-			    {
-			      /*  ////
-			       theAppLog.debug( // Logging the drop of the packet.
-			       	"dropping packet "
-			      		+PacketManager.gettingDirectedPacketString(
-			      				theDatagramPacket,true
-			      				)
-			      		);
-			     	*/  ////
+      {
+        boolean droppingB= 
+            (theRandom.nextInt(2) == 0); // Debug.
+            // false;
+        droppingB= false;  // Comment this out cause drop packets.
+        if ( droppingB )
+          {
+            /*  ////
+             theAppLog.debug( // Logging the drop of the packet.
+               "dropping packet "
+                +PacketManager.gettingDirectedPacketString(
+                    theDatagramPacket,true
+                    )
+                );
+             */  ////
             theAppLog.appendToFileV("[DROPPING PACKET]");
             }
-		    return droppingB;
-	    	}
+        return droppingB;
+        }
 
     private void sendingDatagramPacketV( DatagramPacket theDatagramPacket )
       /* This method tries to send theDatagramPacket.
@@ -236,18 +236,18 @@ public class Sender // Uunicast and multicast sender thread.
         Then things begin to work normally again.  
         This is true under Windows at least.
         */
-	    {
-      		//appLogger.debug("sendingDatagramPacketV(..) calling send(..)." );
+      {
+          //appLogger.debug("sendingDatagramPacketV(..) calling send(..)." );
           int failuresI= 0;
           IOException savedIOException= null; 
         retryLoop: while (true) {
-  	    	try { // Try sending the packet.
-    	        theDatagramSocket.send(theDatagramPacket); // Send packet.
-    	        // theAppLog.appendToFileV("[send]");
-    	        break retryLoop;
-    	      } catch (IOException theIOException) { // Handle exception.
+          try { // Try sending the packet.
+              theDatagramSocket.send(theDatagramPacket); // Send packet.
+              // theAppLog.appendToFileV("[send]");
+              break retryLoop;
+            } catch (IOException theIOException) { // Handle exception.
               failuresI++;
-    	        savedIOException= theIOException; // Save exception for logging later.
+              savedIOException= theIOException; // Save exception for logging later.
               if (failuresI>=5) { // Handle failure limit reached.
                 theAppLog.debug("Sender.sendingDatagramPacketV() discarding packet.");
                 break retryLoop;
@@ -255,13 +255,13 @@ public class Sender // Uunicast and multicast sender thread.
               theAppLog.debug("Sender.sendingDatagramPacketV() will retry sending.");
                      EpiThread.interruptibleSleepB(1000); // Sleep for 1 second.
               if (EpiThread.testInterruptB()) break retryLoop; // Termination requested.
-    	        }
+              }
           } // retryLoop:
-	    	if (failuresI != 0) // Report exceptions and retries if there were any. 
+        if (failuresI != 0) // Report exceptions and retries if there were any. 
           theAppLog.debug("Sender.sendingDatagramPacketV(), "
               + "send failed "+failuresI+" times." + NL
               + PacketManager.gettingDirectedPacketString(theDatagramPacket,true)  
               + NL + "  last Exception was: "+savedIOException );
-	      }
+        }
     
     }

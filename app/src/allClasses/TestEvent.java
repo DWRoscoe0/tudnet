@@ -17,16 +17,16 @@ public class TestEvent extends EventObject {
 
   private boolean legalB= true;  // true means request is legal.
 
-	public TestEvent(Object inSourceObject)  // Constructor.
-	{
-	  super(inSourceObject);
-	  }
+  public TestEvent(Object inSourceObject)  // Constructor.
+  {
+    super(inSourceObject);
+    }
 
-	public TestEvent(Object inSourceObject, boolean inDoB)  // Constructor.
-	{
-	  this(inSourceObject);
+  public TestEvent(Object inSourceObject, boolean inDoB)  // Constructor.
+  {
+    this(inSourceObject);
     doB= inDoB;
-	  }
+    }
 
   public void setDoV( boolean inDoB )
     {
