@@ -46,7 +46,22 @@ public class SystemsMonitor
     private long measurementTimeMsL; // Next time to do measurements.
 
     // Detail-containing child sub-objects.
-      private NamedLong measurementCountNamedLong;
+      private NamedLong measurementCyclesNamedLong;
+      private static NamedLong garbageCollectionsNamedLong; 
+      { // Create initial immediately garbage-collectible object. 
+        new GarbageObject(); //Construct it but don't save a reference to it.
+        }
+      private static class GarbageObject // For counting garbage collections.
+        extends Object 
+        {
+          @Override
+          protected void finalize() { // Called once per garbage collection.
+            garbageCollectionsNamedLong.addDeltaL(1); // Increment GC count.
+            new GarbageObject(); // Construct and discard replacement object.
+            }
+          };
+      private NamedLong freeMemoryNamedLong;
+      private NamedLong totalMemoryNamedLong;
       private NamedLong processorsNamedLong;
       private NamedMutable javaVersionNamedMutable; 
       private long waitEndNsL= -1;
@@ -116,8 +131,17 @@ public class SystemsMonitor
     private void createAndAddChildrenV()
       {
         // Assign variables.
-        measurementCountNamedLong= new NamedLong( 
-            "Measurements", 0
+        measurementCyclesNamedLong= new NamedLong( 
+            "Measurement-Cycles", 0
+            );
+        garbageCollectionsNamedLong= new NamedLong( 
+            "Garbage-Collections", 0
+            );
+        freeMemoryNamedLong= new NamedLong( 
+            "Free-Memory", 0
+            );
+        totalMemoryNamedLong= new NamedLong( 
+            "Total-Memory", 0
             );
         processorsNamedLong= new NamedLong( 
             "Processors", -1
@@ -153,7 +177,10 @@ public class SystemsMonitor
             );
 
         // Add variables to our displayed list.
-        addAtEndV( measurementCountNamedLong );
+        addAtEndV( measurementCyclesNamedLong );
+        addAtEndV( garbageCollectionsNamedLong );
+        addAtEndV( freeMemoryNamedLong );
+        addAtEndV( totalMemoryNamedLong );
         addAtEndV( processorsNamedLong );
         addAtEndV( javaVersionNamedMutable );
         //addB( nanoTimeOverheadNamedInteger );
@@ -290,7 +317,9 @@ public class SystemsMonitor
         
         */
       {
-        measurementCountNamedLong.addDeltaL(1);
+        measurementCyclesNamedLong.addDeltaL(1);
+        freeMemoryNamedLong.setValueL(Runtime.getRuntime().freeMemory());
+        totalMemoryNamedLong.setValueL(Runtime.getRuntime().totalMemory());
         processorsNamedLong.setValueL( // Displaying processor count. 
             Runtime.getRuntime().availableProcessors() ); // This could change.
         final AtomicLong inEDTNsAtomicLong= new AtomicLong(); 

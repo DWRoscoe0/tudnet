@@ -503,7 +503,7 @@ public abstract class DataNode
         });
       Platform.runLater(() -> { // Display with JavaFX Application Thread.
 
-        theAppLog.debug("DataNode.outputChangedSubtreeV() updating TreeView.");
+        //// theAppLog.debug("DataNode.outputChangedSubtreeV() updating TreeView.");
         System.out.print("[dnti]");
         DataNode savedDataNode= theEpiTreeItem.getValue();
         theEpiTreeItem.setValue(null); // Force reference change.

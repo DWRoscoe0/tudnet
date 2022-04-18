@@ -67,6 +67,24 @@ public class Navigation extends EpiStage
     private static boolean tickerB= true; // Enable at first.
     private static Label tickerLabel= new Label(" label-");
     private static int tickInteger=0; ///
+    private Label memoryLabel= new Label(" memory:");
+    private static Label gcLabel= new Label(" GC\0");
+    private static int gcCountI= 0;
+    private static class GarbageObject // For detecting garbage collection.
+      extends Object 
+      {
+        @Override
+        protected void finalize() { // Called in each garbage collection.
+          new GarbageObject(); // Construct new object without saving reference.
+          Platform.runLater( () -> { // Use JavaFX Application Thread.
+              Navigation.gcLabel.setText( // Display
+                  " GC#"+(++gcCountI)); // incremented garbage collection count.
+              });
+          }
+        };
+    { 
+      new Navigation.GarbageObject(); // Create object without saving reference. 
+      }
     private Label frameLabel= new Label(" frame#");
     private AnimationTimer frameAnimationTimer= null;
     private TreeStuff theTreeTreeStuff;
@@ -145,7 +163,10 @@ public class Navigation extends EpiStage
               Platform.runLater(
                 () -> { // Use JavaFX Application Thread.
                   tickerLabel.setText(" tick-"+finalTickI); // Update ticker.
-                  }); 
+                  memoryLabel.setText("MEM: "
+                      + " FREE:"+Runtime.getRuntime().freeMemory()
+                      + ",TOTAL:"+Runtime.getRuntime().totalMemory());
+                  });
               }
             });
         Thread tickerThread= new Thread(tickerRunnable);
@@ -155,6 +176,8 @@ public class Navigation extends EpiStage
         createTestTreeViewV();
 
         frameLabel= new Label(" FRAME#");
+        memoryLabel= new Label(" memory:");
+        gcLabel= new Label(" GC#");
 
         buildDataNodeSceneV();
         buildTreeSceneV();
@@ -267,8 +290,10 @@ public class Navigation extends EpiStage
         bottomFlowPane.getChildren().add(new Label("Tree-Begin "));
         bottomFlowPane.getChildren().add(theTreeShowItemButton);
         bottomFlowPane.getChildren().add(tickerLabel);
-        bottomFlowPane.getChildren().add(new Label(" Tree-End"));
         bottomFlowPane.getChildren().add(frameLabel);
+        bottomFlowPane.getChildren().add(memoryLabel);
+        bottomFlowPane.getChildren().add(gcLabel);
+        bottomFlowPane.getChildren().add(new Label(" Tree-End"));
         
         treeContentBorderPane= new BorderPane();
         treeContentBorderPane.setBottom(bottomFlowPane);
@@ -397,7 +422,7 @@ public class Navigation extends EpiStage
         }
 
     
-    //// Temporary dynamic TreeView troubleshooting code. 
+    ////// Temporary dynamic TreeView troubleshooting code. 
     
     private int countI= 0;
 
@@ -430,7 +455,7 @@ public class Navigation extends EpiStage
               EpiThread.interruptibleSleepB(1000); // Sleep for 1 second.
               Platform.runLater(() -> {
 
-                theAppLog.debug("Navigation.createTestTreeViewV() updating TreeView.");
+                ////// theAppLog.debug("Navigation.createTestTreeViewV() updating TreeView.");
                 System.out.print("[tti]");
                 DataNode child2DataNode= middleChildTreeItem.getValue();
                 ((NamedLeaf)child2DataNode).setNameV("NEW-VALUE-"+countI++);
