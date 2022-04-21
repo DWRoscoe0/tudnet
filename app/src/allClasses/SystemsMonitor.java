@@ -13,23 +13,67 @@ public class SystemsMonitor
 
   implements Runnable
   
-  /* This class measures and displays various performance parameters.
-
-    ///enh? Maybe completely rewrite to measure everything in 2 ms periods,
-    without binary search, as follows:
-    * in first ms
-      * Start with a wait for ms boundary.
-      * do some measurements, new and more robust.
-      * do all displays 
-      * busy wait while reading ms time to next ms boundary.
-    * in second ms
-      * do a simple CPU counting loop to measure CPU performance. 
-      * Loop if reading ms time shows next ms boundary not reached yet.
-    
-    ///enh Measure and display CPU and memory usage using 
-      https://github.com/jezhumble/javasysmon/ or something similar.
-      
-    */
+  /* ///ano This class was created in anticipation of,
+   * ///ano and in response to, various app performance anomalies.
+   * ///ano It measures and displays various system parameters to help with
+   * ///ano the measurement, analysis, and mitigation of those anomalies.
+   * 
+   *
+   * ///ano One group of parameters is for monitoring Java garbage collection.
+   * Monitors of these parameter were originally added to 
+   * the app's Navigation window but were later moved to here.
+   * This group of parameters was added when some performance anomalies 
+   * appeared which were similar to what happens when an app 
+   * spends most of its time garbage collecting.
+   * The following is a summary of events sarounding these additions.
+   * * The anomalous behavior began when the Eclipse IDE, which is also
+   *   written in Java, became sluggish after this app was started from it.  
+   *   Eclipse became completely non-responsive within a few minutes.
+   *   but the TUDNet app seemed to work okay and remained responsive.
+   * * This happened when the app was run in both regular and Debug modes.
+   * * Terminating the TUDNet app would not immediately make Eclipse responsive.
+   *   Eclipse needed to be terminated using the Windows Task Manager
+   *   and restarted.  This behavior was replicated several times.
+   * * The decision was made to add garbage collection monitors to the app,
+   *   but before they could be added the anomalous behavior changed.
+   *   Eclipse would still become sluggish and non-responsive, but gradually.
+   *   More than an hour was needed before it was mostly non-responsive.
+   * * Monitors were added to display the following:
+   *   * Runtime.freeMemory()
+   *   * Runtime.totalMemory()
+   *   * The number of garbage collection passes after app start
+   * * The monitors showed that the time between garbage collections 
+   *   was at least a minute, and they happened when free memory was low
+   *   but nowhere near being exhausted.
+   * * Eclipse responsiveness could now be restored immediately 
+   *   by terminating the TUDNet app. 
+   *   Terminating and restarting Eclipse was no longer necessary.
+   * * It was noticed that BackupTerminator, 
+   *   a class which had been added to deal with a termination anomaly,
+   *   was no longer being activated to terminate the app.
+   * * It was noticed that if the app's JavaFX window is minimized,
+   *   the garbage collection execution frequency increased 
+   *   from running once every couple of minutes
+   *   to running between 1 and 2 times per second,
+   *   occasionally as high as 5 times per second.
+   *
+   *
+   *  ///enh? Maybe completely rewrite to measure everything in 2 ms periods
+   *  without binary search, as follows:
+   *  * in first ms
+   *    * Start with a wait for ms boundary.
+   *    * do some measurements, new and more robust.
+   *    * do all displays 
+   *    * busy wait while reading ms time to next ms boundary.
+   *  * in second ms
+   *    * do a simple CPU counting loop to measure CPU performance. 
+   *    * Loop if reading ms time shows next ms boundary not reached yet.
+   *
+   *
+   *  ///enh Measure and display CPU and memory usage using 
+   *    https://github.com/jezhumble/javasysmon/ or something similar.
+   *    
+   */
 
   { // class SystemsMonitor
   

@@ -67,24 +67,6 @@ public class Navigation extends EpiStage
     private static boolean tickerB= true; // Enable at first.
     private static Label tickerLabel= new Label(" label-");
     private static int tickInteger=0; ///
-    private Label memoryLabel= new Label(" memory:");
-    private static Label gcLabel= new Label(" GC\0");
-    private static int gcCountI= 0;
-    private static class GarbageObject // For detecting garbage collection.
-      extends Object 
-      {
-        @Override
-        protected void finalize() { // Called in each garbage collection.
-          new GarbageObject(); // Construct new object without saving reference.
-          Platform.runLater( () -> { // Use JavaFX Application Thread.
-              Navigation.gcLabel.setText( // Display
-                  " GC#"+(++gcCountI)); // incremented garbage collection count.
-              });
-          }
-        };
-    { 
-      new Navigation.GarbageObject(); // Create object without saving reference. 
-      }
     private Label frameLabel= new Label(" frame#");
     private AnimationTimer frameAnimationTimer= null;
     private TreeStuff theTreeTreeStuff;
@@ -163,9 +145,6 @@ public class Navigation extends EpiStage
               Platform.runLater(
                 () -> { // Use JavaFX Application Thread.
                   tickerLabel.setText(" tick-"+finalTickI); // Update ticker.
-                  memoryLabel.setText("MEM: "
-                      + " FREE:"+Runtime.getRuntime().freeMemory()
-                      + ",TOTAL:"+Runtime.getRuntime().totalMemory());
                   });
               }
             });
@@ -176,8 +155,6 @@ public class Navigation extends EpiStage
         createTestTreeViewV();
 
         frameLabel= new Label(" FRAME#");
-        memoryLabel= new Label(" memory:");
-        gcLabel= new Label(" GC#");
 
         buildDataNodeSceneV();
         buildTreeSceneV();
@@ -291,8 +268,6 @@ public class Navigation extends EpiStage
         bottomFlowPane.getChildren().add(theTreeShowItemButton);
         bottomFlowPane.getChildren().add(tickerLabel);
         bottomFlowPane.getChildren().add(frameLabel);
-        bottomFlowPane.getChildren().add(memoryLabel);
-        bottomFlowPane.getChildren().add(gcLabel);
         bottomFlowPane.getChildren().add(new Label(" Tree-End"));
         
         treeContentBorderPane= new BorderPane();
