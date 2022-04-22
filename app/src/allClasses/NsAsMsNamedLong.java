@@ -18,9 +18,22 @@ public class NsAsMsNamedLong
         super( nameString, theL );
         }
 
-    public String getContentString( ) // DataNode interface method.
+    public String getContentString() // DataNode interface method.
       {
-        return String.format("%9.6f", getValueL() / 1000000. );
+        return
+    
+            (Long.MIN_VALUE == previousValueL) // If previous value was undefined
+    
+            ? String.format( // then return converted value only
+                "%+9.6f", valueL / 1000000. )
+    
+            : String.format( // otherwise return converted value and delta.
+                "%+9.6f [%+9.6f]", 
+                valueL / 1000000., 
+                (valueL-previousValueL) / 1000000.
+                )
+    
+            ;
         }
 
     }

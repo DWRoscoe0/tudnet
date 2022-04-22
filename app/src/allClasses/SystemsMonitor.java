@@ -91,6 +91,7 @@ public class SystemsMonitor
 
     // Detail-containing child sub-objects.
       private NamedLong measurementCyclesNamedLong;
+      private static long garbageCollectionsL= 0;
       private static NamedLong garbageCollectionsNamedLong; 
       { // Create initial immediately garbage-collectible object. 
         new GarbageObject(); //Construct it but don't save a reference to it.
@@ -100,7 +101,7 @@ public class SystemsMonitor
         {
           @Override
           protected void finalize() { // Called once per garbage collection.
-            garbageCollectionsNamedLong.addDeltaL(1); // Increment GC count.
+            garbageCollectionsL++; // Increment GC count.
             new GarbageObject(); // Construct and discard replacement object.
             }
           };
@@ -188,7 +189,7 @@ public class SystemsMonitor
             "Total-Memory", 0
             );
         processorsNamedLong= new NamedLong( 
-            "Processors", -1
+            "Processors"
             );
         final String javaVersionString= "java.version"; 
         javaVersionNamedMutable= new NamedMutable(
@@ -364,6 +365,7 @@ public class SystemsMonitor
         measurementCyclesNamedLong.addDeltaL(1);
         freeMemoryNamedLong.setValueL(Runtime.getRuntime().freeMemory());
         totalMemoryNamedLong.setValueL(Runtime.getRuntime().totalMemory());
+        garbageCollectionsNamedLong.setValueL(garbageCollectionsL);
         processorsNamedLong.setValueL( // Displaying processor count. 
             Runtime.getRuntime().availableProcessors() ); // This could change.
         final AtomicLong inEDTNsAtomicLong= new AtomicLong(); 
