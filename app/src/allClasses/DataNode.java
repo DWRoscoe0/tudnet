@@ -400,8 +400,8 @@ public abstract class DataNode
         then this method outputs the change and
         it repeats this for any children.
         The TreePath of theDataNode's parent is parentTreePath.
-
-        theEpiTreeItem is ignored, but will be used for JavaFX TreeView display.
+        theEpiTreeItem is the TreeItem whose value is theDataNode
+        and is used for JavaFX TreeView display.
         */
       {
         if ( theDataNode == null ) // Nothing to display. 
@@ -409,6 +409,7 @@ public abstract class DataNode
         else { // Check this subtree.
           theAppLog.trace( "DataTreeModel.displayChangedNodesFromV() "
               + theDataNode.getLoggingNodePathString() );
+          if (! valueOfTreeItemCheckB(theEpiTreeItem, theDataNode)) return;
           // Display this node and any updated descendants if it's needed.
           switch ( theDataNode.theTreeChange ) {
             case NONE: // This subtree is unmarked.
@@ -424,6 +425,21 @@ public abstract class DataNode
             }
           }
       }
+
+    private static boolean valueOfTreeItemCheckB(
+        EpiTreeItem theEpiTreeItem, DataNode theDataNode)
+      {
+        boolean successB= false;
+        goReturn: {
+          if (null == theEpiTreeItem) break goReturn;
+          if (null == theDataNode) break goReturn;
+          if (theEpiTreeItem.getValue() != theDataNode) break goReturn;
+          successB= true;
+          } // goReturn:
+        if (! successB)
+          System.out.print("[valueOfTreeItemCheckB() failed]");
+        return successB;
+        }
 
     private static void outputStructuralChangeV(
         TreePath parentTreePath, DataNode theDataNode 
@@ -466,8 +482,9 @@ public abstract class DataNode
       parentTreePath is the TreePath of the subtree's parent 
       and is used to identify the tree node to the Swing GUI.
       
-      ///Fix : theEpiTreeItem is used for displaying to the JavaFX GUI.
-      This code is not working yet.
+      theEpiTreeItem is the TreeItem whose value is theDataNode
+      and is used for JavaFX TreeView display.
+      ///Fix : This code is not working yet.
       
       ///enh : Calculate childEpiTreeItem using DataNode search instead of
       an indexed get(.).  It's safer.

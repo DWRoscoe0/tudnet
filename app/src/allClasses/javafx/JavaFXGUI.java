@@ -78,7 +78,7 @@ public class JavaFXGUI
     public static String startRuntimeAndReturnString()
       /* This method manually starts the JavaFX runtime.  
        * 
-       * This is NOT the full InnerPpp's JavaFX UI.
+       * This is NOT the full InnerApp's JavaFX UI.
        * It's only enough for displaying error dialogs
        * until InnerApp's full UI is active.
        * 

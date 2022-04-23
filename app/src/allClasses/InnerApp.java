@@ -163,7 +163,8 @@ public class InnerApp
        * It does 3 things:
        * 
        * * Finishes InnerApp initialization and startup.
-       * * Waits for a shutdown request, which can come from various places.
+       * * Processes user interface commands while
+       *   checking for a shutdown request, which can come from various places.
        * * Does shutdown and finalization of 
        *   the things it initialized and started earlier.
        *
@@ -182,7 +183,7 @@ public class InnerApp
         
         // At this point, full interaction is possible
         // with the user and with other network devices.
-        doPollingJobsWhileWaitingForShutdownV();
+        doUIAndPollingJobsWhileWaitingForShutdownV();
   
         // At this point, shutdown has been requested.
         theTCPCopier.finalizeV();
@@ -233,11 +234,13 @@ public class InnerApp
         // appLogger.info("InnerApp.finalizeUIV() ends.");
         }
   
-    private void doPollingJobsWhileWaitingForShutdownV()
-      /* This method polls and processes 
-       * some things that need to polled until termination is requested.  
-       * Then it returns.
-       * The request to terminate might or might not come from a polled job.
+    private void doUIAndPollingJobsWhileWaitingForShutdownV()
+      /* This method polls and processes conditions that polling
+       * while user interface inputs are processed.
+       * This continues until termination is requested,
+       * at which time this method returns.
+       * The request to terminate could some from either
+       * user input or a polled job.
        * 
        * ///org Use absolute instead of relative timing in wait.
        */
@@ -259,8 +262,8 @@ public class InnerApp
     private void doSomePollingJobsV()
       /* This method tries to do various polling jobs during each call.
        * It does at least one job, then exits.
-       * It always displays changes that affect the user interface,
-       * both Swing and JavaFX.
+       * It always attempts to display changes 
+       * that affect the user interface, both Swing and JavaFX.
        * It may then do one additional job that is ready to be done,
        * the first job that is ready from the following list:
        * * a executable file update using the AppInstanceManager
@@ -276,7 +279,7 @@ public class InnerApp
                 theDataRoot.getRootDataNode( ),
                 theDataRoot.getRootEpiTreeItem()
                 );
-              theDataRoot.getRootEpiTreeItem().setValue(DataNode.dummyDataNode);
+              ////// theDataRoot.getRootEpiTreeItem().setValue(DataNode.dummyDataNode);
             } catch (Exception theException) {
               theAppLog.exception("InnerApp.doSomePollingJobsV()",theException);
             }
