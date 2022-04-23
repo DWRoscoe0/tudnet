@@ -407,35 +407,42 @@ public class Navigation extends EpiStage
 
     public void createTestTreeViewV() 
       {
-        EpiTreeItem rootItem = 
+        EpiTreeItem rootEpiTreeItem = 
             new EpiTreeItem(
                 new NamedList("TestTreeRoot"));
-        rootItem.setExpanded(true);
+        rootEpiTreeItem.setExpanded(true);
         for (int i = 1; i < 4; i++) {
-            TreeItem<DataNode> item= 
-                new TreeItem<DataNode> (
+            EpiTreeItem childEpiTreeItem= 
+                /// new TreeItem<DataNode> (
+                new EpiTreeItem (
                     NamedLeaf.makeNamedLeaf("TestChild" + i));
-            rootItem.getChildren().add(item);
+            rootEpiTreeItem.getChildren().add(childEpiTreeItem);
         }
-        middleChildTreeItem= rootItem.getChildren().get(1); // Get middle child.
+        middleChildTreeItem= // Get and cache middle child.
+            rootEpiTreeItem.getChildren().get(1);
         testTreeView= 
-            new TreeView<DataNode> (rootItem);        
+            new TreeView<DataNode> (rootEpiTreeItem);        
         StackPane rootStackPane = new StackPane();
         rootStackPane.getChildren().add(testTreeView);
 
-        Runnable updateRunnable= // Create Runnable that updates child.
+        Runnable updateRunnable= // Create Runnable that updates middle child.
           (() -> {
             countI=0;
-            while(true) {
+            while(true) { // Repeatedly change child and update UI.
               EpiThread.interruptibleSleepB(1000); // Sleep for 1 second.
               Platform.runLater(() -> {
 
-                ////// theAppLog.debug("Navigation.createTestTreeViewV() updating TreeView.");
-                System.out.print("[tti]");
+                /// theAppLog.debug("Navigation.createTestTreeViewV() updating TreeView.");
+                // Change DataNode contents, but not DataNode in TreeItem.
                 DataNode child2DataNode= middleChildTreeItem.getValue();
                 ((NamedLeaf)child2DataNode).setNameV("NEW-VALUE-"+countI++);
-                middleChildTreeItem.setValue(null);
-                middleChildTreeItem.setValue(child2DataNode);
+
+                // Trigger UI update by cycling TreeItem value reference.
+                System.out.print("[tti]"); /// Debug.
+                DataNode savedDataNode= middleChildTreeItem.getValue();
+                middleChildTreeItem.setValue(null); // Clear reference.
+                middleChildTreeItem.setValue(savedDataNode); // Restore it.
+
                 /// testTreeView.requestLayout();
                 /// testTreeView.layout();
 
@@ -443,10 +450,10 @@ public class Navigation extends EpiStage
               }
             });
         Thread updateThread= new Thread(updateRunnable);
-        updateThread.setDaemon( true ); // Make thread this daemon type. 
+        updateThread.setDaemon( true ); // Make thread \daemon type. 
         updateThread.start();
     }
-    
+
     }
 
 
