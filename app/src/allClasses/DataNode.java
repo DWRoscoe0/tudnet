@@ -10,6 +10,10 @@ import java.util.List;
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
 
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+
 import allClasses.AppLog.LogLevel;
 import allClasses.epinode.MapEpiNode;
 import allClasses.javafx.EpiTreeItem;
@@ -18,9 +22,6 @@ import allClasses.javafx.TitledListNode;
 import allClasses.javafx.TitledTextNode;
 import allClasses.javafx.TreeStuff;
 import allClasses.multilink.ElementMultiLink;
-import javafx.application.Platform;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 
 public abstract class DataNode
 
@@ -35,14 +36,12 @@ public abstract class DataNode
       Presently it does not support full DAG capabilities.
       A node can have only one parent, so the hierarchy is a tree.  
       Someday this could change.
-      
+
       Some of the methods in this class are 
       non working stubs and MUST be overridden.
       Other methods in this class work as is,
       but might be inefficient in nodes with large numbers of children, 
       and SHOULD be overridden. 
-
-??????????????
 
       Much of the code here came from an earlier version of DataNode.
 
@@ -396,7 +395,7 @@ public abstract class DataNode
     public static void outputPossiblyChangedNodesFromV(
         TreePath parentTreePath, DataNode theDataNode,EpiTreeItem theEpiTreeItem 
         )
-      /* If theDataNode has changed, as indicated by theTreeChange,
+      /* If theDataNode has changed, as indicated field by theTreeChange,
         then this method outputs the change and
         it repeats this for any children.
         The TreePath of theDataNode's parent is parentTreePath.
@@ -519,20 +518,11 @@ public abstract class DataNode
             parentTreePath, subtreeDataNode );
         });
       Platform.runLater(() -> { // Display with JavaFX Application Thread.
-
-        //// theAppLog.debug("DataNode.outputChangedSubtreeV() updating TreeView.");
+        /// theAppLog.debug("DataNode.outputChangedSubtreeV() updating TreeView.");
         System.out.print("[dnti]");
         DataNode savedDataNode= theEpiTreeItem.getValue();
         theEpiTreeItem.setValue(null); // Force reference change.
         theEpiTreeItem.setValue(savedDataNode); // Restore original reference.
-
-        /// TreeModificationEvent<DataNode> theTreeModificationEvent= 
-        ///     new TreeModificationEvent<>(
-        ///         TreeItem.valueChangedEvent(), theEpiTreeItem);
-        /// theEpiTreeItem.setValue(dummyDataNode); // Force reference change.
-        /// Event.fireEvent(theEpiTreeItem, theTreeModificationEvent);
-        /// System.out.print(theEpiTreeItem+",");
-        
         }); 
       }
 

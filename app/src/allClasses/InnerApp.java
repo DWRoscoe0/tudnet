@@ -279,7 +279,6 @@ public class InnerApp
                 theDataRoot.getRootDataNode( ),
                 theDataRoot.getRootEpiTreeItem()
                 );
-              ////// theDataRoot.getRootEpiTreeItem().setValue(DataNode.dummyDataNode);
             } catch (Exception theException) {
               theAppLog.exception("InnerApp.doSomePollingJobsV()",theException);
             }

@@ -64,11 +64,11 @@ public class Navigation extends EpiStage
     private Scene theTreeScene;
     private BorderPane treeContentBorderPane;
     private Button theTreeShowItemButton;
-    private static boolean tickerB= true; // Enable at first.
-    private static Label tickerLabel= new Label(" label-");
+    private static boolean tickerB= true; // Enable at first. ///
+    private static Label tickerLabel= new Label(" label-"); ///
     private static int tickInteger=0; ///
-    private Label frameLabel= new Label(" frame#");
-    private AnimationTimer frameAnimationTimer= null;
+    private Label frameLabel= new Label(" frame#"); ///
+    private AnimationTimer frameAnimationTimer= null; ///
     private TreeStuff theTreeTreeStuff;
 
     // Variables related to the DataNode view Scene.
@@ -145,6 +145,16 @@ public class Navigation extends EpiStage
               Platform.runLater(
                 () -> { // Use JavaFX Application Thread.
                   tickerLabel.setText(" tick-"+finalTickI); // Update ticker.
+
+                  /// Kludge.
+                  // The following was an unsuccessful attempt to cause
+                  // the window and TreeView to periodically 
+                  // re-layout and update by changing the window size slightly.
+                  // It changed the size, but didn't cause the update.
+                  // getScene().getWindow().setWidth(
+                  //    getScene().getWindow().getWidth() + 0.001);
+                  // getScene().setWidth(
+                  //     getScene().getWindow().getWidth() + 0.001);
                   });
               }
             });
@@ -297,7 +307,7 @@ public class Navigation extends EpiStage
         Node guiNode= theTreeTreeStuff.getGuiNode();
         VBox theVBox= new VBox();
         theVBox.getChildren().add(testTreeView); // Add test TreeView. 
-        theVBox.getChildren().add(guiNode); // Add regular app TreeView.
+        theVBox.getChildren().add(guiNode); // Add production TreeView.
         treeContentBorderPane.setCenter(theVBox); // Store for display.
         }
          
@@ -397,13 +407,10 @@ public class Navigation extends EpiStage
         }
 
     
-    ////// Temporary dynamic TreeView troubleshooting code. 
-    
+    /// Temporary dynamic TreeView troubleshooting code. 
     private int countI= 0;
-
     private TreeItem<DataNode> middleChildTreeItem;
     private TreeView<DataNode> testTreeView;
-
 
     public void createTestTreeViewV() 
       {
@@ -413,7 +420,6 @@ public class Navigation extends EpiStage
         rootEpiTreeItem.setExpanded(true);
         for (int i = 1; i < 4; i++) {
             EpiTreeItem childEpiTreeItem= 
-                /// new TreeItem<DataNode> (
                 new EpiTreeItem (
                     NamedLeaf.makeNamedLeaf("TestChild" + i));
             rootEpiTreeItem.getChildren().add(childEpiTreeItem);
@@ -442,10 +448,6 @@ public class Navigation extends EpiStage
                 DataNode savedDataNode= middleChildTreeItem.getValue();
                 middleChildTreeItem.setValue(null); // Clear reference.
                 middleChildTreeItem.setValue(savedDataNode); // Restore it.
-
-                /// testTreeView.requestLayout();
-                /// testTreeView.layout();
-
                 });
               }
             });
