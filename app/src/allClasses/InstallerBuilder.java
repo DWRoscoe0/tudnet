@@ -1,8 +1,5 @@
 package allClasses;
 
-import javax.swing.JComponent;
-import javax.swing.tree.TreePath;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -214,22 +211,6 @@ public class InstallerBuilder
     public String getSummaryString()
       {
         return "";
-        }
-
-    public JComponent getDataJComponent( 
-        TreePath inTreePath, DataTreeModel inDataTreeModel 
-        ) 
-      /* Returns a JComponent which should be a viewer capable of displaying 
-       * this DataNode and executing the command associated with it.
-       * The DataNode to be viewed should be 
-       * the last element of inTreePath,
-       */
-      {
-          JComponent theJComponent;
-          
-          theJComponent= 
-            new TitledTextViewer( inTreePath, inDataTreeModel,"Huh????????????");
-          return theJComponent;
         }
 
     }
