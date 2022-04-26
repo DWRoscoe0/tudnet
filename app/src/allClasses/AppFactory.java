@@ -155,23 +155,31 @@ public class AppFactory {  // For App class lifetimes.
           "Volume-Detector",thePersistent,theScheduledThreadPoolExecutor);
       ConsoleBase theConsoleBase= new ConsoleBase(
           "Console-Base",thePersistent,theScheduledThreadPoolExecutor);
-      DataNode testCenterDataNode= new NamedList(
-          "Test-Center",
+      DataNode sneakerNetDataNode= new NamedList(
+          "Sneakernet-Commands",
           theVolumeChecker,
           theVolumeDetector,
           theConsoleBase,
-          theInstallerBuilder,
-          theEpiFileRoots,
-          theTextStreams2,
-          new Infinitree( null, 0 )
+          theInstallerBuilder
           );
-      IRoots theIRoot= new IRoots(); 
-      DataNode theRootDataNode= new TUDNetHome( // Building DataNode tree.
-        theIRoot,
-        new Outline( 0 ),
+      DataNode internalsMonitorsDataNode= new NamedList(
+        "Internals-Monitors",
         theSystemsMonitor,
-        theConnectionManager,
-        testCenterDataNode
+        theConnectionManager
+        );
+      DataNode testAreaDataNode= new NamedList(
+        "Test-Area",
+        new Infinitree( null, 0 ),
+        theEpiFileRoots,
+        new Outline( 0 ),
+        theTextStreams2
+        );
+      IRoots fileSystemIRoot= new IRoots(); 
+      DataNode theRootDataNode= new TUDNetHome( // Building DataNode tree.
+        sneakerNetDataNode,
+        fileSystemIRoot,
+        internalsMonitorsDataNode,
+        testAreaDataNode
         );
       DataNode.resetChangesInSubtreeV(theRootDataNode); // Clean the tree.
         // Do this to prevent redundant and erroneous first JTree update.
