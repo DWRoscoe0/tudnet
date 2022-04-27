@@ -276,13 +276,13 @@ public class AppLog
         }
 
     public synchronized void setPersistentV( // Setter injector.
-        Persistent thePersistent)
+        MapEpiNode theSettingsMapEpiNode)
       /* Used to define the MapEpiNode which stores log conditions. 
        * This is gotten from thePersistent.
        */
       {
         this.persistentLogMapEpiNode= 
-          thePersistent.getRootMapEpiNode().getMapEpiNode("Logging");
+          theSettingsMapEpiNode.getMapEpiNode("Logging");
         }
 
     private synchronized void initializeIfNeededV()

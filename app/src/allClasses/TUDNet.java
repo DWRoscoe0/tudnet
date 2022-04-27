@@ -148,7 +148,8 @@ class TUDNet
         DefaultExceptionHandler.setDefaultExceptionHandlerV();
           // ((String)null).charAt(0); // Test above with NullPointerException.
         Persistent thePersistent= (new Persistent()).initializePersistent();
-        theAppLog.setPersistentV(thePersistent); // Add for conditional logging.
+        theAppLog.setPersistentV( // Setter inject for conditional logging.
+            thePersistent.getRootMapEpiNode().getMapEpiNode("Settings"));
         String javaFXStartAnomalyString= ///ano Save to later report result of
           JavaFXGUI.startRuntimeAndReturnString(); // start of JavaFX runtime.
         BackupTerminator theBackupTerminator= ///ano 
@@ -157,7 +158,6 @@ class TUDNet
         theAppLog.info(true,"TUDNet.main() ======= APP IS STARTING =======");
 
         if (null != javaFXStartAnomalyString) ///ano Report any problem with
-          //// theAppLog.error(javaFXStartAnomalyString); ///ano runtime startup.
           theAppLog.error( ///ano runtime startup.
               "JavaFX startup anomaly",javaFXStartAnomalyString);
 
