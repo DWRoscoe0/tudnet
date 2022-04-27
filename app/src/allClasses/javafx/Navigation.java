@@ -311,7 +311,8 @@ public class Navigation extends EpiStage
                 );
         Node guiNode= theTreeTreeStuff.getGuiNode();
         VBox theVBox= new VBox();
-        theVBox.getChildren().add(testTreeView); // Add test TreeView. 
+        if (settingsMapEpiNode.isTrueB("TestTreeEnable"))
+          theVBox.getChildren().add(testTreeView); // Add test TreeView. 
         theVBox.getChildren().add(guiNode); // Add production TreeView.
         treeContentBorderPane.setCenter(theVBox); // Store for display.
         }
@@ -431,11 +432,7 @@ public class Navigation extends EpiStage
         }
         middleChildTreeItem= // Get and cache middle child.
             rootEpiTreeItem.getChildren().get(1);
-        testTreeView= 
-            new TreeView<DataNode> (rootEpiTreeItem);        
-        StackPane rootStackPane = new StackPane();
-        rootStackPane.getChildren().add(testTreeView);
-
+        testTreeView= new TreeView<DataNode> (rootEpiTreeItem);        
         Runnable updateRunnable= // Create Runnable that updates middle child.
           (() -> {
             countI=0;
