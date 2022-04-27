@@ -81,6 +81,7 @@ public class Navigation extends EpiStage
     // Other variables.
     private EpiTreeItem theRootEpiTreeItem;
     private MapEpiNode persistentMapEpiNode; // Root of Persistent data.
+    private MapEpiNode settingsMapEpiNode;
 
 
     // Construction and initialization.
@@ -113,6 +114,9 @@ public class Navigation extends EpiStage
        * ///opt Simplify by using theDataRoot.getRootEpiTreeItem().
        */
       {
+        settingsMapEpiNode= // Cache Settings.
+            thePersistent.getRootMapEpiNode().getMapEpiNode("Settings");
+
         theRootEpiTreeItem= new EpiTreeItem(theRootDataNode);
         theRootEpiTreeItem.setExpanded(true); // Show only 1st and 2nd levels.
 
@@ -277,7 +281,8 @@ public class Navigation extends EpiStage
         bottomFlowPane.getChildren().add(new Label("Tree-Begin "));
         bottomFlowPane.getChildren().add(theTreeShowItemButton);
         bottomFlowPane.getChildren().add(tickerLabel);
-        bottomFlowPane.getChildren().add(frameLabel);
+        if (settingsMapEpiNode.isTrueB("FrameCounterEnable"))
+          bottomFlowPane.getChildren().add(frameLabel);
         bottomFlowPane.getChildren().add(new Label(" Tree-End"));
         
         treeContentBorderPane= new BorderPane();
