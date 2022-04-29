@@ -23,7 +23,7 @@ public class TreeStage /// extends EpiStage
         TreeView<String> theTreeView= new TreeView<String>(rootTreeItem);        
         Scene theScene= new Scene(theTreeView, 300, 250);
         theEpiStage.setScene(theScene);
-        theEpiStage.finishInitAndShowStageV(
+        theEpiStage.setCommonSettingsV(
           "Tree View Sample"
           );
       }

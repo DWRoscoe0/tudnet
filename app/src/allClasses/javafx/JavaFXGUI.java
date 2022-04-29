@@ -319,7 +319,9 @@ public class JavaFXGUI
         }
 
     public static void setDefaultStyle(Node theNode)
-      /* Sets the default style of theNode. */
+      /* Sets the default style of theNode. 
+       * Note that styles are inherited by Node descendants.
+       * */
       {
         theNode.setStyle(
             "-fx-font-size: 22; -fx-font-family: \"monospace\"; ");
@@ -330,7 +332,7 @@ public class JavaFXGUI
 
     public void hideAllWindowsV()
       /* This method hides all windows.
-       * This is used in preparation for shutdown.  
+       * This is used in to prepare for shutdown.  
        * */
       {
         theAppLog.debug("JavaFXGUILog","JavaFXGUI.hideAllWindowsV() begins.");
