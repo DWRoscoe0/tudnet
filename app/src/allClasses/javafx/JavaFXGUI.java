@@ -294,7 +294,7 @@ public class JavaFXGUI
             theDataRoot, 
             theSelections,
             theShutdowner
-            ).initializeAndStartV();
+            ).initializeAndStartNavigationV();
 
         theAppLog.debug("JavaFXGUILog","JavaFXGUI.nestedStartV(), "
             + "returned from new Navigation(.).initializeAndStartV(), "
@@ -380,15 +380,6 @@ public class JavaFXGUI
 
     // JavaFX utility and debug methods.
 
-    public static void runLaterQuietV(
-        String descriptionString, Runnable theRunnable)
-      /* This method works like runLaterQuietV(.) but without logging  */
-      {
-        Platform.runLater(() -> {
-          theRunnable.run(); // Execute Runnable from caller of this method.
-          });
-        }
-
     public static void runLaterV(
         String descriptionString, Runnable theRunnable)
       /* This method executes
@@ -409,6 +400,15 @@ public class JavaFXGUI
           });
         theAppLog.debug( 
           "JavaFXGUI.runLaterV(.) in "+descriptionString+" queuing ends.");
+        }
+
+    public static void runLaterQuietV(
+        String descriptionString, Runnable theRunnable)
+      /* This method works like runLaterQuietV(.) but without logging  */
+      {
+        Platform.runLater(() -> {
+          theRunnable.run(); // Execute Runnable from caller of this method.
+          });
         }
       
     }

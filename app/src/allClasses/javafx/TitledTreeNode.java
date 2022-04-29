@@ -139,7 +139,7 @@ public class TitledTreeNode
        * This is all done on the JavaFX Application Thread.
        */
       {
-        JavaFXGUI.runLaterV( 
+        JavaFXGUI.runLaterQuietV( 
           "TitledTreeNode.selectV("+theDataNode+")",
           () -> {
             TreeItem<DataNode> theTreeItem= 

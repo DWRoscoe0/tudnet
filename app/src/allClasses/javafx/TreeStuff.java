@@ -1,7 +1,5 @@
 package allClasses.javafx;
 
-import static allClasses.AppLog.theAppLog;
-
 import allClasses.DataNode;
 import allClasses.DataRoot;
 import allClasses.Nulls;
@@ -212,8 +210,8 @@ public class TreeStuff
        * and in the selection history.
        */
       {
-        theAppLog.debug(
-            "TreeStuff.setSelectedDataNodeV() to "+theDataNode);
+        /// theAppLog.debug(
+        ///     "TreeStuff.setSelectedDataNodeV() to "+theDataNode);
 
         selectedDataNode= theDataNode; // Store selection locally.
 

@@ -19,7 +19,7 @@ class EpiStage
         this.theShutdowner= theShutdowner;
         }
 
-    public void finishStateInitAndStartV(
+    public void finishInitAndShowStageV(
         String titleString
         )
       /* This method finishes initialization that Stages have in common,

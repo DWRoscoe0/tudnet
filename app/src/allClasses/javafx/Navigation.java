@@ -13,7 +13,6 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 
@@ -47,11 +46,14 @@ public class Navigation extends EpiStage
      *   Switching to tree display mode before startup enabled display,
      *   and then the window could be switched back and forth between modes.
      *   After that, it could start in either mode and display correctly.
-     *    
-     * 
+     *
+     *
      * ///fix To prevent Listener leak, in Finalization,
      *   remove ConsoleNode Document change listener from ConsoleBase 
-     *   
+     *
+     * ///enh Learn about Insets, Outsets, and Border and use
+     * to make better looking labels.
+     *
      */
 
     // Injected dependencies.
@@ -65,7 +67,7 @@ public class Navigation extends EpiStage
     private BorderPane treeContentBorderPane;
     private Button theTreeShowItemButton;
     private static boolean tickerB= true; // Enable at first. ///
-    private static Label tickerLabel= new Label(" label-"); ///
+    private static Label theTickerLabel= new Label(" label-"); ///
     private static int tickInteger=0; ///
     private Label frameLabel= new Label(" frame#"); ///
     private AnimationTimer frameAnimationTimer= null; ///
@@ -83,6 +85,13 @@ public class Navigation extends EpiStage
     private MapEpiNode persistentMapEpiNode; // Root of Persistent data.
     private MapEpiNode settingsMapEpiNode;
 
+
+    // Variables related to new combined DataNode and tree view Scene.
+    private boolean allPurposeSceneEnabledB= false;
+    private Scene theAllPurposeScene;
+    private BorderPane theAllPurposeBorderPane;
+    private Button theShowAllPurposeSceneButton;
+    private Button theShowSinglePurposeScenesButton;
 
     // Construction and initialization.
 
@@ -104,10 +113,13 @@ public class Navigation extends EpiStage
         persistentMapEpiNode= thePersistent.getRootMapEpiNode();
         }
 
-    public void initializeAndStartV()
-      /* This method initializes and starts the Navigation Stage, then returns.
-       * The Stage then alternates between 2 Scenes:
-       * * one which displays a TreeView of the hierarchy, and
+    public void initializeAndStartNavigationV()
+      /* After the Navigation object is constructed, 
+       * this method should be called.
+       * This method initializes and shows the Navigation Stage, then returns.
+       * 
+       * One of 2 Scenes will be set to the Stage:
+       * * one which displays a TreeView of the DataNode hierarchy, and
        * * one which displays a single DataNode and its children.
        * Each Scene has a button to switch to the other Scene.
        * 
@@ -116,18 +128,6 @@ public class Navigation extends EpiStage
       {
         settingsMapEpiNode= // Cache Settings.
             thePersistent.getRootMapEpiNode().getMapEpiNode("Settings");
-
-        theRootEpiTreeItem= new EpiTreeItem(theRootDataNode);
-        theRootEpiTreeItem.setExpanded(true); // Show only 1st and 2nd levels.
-
-        theTreeShowItemButton= new Button("Show Node");
-        theTreeShowItemButton.setOnAction(
-            theActionEvent -> doTreeShowDataNodeButtonActionV() );
-
-        theDataNodeShowTreeButton= new Button("Show Tree");
-        theDataNodeShowTreeButton.setOnAction(
-            theActionEvent -> doDataNodeShowTreeButtonActionV() );
-
         setOnCloseRequest( (theWindowEvent) -> {
               theAppLog.info(
                 "Navigation.initializeAndStartV().setOnCloseRequest(.) handler"
@@ -135,8 +135,68 @@ public class Navigation extends EpiStage
               theShutdowner.requestAppShutdownV();
               });
 
-        tickerLabel= new Label(" TICKER");
-        Runnable tickerRunnable= // Create Runnable that updates tickerLabel.
+        theRootEpiTreeItem= new EpiTreeItem(theRootDataNode);
+        theRootEpiTreeItem.setExpanded(true); // Show only 1st and 2nd levels.
+
+        // Create the UI components.
+        createButtonsV();
+        createTickerLabelV();
+        createTestTreeViewV();
+        createFrameLabelViewV();
+
+        buildDataNodeSceneV();
+        buildTreeSceneV();
+
+        buildAllPurposeSceneV();
+
+        displayTreeOrDataNodeV();
+
+        finishInitAndShowStageV("TUDNet JavaFX Navigation UI");
+        
+        showCommandHelpV(); // Display help in a separate dialog window.
+        }
+
+    private void createButtonsV()
+      /*
+       * ///ano Based on log entry time-stamps in log file,
+       * it takes almost 1/2 second to show the new window content
+       * after this method exits.
+       * Maybe it will be faster after being changed 
+       * to change Node instead of entire Scene?
+       */
+      {
+        theTreeShowItemButton= new Button("Show Node");
+        theTreeShowItemButton.setOnAction( theActionEvent -> {
+          persistentMapEpiNode.putTrueOrRemoveB( // Set in Persistent storage
+              "DisplayAsTree", false); // value to display as DataNode.
+          displayTreeOrDataNodeV();
+          });
+
+        theDataNodeShowTreeButton= new Button("Show Tree");
+        theDataNodeShowTreeButton.setOnAction( theActionEvent -> { 
+          persistentMapEpiNode.putTrueOrRemoveB( // Set in Persistent storage
+              "DisplayAsTree", true); // value to display as tree.
+          displayTreeOrDataNodeV();
+          });
+
+        theShowAllPurposeSceneButton= new Button("All-Purpose-Scene");
+        theShowAllPurposeSceneButton.setOnAction( theActionEvent -> {
+          allPurposeSceneEnabledB= true;
+          displayAppriateSceneV();
+          });
+
+        theShowSinglePurposeScenesButton= new Button("Single-Purpose-Scenes");
+        theShowSinglePurposeScenesButton.setOnAction( theActionEvent -> {
+          allPurposeSceneEnabledB= false;
+          displayAppriateSceneV();
+          });
+        
+        }
+ 
+    private void createTickerLabelV()
+      {
+        theTickerLabel= new Label(" TICKER");
+        Runnable tickerRunnable= // Create Runnable that updates ticker Label.
           (() -> {
             tickInteger=0;
             while(true) {
@@ -148,7 +208,8 @@ public class Navigation extends EpiStage
               final int finalTickI= tickInteger;
               Platform.runLater(
                 () -> { // Use JavaFX Application Thread.
-                  tickerLabel.setText(" tick-"+finalTickI); // Update ticker.
+                  theTickerLabel.setText(
+                      " tick-"+finalTickI+" "); // Update ticker.
 
                   /// Kludge.
                   // The following was an unsuccessful attempt to cause
@@ -165,18 +226,11 @@ public class Navigation extends EpiStage
         Thread tickerThread= new Thread(tickerRunnable);
         tickerThread.setDaemon( true ); // Make thread this daemon type. 
         tickerThread.start();
+        }
 
-        createTestTreeViewV();
-
+    private void createFrameLabelViewV()
+      {
         frameLabel= new Label(" FRAME#");
-
-        buildDataNodeSceneV();
-        buildTreeSceneV();
-
-        displayTreeOrDataNodeV();
-
-        finishStateInitAndStartV("TUDNet JavaFX Navigation UI");
-
         frameAnimationTimer = new AnimationTimer() {
           int frameI=0;
           @Override
@@ -185,9 +239,51 @@ public class Navigation extends EpiStage
             }
           };
         frameAnimationTimer.start();
-        
-        showCommandHelpV();
         }
+
+    private void displayAppriateSceneV()
+      /* Depending on the contents of Persistent storage and local state,
+       * this methods displays either the all-purpose scene,
+       * or one of the other original scenes.
+       */
+      {
+        if (allPurposeSceneEnabledB)
+          displayAllPurposeSceneV();
+          else
+          displayTreeOrDataNodeV();
+      }
+
+    private void displayTreeOrDataNodeV()
+      /* Depending on the contents of Persistent storage,
+       * this methods displays the tree or it displays a DataNode.
+       * The selection is controlled from Persistent storage.
+       */
+      {
+        DataNode previouslySelectedDataNode= 
+            theSelections.getPreviousSelectedDataNode();
+        boolean displayTreeB= persistentMapEpiNode.isTrueB("DisplayAsTree");
+        /// theAppLog.debug(
+        ///     "Navigation.displayTreeOrDataNodeV() tree= "+displayTreeB);
+        if (displayTreeB)
+          { 
+            buildTreeSceneV(); // Rebuild to resolve tickerLabel.
+            setTreeContentFromDataNodeV(previouslySelectedDataNode);
+            setScene(theTreeScene); // Use tree scene as first one displayed.
+            }
+          else
+          { 
+            buildDataNodeSceneV(); // Rebuild to resolve tickerLabel.
+            setDataNodeContentFromDataNodeV(previouslySelectedDataNode);
+            setScene(theDataNodeScene); // Use item scene as first one displayed.
+            }
+        /// theAppLog.debug("Navigation.displayTreeOrDataNodeV() end");
+        }
+
+    private void displayAllPurposeSceneV()
+      {
+        setScene(theAllPurposeScene);
+        }
+
 
     public void showCommandHelpV()
       /* This method implements the Help command.
@@ -212,62 +308,6 @@ public class Navigation extends EpiStage
         Dialogger.showModelessJavaFXDialogReturnString(
             "JavaFX UI Help", helpString);
         } // queueCommandHelpV()
-        
-    private void doDataNodeShowTreeButtonActionV()
-      /* 
-       * This method is used to cause a switch of Scenes 
-       * from the DataNode Scene to the tree Scene.
-       * It gets the subject DataNode that 
-       * is being displayed by the DataNode viewer,
-       * sets that as the selection in the TreeView,
-       * then sets the Scene to be the TreeView Scene.
-       */
-      {
-        /// System.out.println("doDataNodeShowTreeButtonActionV() called.");
-        persistentMapEpiNode.putTrueOrRemoveB( // Set in Persistent storage
-            "DisplayAsTree", true); // value to display as tree.
-        displayTreeOrDataNodeV();
-        }
-
-    private void doTreeShowDataNodeButtonActionV()
-      /* This method sets the Scene to display
-       * the DataNode referenced by the TreeItem 
-       * presently selected in and displayed by the TreeView.
-       * This method is used to cause a switch of Scenes 
-       * from the Tree scene to the DataNode Scene.
-       */
-      {
-        persistentMapEpiNode.putTrueOrRemoveB( // Set in Persistent storage
-            "DisplayAsTree", false); // value to display as DataNode.
-        displayTreeOrDataNodeV();
-        }
-
-    private void displayTreeOrDataNodeV()
-      /* Depending on the contents of Persistent storage,
-       * this methods displays the tree or it displays a DataNode.
-       * The selection is controlled from Persistent storage.
-       */
-      {
-        DataNode previouslySelectedDataNode= 
-            theSelections.getPreviousSelectedDataNode();
-        boolean displayTreeB= persistentMapEpiNode.isTrueB("DisplayAsTree");
-        theAppLog.debug(
-            "Navigation.displayTreeOrDataNodeV() tree= "+displayTreeB);
-        if (displayTreeB)
-          { 
-            buildTreeSceneV(); // Rebuild to resolve tickerLabel.
-            setTreeContentFromDataNodeV(previouslySelectedDataNode);
-            setScene(theTreeScene); // Use tree scene as first one displayed.
-            }
-          else
-          { 
-            buildDataNodeSceneV(); // Rebuild to resolve tickerLabel.
-            setDataNodeContentFromDataNodeV(previouslySelectedDataNode);
-            setScene(theDataNodeScene); // Use item scene as first one displayed.
-            }
-        theAppLog.debug(
-            "Navigation.displayTreeOrDataNodeV() end");
-        }
 
 
     // Tree scene methods.
@@ -278,12 +318,11 @@ public class Navigation extends EpiStage
        */ 
       {
         FlowPane bottomFlowPane= new FlowPane();
-        bottomFlowPane.getChildren().add(new Label("Tree-Begin "));
         bottomFlowPane.getChildren().add(theTreeShowItemButton);
-        bottomFlowPane.getChildren().add(tickerLabel);
+        bottomFlowPane.getChildren().add(theTickerLabel);
+        bottomFlowPane.getChildren().add(theShowAllPurposeSceneButton);
         if (settingsMapEpiNode.isTrueB("FrameCounterEnable"))
           bottomFlowPane.getChildren().add(frameLabel);
-        bottomFlowPane.getChildren().add(new Label(" Tree-End"));
         
         treeContentBorderPane= new BorderPane();
         treeContentBorderPane.setBottom(bottomFlowPane);
@@ -316,13 +355,24 @@ public class Navigation extends EpiStage
         theVBox.getChildren().add(guiNode); // Add production TreeView.
         treeContentBorderPane.setCenter(theVBox); // Store for display.
         }
-         
+
+
+    // All-purpose Scene methods.
+
+    private void buildAllPurposeSceneV()
+      /* Creates a Scene for displaying anything. single DataNode.
+       */
+      {
+        theAllPurposeBorderPane= new BorderPane();
+        theAllPurposeBorderPane.setBottom(theShowSinglePurposeScenesButton);
+        theAllPurposeScene= new Scene(theAllPurposeBorderPane);
+        }
 
 
     // DataNode scene methods.
 
     private void buildDataNodeSceneV()
-      /* Creates and returns a Scene for displaying a single DataNode.
+      /* Creates a Scene for displaying a single DataNode.
         As a aide-effect, it also sets theDataNodeContentBorderPane so that
         theDataNodeContentBorderPane.setCenter() may be used later
         to fill in the content.
@@ -330,15 +380,15 @@ public class Navigation extends EpiStage
       {
         theDataNodeContentBorderPane= new BorderPane();
         FlowPane bottomFlowPane= new FlowPane();
-        bottomFlowPane.getChildren().add(new Label("Item-Begin "));
         bottomFlowPane.getChildren().add(theDataNodeShowTreeButton);
-        bottomFlowPane.getChildren().add(tickerLabel);
-        bottomFlowPane.getChildren().add(new Label(" Item-End"));
+        bottomFlowPane.getChildren().add(theTickerLabel);
+        bottomFlowPane.getChildren().add(theShowAllPurposeSceneButton);
         theDataNodeContentBorderPane.setBottom(bottomFlowPane);
         theDataNodeContentBorderPane.addEventFilter( // or addEventHandler(
           KeyEvent.KEY_PRESSED, 
           (theKeyEvent) -> handleDataNodeKeyPressV(theKeyEvent)
           );
+
         theDataNodeScene= new Scene(theDataNodeContentBorderPane);
         EpiScene.setDefaultsV(theDataNodeScene);
         }
@@ -412,11 +462,18 @@ public class Navigation extends EpiStage
           }
         }
 
-    
-    /// Temporary dynamic TreeView troubleshooting code. 
+
+
+    /* ///tmp Temporary dynamic TreeView troubleshooting code.
+     * This was added to try to figure out why the 
+     * main TreeView used for displaying the DataNode tree isn't updating.  
+     */
+
     private int countI= 0;
+
     private TreeItem<DataNode> middleChildTreeItem;
     private TreeView<DataNode> testTreeView;
+
 
     public void createTestTreeViewV() 
       {
@@ -459,20 +516,3 @@ public class Navigation extends EpiStage
     }
 
     }
-
-
-class IndirectString extends Object {
-  
-  String theString;
-  
-  public IndirectString(String theString) {
-    this.theString= theString;
-    }
-  
-  public void setV(String theString) {
-    this.theString= theString;
-    }
-  
-  public String toString() {return theString.toString(); }
-  }
-    
