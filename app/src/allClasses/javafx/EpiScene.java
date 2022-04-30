@@ -1,14 +1,20 @@
 package allClasses.javafx;
 
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 
-public class EpiScene 
+public class EpiScene extends Scene
   {
-
-    public static void setDefaultsV(Scene theScene)
+    public EpiScene(Parent rootParent) 
       {
-        Node rootNode= theScene.getRoot();
+        super(rootParent);
+        setDefaultsV();
+        }
+  
+    private void setDefaultsV()
+      {
+        Node rootNode= getRoot();
         JavaFXGUI.setDefaultStyle(rootNode);
         }
     
