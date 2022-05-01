@@ -318,7 +318,7 @@ public class JavaFXGUI
         theAppLog.debug("JavaFXGUILog","JavaFXGUI.JavaFXGUI.finalizeV() ends.");
         }
 
-    public static void setDefaultStyle(Node theNode)
+    public static void setDefaultStyleV(Node theNode)
       /* Sets the default style of theNode. 
        * Note that styles are inherited by Node descendants.
        * */

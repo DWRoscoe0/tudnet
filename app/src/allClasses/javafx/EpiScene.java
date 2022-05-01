@@ -12,10 +12,10 @@ public class EpiScene extends Scene
         setDefaultsV();
         }
   
-    private void setDefaultsV()
+    public void setDefaultsV() /// deprecated
       {
         Node rootNode= getRoot();
-        JavaFXGUI.setDefaultStyle(rootNode);
+        JavaFXGUI.setDefaultStyleV(rootNode);
         }
     
     }

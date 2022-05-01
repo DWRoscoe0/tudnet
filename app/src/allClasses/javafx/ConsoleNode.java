@@ -55,7 +55,7 @@ public class ConsoleNode
                 Selections theSelections
                 )
     { 
-      TreeStuff theTreeStuff= TreeStuff.makeWithAutoCompleteTreeStuff(
+      TreeStuff theTreeStuff= TreeStuff.makeTreeStuff(
           theConsoleBase,
           selectedDataNode,
           thePersistent,
@@ -68,7 +68,7 @@ public class ConsoleNode
         theString,
         theTreeStuff
         );
-      theTreeStuff.initializeV(theConsoleNode);
+      theTreeStuff.initializeGUINodeV(theConsoleNode);
       return theTreeStuff;
       }
     

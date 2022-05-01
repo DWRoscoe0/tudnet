@@ -142,7 +142,7 @@ public class IFile
             new TitledTextNode(
                 subjectDataNode,
                 getFileString(),
-                TreeStuff.makeWithAutoCompleteTreeStuff(
+                TreeStuff.makeTreeStuff(
                     subjectDataNode,
                     null,
                     thePersistent,

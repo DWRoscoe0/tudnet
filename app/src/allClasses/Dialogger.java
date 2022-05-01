@@ -97,7 +97,7 @@ public class Dialogger extends Object
               theAlert.getDialogPane().setMinWidth(600); ///ano Fix for below.
                 ///ano getDialogPane().setMinWidth(Region.USE_PREF_SIZE) fails.
                 ///ano Also ended problem of title bar mostly off-screen.
-              JavaFXGUI.setDefaultStyle(theAlert.getDialogPane());
+              JavaFXGUI.setDefaultStyleV(theAlert.getDialogPane());
               theAlert.initModality(Modality.NONE);
   
               theAlert.setTitle(titleString);

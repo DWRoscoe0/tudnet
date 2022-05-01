@@ -20,13 +20,16 @@ public class TreeStuff
      *   * It stores the location of the parent subject DataNode.
      *   * It stores the location of the child selection DataNode, if any, 
      *     within the subject DataNode.  null means there is no selection.
-     * This class may be interrogated for location information.
+     *
+     * This class performs various operations that are useful
+     * to the JavaFX UI, tracking locations in the hierarchy, etc.
+     * For example, this class may be interrogated for location information.
+     * Location information is duplicated in the Selections class object.
+     * 
      * An instance of this class should be updated by 
      * the selection model of the Node's associated viewer.
-     * 
-     * Location information is duplicated in the Selections class object.
      *
-     * Location is represented by the DataNode of interest at that location.
+     * Location is represented by the DataNode of interest at the location.
      *
      * Location can also be represented by the TreePath
      * from the root DataNode to the DataNode at the location of interest,
@@ -285,7 +288,7 @@ public class TreeStuff
         return theDataRoot;
         }
 
-    public static TreeStuff makeWithAutoCompleteTreeStuff(
+    public static TreeStuff makeTreeStuff(
         DataNode subjectDataNode,
         DataNode selectedDataNode,
         Persistent thePersistent,
@@ -293,14 +296,14 @@ public class TreeStuff
         EpiTreeItem theRootEpiTreeItem,
         Selections theSelections
         )
-      /* This is the factory method for TreeStuff objects.
+      /* This method makes TreeStuff objects.
        * All TreeStuffs are made by a call to this method, 
-       * followed by a call to initializeV(theNode) to finish initialization.
+       * followed by a call to initializeGUINodeV(.) to finish initialization.
        * This method tries to fill in a value for a selectedDataNode
        * within the subjectDataNode.  It might or might not succeed.
        */
       {
-        TreeStuff theTreeStuff= new TreeStuff(
+        TreeStuff theTreeStuff= new TreeStuff( // Construct TreeStuff.
             subjectDataNode,
             selectedDataNode,
             thePersistent,
@@ -310,15 +313,15 @@ public class TreeStuff
             );
         if  // If nothing selected in the TreeStuff
           (null == theTreeStuff.getSelectionDataNode())
-          {
+          { // Try to make a selection based on available context.
             DataNode chosenSelectionDataNode=
               theSelections.chooseChildDataNode(subjectDataNode);
             theTreeStuff.setSelectedDataNodeV(chosenSelectionDataNode);
             }
         return theTreeStuff;
         }
-          
-    public void initializeV(Node theUINode)
+
+    public void initializeGUINodeV(Node theUINode)
       /* This does the bit of dependency injection 
        * that can not be done by the constructor,
        * in this case storing the JavaFX UI Node. 

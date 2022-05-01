@@ -44,7 +44,7 @@ public class TitledTreeNode
         Selections theSelections
         )
     { 
-      TreeStuff theTreeStuff= TreeStuff.makeWithAutoCompleteTreeStuff(
+      TreeStuff theTreeStuff= TreeStuff.makeTreeStuff(
           subjectDataNode,
           selectedDataNode,
           thePersistent,
@@ -57,7 +57,7 @@ public class TitledTreeNode
         theRootEpiTreeItem,
         theTreeStuff
         );
-      theTreeStuff.initializeV(theTitledTreeNode);
+      theTreeStuff.initializeGUINodeV(theTitledTreeNode);
       return theTreeStuff;
       }
 

@@ -37,7 +37,7 @@ public class TitledTextNode extends BorderPane
                 Selections theSelections
                 )
     { 
-      TreeStuff theTreeStuff= TreeStuff.makeWithAutoCompleteTreeStuff(
+      TreeStuff theTreeStuff= TreeStuff.makeTreeStuff(
           subjectDataNode,
           selectedDataNode,
           thePersistent,
@@ -50,7 +50,7 @@ public class TitledTextNode extends BorderPane
         theString,
         theTreeStuff
         );
-      theTreeStuff.initializeV(theTitledTextNode);
+      theTreeStuff.initializeGUINodeV(theTitledTextNode);
       return theTreeStuff;
       }
     

@@ -54,7 +54,7 @@ public class TitledListNode
      */
     { 
       TreeStuff theTreeStuff= // Construct the appropriate TreeStuff. 
-        TreeStuff.makeWithAutoCompleteTreeStuff(
+        TreeStuff.makeTreeStuff(
           subjectDataNode,
           selectedDataNode,
           thePersistent,
@@ -64,7 +64,7 @@ public class TitledListNode
           );
       TitledListNode theTitledListNode= // Calculate the UI Node to use.
           new TitledListNode(subjectDataNode,theTreeStuff);
-      theTreeStuff.initializeV(theTitledListNode); // Store the UI Node.
+      theTreeStuff.initializeGUINodeV(theTitledListNode); // Store the UI Node.
       return theTreeStuff;
       }
 
