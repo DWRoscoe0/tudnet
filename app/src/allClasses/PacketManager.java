@@ -96,22 +96,36 @@ public abstract class PacketManager<
         DatagramPacket theDatagramPacket 
         )
       {
-        if (theAppLog.logB(Config.packetLogLevel)) 
-          theAppLog.logV(
+        /*  Old way:
+          if (theAppLog.logB(Config.packetLogLevel)) 
+            theAppLog.logV(
               Config.packetLogLevel,
-            PacketManager.gettingDirectedPacketString(
-                theDatagramPacket, false
-                )
-            );
+              PacketManager.gettingDirectedPacketString(
+                  theDatagramPacket, false
+                  )
+              );
+        */
+        theAppLog.debug("Packets", // Log if Packet logging enabled.
+          PacketManager.gettingDirectedPacketString(
+              theDatagramPacket, false
+              )
+          );
         }
 
     public static void logSenderPacketV( 
         DatagramPacket theDatagramPacket 
         )
       {
-        if (theAppLog.logB(Config.packetLogLevel)) 
-          theAppLog.logV(
-            Config.packetLogLevel,
+        /* Old way: 
+          if (theAppLog.logB(Config.packetLogLevel)) 
+            theAppLog.logV(
+              Config.packetLogLevel,
+              PacketManager.gettingDirectedPacketString(
+                  theDatagramPacket, true
+                  )
+              );
+        */
+        theAppLog.debug("Packets", // Log if Packet logging enabled.
             PacketManager.gettingDirectedPacketString(
                 theDatagramPacket, true
                 )
@@ -122,13 +136,20 @@ public abstract class PacketManager<
         DatagramPacket theDatagramPacket 
         )
       {
-        if (theAppLog.logB(Config.packetLogLevel)) 
-          theAppLog.logV(
-            Config.packetLogLevel,
-            PacketManager.gettingDirectedPacketString(
-                theDatagramPacket, false
-                )
-            );
+        /*  Old way:
+          if (theAppLog.logB(Config.packetLogLevel)) 
+            theAppLog.logV(
+              Config.packetLogLevel,
+              PacketManager.gettingDirectedPacketString(
+                  theDatagramPacket, false
+                  )
+              );
+        */
+        theAppLog.debug("Packets", // Log if Packet logging enabled.
+          PacketManager.gettingDirectedPacketString(
+              theDatagramPacket, false
+              )
+          );
         }
 
     // Methods for converting packets to Strings for display.

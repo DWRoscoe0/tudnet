@@ -95,7 +95,7 @@ public class TitledTreeNode
        * so that the best child Node selection is made.
        */
       {
-        System.out.println("TitledTreeNode key handler.");
+        System.out.println("[ttnkh]");
         boolean keyProcessedB= true;
         KeyCode keyCodeI= theKeyEvent.getCode(); // Get code of key pressed.
         switch (keyCodeI) {

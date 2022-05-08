@@ -294,7 +294,7 @@ public class JavaFXGUI
             theDataRoot, 
             theSelections,
             theShutdowner
-            ).initializeAndStartNavigationV();
+            ).initializeAndShowV();
 
         theAppLog.debug("JavaFXGUILog","JavaFXGUI.nestedStartV(), "
             + "returned from new Navigation(.).initializeAndStartV(), "

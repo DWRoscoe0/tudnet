@@ -1,11 +1,14 @@
 package allClasses.javafx;
 
+import static allClasses.AppLog.theAppLog;
+
 import allClasses.DataNode;
 import allClasses.DataRoot;
 import allClasses.Nulls;
 import allClasses.Persistent;
 import javafx.scene.Node;
 import javafx.scene.control.TreeItem;
+import static allClasses.SystemSettings.NL;
 
 
 public class TreeStuff 
@@ -135,26 +138,30 @@ public class TreeStuff
        * and a JavaFX Node of a viewer appropriate for 
        * displaying the new subject DataNode, with the viewer initialized
        * with the proper selection.
-       * This method returns null if moving to the left is not possible.
+       * This method returns null if moving to the right is not possible.
        */
       {
           DataNode oldSubjectDataNode, oldSelectedDataNode; 
           DataNode newSubjectDataNode, newSelectedDataNode; 
-          TreeStuff resultTreeStuff= // Return self if no movement possible.
-            this;
+          TreeStuff resultTreeStuff= // Return null if movement impossible.
+            null;
         main: {
           oldSubjectDataNode= getSubjectDataNode();
+          theAppLog.appendToFileV(NL+"[tsmr1:"+oldSubjectDataNode+"]");
           if (null == oldSubjectDataNode) // If subject not defined 
             break main; // this is a serious problem, so give up.
           oldSelectedDataNode= getSelectionDataNode();
           newSubjectDataNode= // Set new subject to be
               theSelections.chooseChildDataNode( // result of choosing from
                   oldSubjectDataNode, oldSelectedDataNode); // old subject.
+          theAppLog.appendToFileV(
+              NL+"[tsmr2:"+oldSelectedDataNode+";"+newSubjectDataNode+"]");
           if (null == newSubjectDataNode) // If new subject not defined 
             break main; // we can not move right, so give up.
           newSelectedDataNode= // Set new selection to be 
               theSelections.chooseChildDataNode( // result of choosing from
                   newSubjectDataNode, null); // new subject.
+          theAppLog.appendToFileV(NL+"[tsmr3:"+newSelectedDataNode+"]");
           resultTreeStuff=  // For the new 
               newSubjectDataNode.makeTreeStuff( // subject node, make TreeStuff
                 newSelectedDataNode, // with this as subject's selection 
@@ -164,6 +171,7 @@ public class TreeStuff
                 theSelections // and this.
                 ); 
         } // main:
+          theAppLog.appendToFileV("[tsmrx]");
           return resultTreeStuff;
         }
     
@@ -180,7 +188,7 @@ public class TreeStuff
        * This method returns null if moving to the left is not possible.
        */
       {
-          TreeStuff resultTreeStuff= this; // Return self if anything fails.
+          TreeStuff resultTreeStuff= null; // Return null if anything fails.
         main: { 
           DataNode oldSubjectDataNode= getSubjectDataNode();
           if (oldSubjectDataNode.isRootB()) break main; // Fail if at root.

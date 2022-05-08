@@ -671,7 +671,7 @@ public class FileOps
        * sourceWriterTo1Throws2 does all the data writing.
        */
       {
-        theAppLog.info(// "FileOps",
+        theAppLog.info("FileOps",
             "FileOps.writeDataReturnString(.) begins/called, file: "
             + destinationFileFile);
 
@@ -712,7 +712,8 @@ public class FileOps
             "FileOps.writeDataReturnString(.) ends, file: "
             + destinationFileFile);
 
-        theAppLog.info("FileOps.writeDataReturnString(.) ends");
+        theAppLog.debug("FileOps",
+            "FileOps.writeDataReturnString(.) ends");
         return errorString;
         }
     

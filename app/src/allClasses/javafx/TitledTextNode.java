@@ -1,5 +1,6 @@
 package allClasses.javafx;
 
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -71,14 +72,12 @@ public class TitledTextNode extends BorderPane
         setTop(titleLabel); // Adding it to main JPanel.
         BorderPane.setAlignment(titleLabel,Pos.CENTER);
 
-        TextArea theTextArea= new TextArea(   // Construct JTextArea.
-          /// "--------------DEBUG--------------  \n"+
+        TextArea theTextArea= new TextArea(   // Construct TextArea.
           theString  // Text String to view.
           );
-        /// theTextArea.getCaret().setVisible(true); // Make viewer cursor visible.
         theTextArea.setWrapText(true); // Make all visible.
-        /// theTextArea.setWrapStyleWord(true); // Make it pretty.
         setCenter(theTextArea);
+        Platform.runLater( () -> theTextArea.requestFocus() );
         }
 
     }

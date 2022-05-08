@@ -1,6 +1,5 @@
 package allClasses;
 
-import allClasses.AppLog.LogLevel;
 
 public class Config
 
@@ -77,7 +76,7 @@ public class Config
 
     public static final long packetSendDelayMsL= 0; // 500; // 1000;
 
-    public static LogLevel packetLogLevel= AppLog.LogLevel.DEBUG; //TRACE;  // INFO; // DEBUG;
+    /// public static LogLevel packetLogLevel= AppLog.LogLevel.DEBUG; //TRACE;  // INFO; // DEBUG;
       // By setting this to TRACE, packets sent and received
       // will be logged only when the app is being traced,
       // and maxLogLevel is also TRACE.

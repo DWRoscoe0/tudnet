@@ -5,7 +5,6 @@ import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.input.KeyCode;
@@ -85,18 +84,18 @@ public class Navigation extends EpiStage
     // Code for top-level initialization.
 
     private MapEpiNode rootMapEpiNode; // Root of Persistent data.
-    private MapEpiNode settingsMapEpiNode; // Settings subtree.
+    private MapEpiNode settingsMapEpiNode; // Persistent Settings subtree.
 
-    public void initializeAndStartNavigationV()
+    public void initializeAndShowV()
       /* After the Navigation Stage is constructed, 
        * this method should be called.
-       * This method initializes and shows the Navigation Stage, then returns.
+       * This method initializes and shows the Navigation Stage.
        * 
-       * One of 2 Scenes will be set to the Stage:
+       * One of 2 views of the DataNode hierarchy will showing at exit:
        * * one which displays a TreeView of the DataNode hierarchy, and
-       * * one which displays a single DataNode and its children.
-       * Each Scene has a button to switch to the other Scene.
-       * 
+       * * one which displays a single DataNode of the DataNode hierarchy.
+       * There is also a button to switch to the other content.
+       *
        * ///opt Simplify by using theDataRoot.getRootEpiTreeItem().
        */
       {
@@ -106,88 +105,77 @@ public class Navigation extends EpiStage
             rootMapEpiNode.getMapEpiNode("Settings");
         setOnCloseRequest( (theWindowEvent) -> {
               theAppLog.info(
-                "Navigation.initializeAndStartV().setOnCloseRequest(.) handler"
+                "Navigation.initializeAndShowV().setOnCloseRequest(.) handler"
                 + "\n   ======== REQUESTING APP SHUTDOWN =========");
               theShutdowner.requestAppShutdownV();
               });
 
-        displayAppropriateSceneV();
+        theBorderPane= new BorderPane(); // Make the one BorderPane.
+        theBorderPane.addEventFilter(
+            KeyEvent.KEY_PRESSED,
+            (theKeyEvent) -> theAppLog.appendToFileV(
+                NL+"[begin-key:"+theKeyEvent.getCode()+"]")
+            );
+        theBorderPane.addEventHandler(
+            KeyEvent.KEY_PRESSED,
+            (theKeyEvent) -> theAppLog.appendToFileV(
+                "[end-key:"+theKeyEvent.getCode()+"]")
+            );
+
+        theEpiScene= new EpiScene(theBorderPane);
+        setScene(theEpiScene); // Use tree scene as first one displayed.
+        
+        rebuildSceneContentV();
 
         setCommonSettingsV("TUDNet JavaFX Navigation UI");
         show(); // Make UI show this stage.
         JavaFXGUI.recordOpenWindowV(null,this,null); // Record showing.
 
         showCommandHelpV(); // Display help in a separate dialog window.
+        theAppLog.info(
+          "Navigation.initializeAndShowV() Ends"
+          + "\n   ======== DISPLAYING APP UI =========");
         }
 
 
     // Code related to choosing what type of scene to display.
 
-    private void displayAppropriateSceneV()
-      /* Depending on the contents of Persistent storage and local state,
-       * this methods displays either the all-purpose scene,  ////////////
-       * or one of the other original scenes.
-       */
-      {
-        displayTreeOrDataNodeV();
-        }
-
-
-    // Code related to new combined all-purpose DataNode and tree view Scene.
-
-
-    private void displayTreeOrDataNodeV()
+    private void rebuildSceneContentV()
       /* Depending on the contents of Persistent storage,
-       * this methods displays the tree or it displays a DataNode.
-       * The selection is controlled from Persistent storage.
+       * this methods rebuilds the Nodes to display 
+       * the tree or a single DataNode.
+       * Which one is controlled from Persistent storage.
        */
       {
         createUIComponentsV();
         DataNode previouslySelectedDataNode= 
             theSelections.getPreviousSelectedDataNode();
         boolean displayTreeB= rootMapEpiNode.isTrueB("DisplayAsTree");
-        theMultiPurposeBorderPane= new BorderPane();
         if (displayTreeB)
-          { buildTreePartV(previouslySelectedDataNode); }
+          { buildTreePartsV(previouslySelectedDataNode); }
           else
-          { buildDataNodeV(previouslySelectedDataNode); }
-        //////// Common code.
-        theMultiPurposeBorderPane.setBottom(bottomFlowPane);
-        JavaFXGUI.setDefaultStyleV(theMultiPurposeBorderPane);
-        theMultiPurposeEpiScene= new EpiScene(theMultiPurposeBorderPane);
-        setScene(theMultiPurposeEpiScene); // Use tree scene as first one displayed.
+          { buildDataNodePartsV(previouslySelectedDataNode); }
+        theBorderPane.setBottom(theBottomFlowPane);
+        JavaFXGUI.setDefaultStyleV(theBorderPane);
         }
 
 
     // Code related to the DataNode view Scene.
 
-    //// private Scene theDataNodeScene;
-    //// private BorderPane theDataNodeContentBorderPane;
-      // The center of this will change to display different DataNodes.
-    //// private TreeStuff theDataNodeTreeStuff; // For location tracking.
-
-    private void buildDataNodeV(
-        DataNode previouslySelectedDataNode) 
-      {
-        buildBottomFlowPane(theDataNodeShowTreeButton);
-        //////// DataNode code.
-        theMultiPurposeBorderPane.addEventFilter( // or addEventHandler(
-          KeyEvent.KEY_PRESSED, 
-          (theKeyEvent) -> handleDataNodeKeyPressV(theKeyEvent)
-          );
-        setDataNodeContentFromDataNodeV(previouslySelectedDataNode);
-        }
-
-    private void setDataNodeContentFromDataNodeV(DataNode theDataNode)
-      /* If theDataNode is null then this method does nothing.
+    private void buildDataNodePartsV(
+        DataNode previouslySelectedDataNode)
+      /* This method builds the DataNode dependent part of UI.
+       * If theDataNode/previouslySelectedDataNode is null 
+       * then this method does nothing.
+       *
        * Otherwise it calculates a new TreeStuff from theDataNode,
        * and stores a GUI Node appropriate for displaying theDataNode
        * at the center of the content BorderPane of the DataNode Scene 
        * so that theDataNode will be displayed.
        */
       {
-        theAppLog.debug("Navigation.setDataNodeContentFromDataNodeV() "
-            + "theDataNode= "+theDataNode);
+        rebuildWithButtonTheBottomFlowPaneV(theDataNodeShowTreeButton);
+        DataNode theDataNode= previouslySelectedDataNode;
         if (null != theDataNode) { // Process DataNode if present.
           DataNode selectionDataNode= null;
           DataNode subjectDataNode= theDataNode;
@@ -195,56 +183,59 @@ public class Navigation extends EpiStage
             selectionDataNode= subjectDataNode;
             subjectDataNode= theDataNode.getTreeParentNamedList();
             }
-          theMultiPurposeTreeStuff= // Make TreeStuff appropriate for DataNode.
+          theTreeStuff= // Make TreeStuff appropriate for DataNode.
             subjectDataNode.makeTreeStuff(
               selectionDataNode,
               thePersistent,
               theDataRoot,
-              theMultiPurposeRootEpiTreeItem,
+              theRootEpiTreeItem,
               theSelections
               );
-          Node guiNode= theMultiPurposeTreeStuff.getGuiNode();
-          theAppLog.debug("Navigation.setDataNodeContentFromDataNodeV() "
-            + "guiNode= "+guiNode);
-          theMultiPurposeBorderPane.setCenter(guiNode); // Store for display.
+          updateFromDataNodeTreeStuffV();
           }
         }
-
-    @SuppressWarnings("unused")
-    private void buildDataNodeSceneV() // Unused.
-      /* Creates a Scene for displaying a single DataNode.
-        As a aide-effect, it also sets theDataNodeContentBorderPane so that
-        theDataNodeContentBorderPane.setCenter() may be used later
-        to fill in the content.
+    
+    private void updateFromDataNodeTreeStuffV()
+      /*
+       * In this method, the code
+       *   /// guiNode.addEventFilter(
+       *   ///   KeyEvent.KEY_PRESSED,
+       *   ///   (theKeyEvent) -> handleDataNodeKeyPressV(theKeyEvent)
+       *   ///   );
+       * was discovered to add multiple copies of the handler,
+       * wasting resources.  It was replaced with
+       *   // guiNode.setOnKeyPressed(
+       *   //   (theKeyEvent) -> handleDataNodeKeyPressV(theKeyEvent));
+       * sets only one copy.
        */
       {
-        theMultiPurposeBorderPane= new BorderPane();
-        bottomFlowPane= new FlowPane();
-        bottomFlowPane.getChildren().add(theDataNodeShowTreeButton);
-        bottomFlowPane.getChildren().add(theElapsedLabel);
-        theMultiPurposeBorderPane.setBottom(bottomFlowPane);
-        theMultiPurposeBorderPane.addEventFilter( // or addEventHandler(
-          KeyEvent.KEY_PRESSED, 
-          (theKeyEvent) -> handleDataNodeKeyPressV(theKeyEvent)
-          );
-
-        theMultiPurposeEpiScene= new EpiScene(theMultiPurposeBorderPane);
+        Node guiNode= theTreeStuff.getGuiNode();
+        guiNode.addEventFilter(
+            KeyEvent.KEY_PRESSED,
+            (theKeyEvent) -> handleDataNodeKeyPressV(theKeyEvent)
+            );
+        theAppLog.appendToFileV(
+            NL+"[ufdnst Adding KEY_PRESSED filter to:"+guiNode+"]");
+        /// theAppLog.debug("Navigation.setDataNodeContentFromDataNodeV() "
+        ///   + "guiNode= "+guiNode);
+        theBorderPane.setCenter(guiNode); // Store in graph for display.
         }
 
 
     // Code related to the tree view Scene, being converted to MultiPurpose.
     // Some of these variables might be convertable to local variables.
 
-    private EpiScene theMultiPurposeEpiScene;
-    private BorderPane theMultiPurposeBorderPane;
-    private TreeStuff theMultiPurposeTreeStuff;
-    private EpiTreeItem theMultiPurposeRootEpiTreeItem;
-    private FlowPane bottomFlowPane;
+    // These are some of the main UI Nodes, showing nesting.
+    private EpiScene theEpiScene;
+      private BorderPane theBorderPane; // Root of Nodes.
+        private EpiTreeItem theRootEpiTreeItem;
+        private FlowPane theBottomFlowPane;
 
-    private void buildTreePartV(DataNode previouslySelectedDataNode)
+    private TreeStuff theTreeStuff; // Helper TreeStuff.
+
+    private void buildTreePartsV(DataNode previouslySelectedDataNode)
       {
-        buildBottomFlowPane(theTreeShowItemButton);
-        //////// Old Tree code, now MultiPurpose.
+        rebuildWithButtonTheBottomFlowPaneV(theTreeShowItemButton);
         setTreeContentFromDataNodeV(previouslySelectedDataNode);
         }
 
@@ -256,40 +247,24 @@ public class Navigation extends EpiStage
        * so that theDataNode will be displayed.
        */
       {
-        theMultiPurposeRootEpiTreeItem= new EpiTreeItem(theRootDataNode);
-        theMultiPurposeRootEpiTreeItem.setExpanded(true); // Show only 1st and 2nd levels.
-        theMultiPurposeTreeStuff= TitledTreeNode.makeTreeStuff(
+        theRootEpiTreeItem= new EpiTreeItem(theRootDataNode);
+        theRootEpiTreeItem.setExpanded(true); // Show only 1st and 2nd levels.
+        theTreeStuff= TitledTreeNode.makeTreeStuff(
                 (DataNode)null,
                 selectedDataNode,
                 theDataRoot,
-                theMultiPurposeRootEpiTreeItem,
+                theRootEpiTreeItem,
                 thePersistent,
                 theSelections
                 );
-        Node guiNode= theMultiPurposeTreeStuff.getGuiNode();
+        Node guiNode= theTreeStuff.getGuiNode();
         VBox theVBox= new VBox();
         theVBox.getChildren().add(guiNode); // Add production TreeView.
-        theMultiPurposeBorderPane.setCenter(theVBox); // Store for display.
+        theBorderPane.setCenter(theVBox); // Store for display.
         }
 
-    @SuppressWarnings("unused")
-    private void buildTreeSceneV() /// Unused.
-      /* This method builds the Scene to be used when
-       * the user wants to display DataNodes as a tree. 
-       */ 
-      {
-        bottomFlowPane= new FlowPane();
-        bottomFlowPane.getChildren().add(theTreeShowItemButton);
-        bottomFlowPane.getChildren().add(theElapsedLabel);
-        if (settingsMapEpiNode.isTrueB("FrameCounterEnable"))
-          bottomFlowPane.getChildren().add(frameLabel);
-        
-        theMultiPurposeBorderPane= new BorderPane();
-        theMultiPurposeBorderPane.setBottom(bottomFlowPane);
-        theMultiPurposeBorderPane.setCenter( // This will be replaced later.
-            new TextArea("UNDEFINED")); 
-        theMultiPurposeEpiScene= new EpiScene(theMultiPurposeBorderPane);
-        }
+
+
 
 
     private void createUIComponentsV()
@@ -301,28 +276,27 @@ public class Navigation extends EpiStage
         createTestTreeViewV();
         }
 
-      private FlowPane buildBottomFlowPane(Button theTreeShowItemButton)
-        /* This method builds the bottomFlowPane to used as
-         * the bottom section of theMultiPurposeBorderPane.
-         */
-        {
-          bottomFlowPane= new FlowPane();
-          bottomFlowPane.getChildren().add(theTreeShowItemButton);
-          bottomFlowPane.getChildren().add(theElapsedLabel);
-          if (settingsMapEpiNode.isTrueB("FrameCounterEnable"))
-            bottomFlowPane.getChildren().add(frameLabel);
-          return bottomFlowPane;
-          }
+    private void rebuildWithButtonTheBottomFlowPaneV(
+        Button theChangeFormatButton)
+      /* This method builds the theBottomFlowPane to used as
+       * the bottom section of theMultiPurposeBorderPane.
+       */
+      {
+        theBottomFlowPane= new FlowPane();
+        theBottomFlowPane.getChildren().add(theChangeFormatButton);
+        theBottomFlowPane.getChildren().add(theElapsedLabel);
+        if (settingsMapEpiNode.isTrueB("FrameCounterEnable"))
+          theBottomFlowPane.getChildren().add(frameLabel);
+        }
 
 
-    // Code related to the Buttons.
+    // Code related to the bottom FlowPane Buttons.
     
     private Button theTreeShowItemButton;
     private Button theDataNodeShowTreeButton;
 
     private void buildButtonsV()
       /* This method builds the buttons.
-       * It builds 4 of them, but only 2 will be used for a given scene.
        * 
        * ///ano Based on log entry time-stamps in log file,
        * it takes almost 1/2 second to show the new window content
@@ -335,20 +309,20 @@ public class Navigation extends EpiStage
         theTreeShowItemButton.setOnAction( theActionEvent -> {
           rootMapEpiNode.putTrueOrRemoveB( // Set in Persistent storage
               "DisplayAsTree", false); // value to display as DataNode.
-          displayTreeOrDataNodeV();
+          rebuildSceneContentV();
           });
 
         theDataNodeShowTreeButton= new Button("Show Tree");
         theDataNodeShowTreeButton.setOnAction( theActionEvent -> { 
           rootMapEpiNode.putTrueOrRemoveB( // Set in Persistent storage
               "DisplayAsTree", true); // value to display as tree.
-          displayTreeOrDataNodeV();
+          rebuildSceneContentV();
           });
 
         }
 
 
-    // Code related to the Elapsed-Time display.
+    // Code related to the Elapsed-Time Label display.
 
     private static boolean displayElapsedB= true; // Enable at first. ///
     private static Label theElapsedLabel= null;
@@ -368,7 +342,7 @@ public class Navigation extends EpiStage
               if (! displayElapsedB) continue; // End loop if ticker not enabled.
               //  tickerB= false; // Disable later ticks.
               theElapsedI++;
-              theAppLog.appendToFileV("[t]");
+              theAppLog.appendToFileV(NL+"[t]");
               final int finalElapsedI= theElapsedI;
               Platform.runLater(
                 () -> { // Use JavaFX Application Thread.
@@ -393,10 +367,11 @@ public class Navigation extends EpiStage
         }
 
 
-    // Code related to the Frame Label.
+    // Code related to the Frame Label display.
 
     private Label frameLabel= null;
     private AnimationTimer frameAnimationTimer= null; ///
+
 
     private void buildOnceFrameLabelViewV()
       {
@@ -426,6 +401,7 @@ public class Navigation extends EpiStage
     /// if (settingsMapEpiNode.isTrueB("TestTreeEnable"))
     ///   theVBox.getChildren().add(testTreeView); // Add test TreeView. 
 
+
     public void createTestTreeViewV() 
       {
         EpiTreeItem rootEpiTreeItem = 
@@ -454,7 +430,7 @@ public class Navigation extends EpiStage
                 ((NamedLeaf)child2DataNode).setNameV("NEW-VALUE-"+countI++);
 
                 // Trigger UI update by cycling TreeItem value reference.
-                System.out.print("[tti]"); /// Debug.
+                /// System.out.print("[tti]"); /// Debug.
                 DataNode savedDataNode= middleChildTreeItem.getValue();
                 middleChildTreeItem.setValue(null); // Clear reference.
                 middleChildTreeItem.setValue(savedDataNode); // Restore it.
@@ -467,29 +443,35 @@ public class Navigation extends EpiStage
         }
 
 
+
+
     // Miscellaneous methods:
   
+
     private void handleDataNodeKeyPressV(KeyEvent theKeyEvent)
       ///org relative to Selections and TreeStuff.
       {
+        theAppLog.appendToFileV("[dnkp]");
         KeyCode keyCodeI = theKeyEvent.getCode(); // Get code of key pressed.
         TreeStuff newTreeStuff= null;
         switch (keyCodeI) {
           case RIGHT:  // right-arrow.
-            newTreeStuff= theMultiPurposeTreeStuff.moveRightAndMakeTreeStuff();
+            newTreeStuff= theTreeStuff.moveRightAndMakeTreeStuff();
             break;
           case LEFT:  // left-arrow.
-            newTreeStuff= theMultiPurposeTreeStuff.moveLeftAndMakeTreeStuff();
+            newTreeStuff= theTreeStuff.moveLeftAndMakeTreeStuff();
             break;
           default: break;
           }
         if (null != newTreeStuff) { // Change content if new TreeStuff present.
-          theMultiPurposeTreeStuff= newTreeStuff; // Save new TreeStuff.
-          Node contentNode= theMultiPurposeTreeStuff.getGuiNode();
-          theMultiPurposeBorderPane.setCenter( // Store for display
-              contentNode); // the Node created by TreeStuff.
+          theAppLog.appendToFileV(
+              NL+"[dnnts:"+newTreeStuff.getSubjectDataNode()
+              +";"+newTreeStuff.getSelectionDataNode()+"]");
+          theTreeStuff= newTreeStuff; // Save new TreeStuff.
+          updateFromDataNodeTreeStuffV();
           }
         }
+
 
     public void showCommandHelpV()
       /* This method implements the Help command.

@@ -519,7 +519,7 @@ public abstract class DataNode
         });
       Platform.runLater(() -> { // Display with JavaFX Application Thread.
         /// theAppLog.debug("DataNode.outputChangedSubtreeV() updating TreeView.");
-        System.out.print("[dnti]");
+        /// System.out.print("[dnti]");
         DataNode savedDataNode= theEpiTreeItem.getValue();
         theEpiTreeItem.setValue(null); // Force reference change.
         theEpiTreeItem.setValue(savedDataNode); // Restore original reference.
@@ -1033,11 +1033,13 @@ public abstract class DataNode
         DataNode childDataNode= // Translate index to DataNode.
           getChild( childIndexI );
 
+        /*  ///
         theAppLog.debug("[DataNode.getNamedChildDataNode(.):"
           +this+","+inNameString+","+childIndexI+","+childDataNode+"]");
-
         if (null == childDataNode)
           theAppLog.appendToFileV(" [get FAILED!]");
+        */  ///
+        
         return childDataNode;  // Return DataNode.
         }
 
