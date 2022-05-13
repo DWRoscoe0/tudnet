@@ -18,27 +18,33 @@ import allClasses.DataNode;
 import allClasses.DataRoot;
 import allClasses.Persistent;
 
-// import static allClasses.Globals.appLogger;
+import static allClasses.AppLog.theAppLog;
 
 
-public class ConsoleNode 
-  extends BorderPane
+public class ConsoleNode
+
+  extends BorderPane // This the a JavaFX UI Node subclass.
+
   implements DocumentListener
-  
 
-  /* This class is used for displaying leaf Nodes that
-   * can be displayed as blocks of text.
-   * 
-   * The following problems were discovered when used with VolumeChecker.
-   * ///ano Detect when the caret of the TextArea scrolls out of view, 
-   *     and ask the user whether that action was the result 
-   *     of the user's command, or the action was an anomaly.
-   *     If it was an anomaly then scroll back to the correct position.
-   *     and automatically correct future scrolling anomalies
-   *     without bothering the user.
-   */
-  
   {
+
+    /* This class is a JavaFX UI Node subclass, 
+     * based on the JavaFX BorderPane.
+     * This class is used for interacting with
+     * DataNodes that are subclasses of ConsoleNode.
+     * This class provides a console-like user interface
+     * within the JavaFX GUI.
+     * 
+     * 
+     * The following problems were discovered when used with VolumeChecker.
+     * ///ano Detect when the caret of the TextArea scrolls out of view, 
+     *     and ask the user whether that action was the result 
+     *     of the user's command, or the action was an anomaly.
+     *     If it was an anomaly then scroll back to the correct position.
+     *     and automatically correct future scrolling anomalies
+     *     without asking  the user.
+     */
 
     @SuppressWarnings("unused") ///
     private TreeStuff theTreeStuff;
@@ -54,6 +60,9 @@ public class ConsoleNode
                 EpiTreeItem theRootEpiTreeItem,
                 Selections theSelections
                 )
+    /* This method creates a TreeStuff and an associated ConsoleNode
+     * that is useful for interacting with theConsoleBase DataNode.
+     */
     { 
       TreeStuff theTreeStuff= TreeStuff.makeTreeStuff(
           theConsoleBase,
@@ -71,53 +80,80 @@ public class ConsoleNode
       theTreeStuff.initializeGUINodeV(theConsoleNode);
       return theTreeStuff;
       }
-    
-    public ConsoleNode(
+
+    public ConsoleNode( // Constructor.
         ConsoleBase theConsoleBase, 
         String initialContentString, 
         TreeStuff theTreeStuff
         )
-      /* Constructs a ConsoleNode.
-        subjectDataNode is the node of the Tree to be displayed.
-        The last DataNode in the path is that Node.
-        The content text to be displayed is theString.
+      /* This constructor constructs a ConsoleNode object.
+        subjectDataNode is the DataNode with which
+        the user will be interacting.
+        The initial text to be displayed is initialContentString.
+        theTreeStuff is the associated TreeStuff.
         */
       {
         this.theTreeStuff= theTreeStuff;
         this.theConsoleBase= theConsoleBase;
+
         Label titleLabel= new Label( theConsoleBase.toString());
         setTop(titleLabel); // Add title to main Pane.
         BorderPane.setAlignment(titleLabel,Pos.CENTER);
-
-        /// theAppLog.debug(
-        ///   "ConsoleNode.ConsoleNode(.) TextArea(\""+initialContentString+"\")");
         theTextArea= // Construct TextArea with initial text.
           new TextArea(initialContentString);
-        /// theTextArea.getCaret().setVisible(true); // Make viewer cursor visible.
+        /// theAppLog.debug(
+        ///   "ConsoleNode.ConsoleNode(.) TextArea(\""+initialContentString+"\")");
         theTextArea.setWrapText(true); // Make all visible.
-        /// theTextArea.setWrapStyleWord(true); // Make it pretty.
         Platform.runLater( () -> {
             theTextArea.requestFocus();
             theTextArea.positionCaret(theTextArea.getLength());
             ///mys ///fix  Kake cursor visible again.  Does unrequested scroll.
             } );
-        theTextArea.addEventFilter( // or addEventHandler(
+        theTextArea.addEventFilter( // Prepare TextArea KeyEvents processing.
           KeyEvent.ANY, (theKeyEvent) -> handleKeyV(theKeyEvent) );
-        theConsoleBase.addDocumentListener(this);
+        theConsoleBase.addDocumentListener(this); // Prepare base Document
+          // processing.
         setCenter(theTextArea);
         }
 
+    private void handleKeyV(KeyEvent theKeyEvent)
+      /* This method is used as a KeyEvent filter in 
+       * the JavaFX event capture phase.
+       * It processes and consumes ALL KeyEvents passed to it.
+       * It requires that a JavaFX Node have keyboard focus,
+       * but prevents the Node actually processing the KeyEvent.
+       * 
+       * This method passes keys from KEY_TYPED events to 
+       * theConsoleBase DataNode associated with this JavaFX UI Node.
+       * 
+       * This method consumes, but otherwise ignores, 
+       * the other 2 KeyEvent types: KEY_PRESSED and KEY_RELEASED.
+       * This is done because apparently TextArea
+       * inserts "\n" after the caret in response to (Enter) key presses.
+       */
+      {
+        if // Pass only KEY_TYPED events to theConsoleBase. 
+          (KeyEvent.KEY_TYPED == theKeyEvent.getEventType()) 
+          {
+            String keyString= theKeyEvent.getCharacter();
+            theConsoleBase.processInputKeyV(keyString);
+            }
 
-    /* DocumentListener methods, to make TextArea same as ConsoleBase Document.
-     * Presently only inserts are handled.
-     * The cursor is placed at the end of the insert.
+        theKeyEvent.consume(); // Consume to prevent further Event processing.
+        }
+
+
+    /* DocumentListener methods, to keep theTextArea content equal to
+     *  ConsoleBase.thePlainDocument content.
+     * Presently only document inserts are handled by these methods.
+     * The cursor is always placed at the end of theTextArea change.
      */
 
-    public void changedUpdate(DocumentEvent theDocumentEvent) {} // Not needed.
+    public void changedUpdate(DocumentEvent theDocumentEvent) {} // Not used.
 
     public void insertUpdate(DocumentEvent theDocumentEvent)
       /* This method processes Document insert events by 
-       * duplicating the document change in the theTextArea.
+       * duplicating the document changes in the theTextArea.
        */
       {
         final Document theDocument= theDocumentEvent.getDocument();
@@ -127,7 +163,7 @@ public class ConsoleNode
             theDocument, offsetI, lengthI);
         /// theAppLog.debug(
         ///   "ConsoleNode.insertUpdate(.) theString='"+theString+"'");
-        Platform.runLater( () -> {
+        Platform.runLater( () -> { // (do this because TextArea is part of GUI)
             /*  ///dbg
             logTextAreaTailStateV("before..insertText(.) ");
             theAppLog.debug(
@@ -172,45 +208,50 @@ public class ConsoleNode
             );
         }
     */  ///dbg
-    
+
     private String fromDocumentGetString(
         Document theDocument, int offsetI, int lengthI)
+      /* This method tries to return a String consisting of the characters
+       * in theDocument from offset offsetI to offsetI+lengthI.
+       * If an exception happens then it returns 
+       * a String describing the exception.
+       */
       {
         String theString;
         try {
             theString= theDocument.getText(offsetI, lengthI);
-          } catch (BadLocationException e1) {
-            theString= "[BadLocationException]";
-            ////// TODO Auto-generated catch block
-            e1.printStackTrace();
+          } catch (BadLocationException theBadLocationException) {
+            theString= theBadLocationException.toString();
+            theAppLog.error("ConsoleNode.fromDocumentGetString(.) "+theString);
           }
         return theString;
       }
 
-    /*  ///fix in removeUpdate(.) method which follows: 
-          java.lang.StringIndexOutOfBoundsException: 
-                String index out of range: -127
-        It happened when I pressed left-arrow and right-arrow to exit viewer
-        and re-enter, it resulted in an exception.  Console showed:
-          !!!!!!!!!!!!!!!!!!!!!!!!!!!!DefaultExceptionHandler.uncaughtException(..): Uncaught Exception in thread JavaFX Application Threadjava.lang.StringIndexOutOfBoundsException: 
-            String index out of range: -127
-          !EXCEPTION: DefaultExceptionHandler.uncaughtException(..): Uncaught Exception in thread JavaFX Application Thread :
-            java.lang.StringIndexOutOfBoundsException: String index out of range: -127
-          !java.lang.StringIndexOutOfBoundsException: String index out of range: -127
-            at java.lang.String.substring(String.java:1967)
-            at javafx.scene.control.TextInputControl.updateContent(TextInputControl.java:571)
-            at javafx.scene.control.TextInputControl.replaceText(TextInputControl.java:548)
-            at javafx.scene.control.TextInputControl.deleteText(TextInputControl.java:496)
-            at allClasses.javafx.ConsoleNode.lambda$3(ConsoleNode.java:160)
-            at com.sun.javafx.application.PlatformImpl.lambda$null$5(PlatformImpl.java:295)
-        * It happened in the Runnable in ConsoleNode.removeUpdate(.) calling
-          TextArea.deleteText(.).
-        ? I suspect this problem is related to 
-          ? a synchronization problem
-          ? a leaked Listener
-        I tried reproducing it and failed, 
+    /*  ///fix Watch for re-occurrence of following problem in removeUpdate(). 
+      The method which follows, removeUpdate(.), produced: 
+        java.lang.StringIndexOutOfBoundsException: 
+              String index out of range: -127
+      It happened when I pressed left-arrow and right-arrow to exit viewer
+      and re-enter.  It resulted in an exception.  Console showed:
+        ........DefaultExceptionHandler.uncaughtException(..): Uncaught Exception in thread JavaFX Application Threadjava.lang.StringIndexOutOfBoundsException: 
+          String index out of range: -127
+        !EXCEPTION: DefaultExceptionHandler.uncaughtException(..): Uncaught Exception in thread JavaFX Application Thread :
+          java.lang.StringIndexOutOfBoundsException: String index out of range: -127
+        !java.lang.StringIndexOutOfBoundsException: String index out of range: -127
+          at java.lang.String.substring(String.java:1967)
+          at javafx.scene.control.TextInputControl.updateContent(TextInputControl.java:571)
+          at javafx.scene.control.TextInputControl.replaceText(TextInputControl.java:548)
+          at javafx.scene.control.TextInputControl.deleteText(TextInputControl.java:496)
+          at allClasses.javafx.ConsoleNode.lambda$3(ConsoleNode.java:160)
+          at com.sun.javafx.application.PlatformImpl.lambda$null$5(PlatformImpl.java:295)
+      * It happened in the Runnable in ConsoleNode.removeUpdate(.) calling
+        TextArea.deleteText(.).
+      ? I suspect this problem is related to 
+        ? a synchronization problem
+        ? a leaked Listener
+      I tried reproducing it and failed. 
       */
-    
+
     public void removeUpdate(DocumentEvent theDocumentEvent)
       /* This method processes Document remove events by 
        * duplicating the document change in the theTextArea.
@@ -220,35 +261,12 @@ public class ConsoleNode
         final int lengthI= theDocumentEvent.getLength();
         /// theAppLog.debug(
         ///   "ConsoleNode.removeUpdate(.) theString='"+theString+"'");
-        Platform.runLater( () -> {
+        Platform.runLater( () -> { // (do this because TextArea is part of GUI)
             /// theAppLog.debug(
             ///   "ConsoleNode.removeUpdate(.) QUEUED theString='"+theString+"'");
             theTextArea.deleteText(offsetI, offsetI+lengthI);
             theTextArea.positionCaret(offsetI);
             } );
-        }
-
-    private void handleKeyV(KeyEvent theKeyEvent)
-      /* This event handler method handles key events by
-       * capturing all types keys and passing them to theConsoleBase.
-       * It is actually used as an event filter during the event capture stage,
-       * not as a handler during the event bubbling phase.
-       * It handles and consumes all KeyEvent.ANY sub-types by
-       * * passing typed characters to theConsoleBase from KEY_TYPED events
-       * * ignoring other KeyEvent types: KEY_PRESSED and KEY_RELEASED.
-       * It is done this way because apparently TextArea
-       * will insert "\n" after the caret in response to (Enter) key presses.
-       */
-      {
-        if (KeyEvent.KEY_TYPED == theKeyEvent.getEventType()) {
-
-          String keyString= theKeyEvent.getCharacter();
-  
-          theConsoleBase.processInputKeyV(keyString);
-          }
-
-        theKeyEvent.consume(); // Consume event to prevent 
-          // further processing of all KeyEvent sub-types.
         }
 
     }

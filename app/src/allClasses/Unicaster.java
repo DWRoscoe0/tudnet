@@ -81,7 +81,7 @@ public class Unicaster
   		private LinkedMachineState theLinkedMachineState;
       private MapEpiNode thisMapEpiNode;
 
-  	  Color getBackgroundColor( Color defaultBackgroundColor )
+  	  public Color getBackgroundColor( Color defaultBackgroundColor )
   	    /* This method is a kludge to return the background color from 
   	      the theLinkedMachineState without needing to add code to 
   	      AndState or AndOrState.

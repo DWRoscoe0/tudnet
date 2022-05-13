@@ -109,8 +109,8 @@ public class VolumeChecker
             "VolumeChecker.VolumeChecker(.) ends, nameString='"+nameString+"'");
         }
 
+    @Override
     protected void mainThreadLogicV()
-      // This overrides the superclass method. 
       {
         queueAndDisplayOutputSlowV(
           "This feature does simple functional testing of storage volumes "
@@ -197,10 +197,10 @@ public class VolumeChecker
         replaceOperationAndRefreshProgressReportV("done");
       }  // goReturn:
         if (! EpiString.isAbsentB(resultString)) // Report error or success.
-          reportWithPromptSlowlyAndWaitForKeyV( // Report error.
+          appendWithPromptSlowlyAndWaitForKeyV( // Report error.
               "Abnormal termination:\n" + resultString);
           else 
-          reportWithPromptSlowlyAndWaitForKeyV( // Report success.
+          appendWithPromptSlowlyAndWaitForKeyV( // Report success.
             "The operation completed without error.");
         theAppLog.debug("VolumeChecker.checkVolumeV(.) ends.");
         return;
@@ -616,7 +616,7 @@ public class VolumeChecker
     private void outputProgressSlowlyV()
       {
         String outputString= getProgressReportString();
-        outputSlowlyV(outputString);
+        appendSlowlyV(outputString);
         }
     
     private String getProgressReportString()

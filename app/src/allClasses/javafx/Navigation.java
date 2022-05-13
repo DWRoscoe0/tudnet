@@ -164,14 +164,13 @@ public class Navigation extends EpiStage
 
     private void buildDataNodePartsV(
         DataNode previouslySelectedDataNode)
-      /* This method builds the DataNode dependent part of UI.
-       * If theDataNode/previouslySelectedDataNode is null 
-       * then this method does nothing.
+      /* This method builds the DataNode dependent part of the UI.
+       * If previouslySelectedDataNode is null then this method does nothing.
        *
-       * Otherwise it calculates a new TreeStuff from theDataNode,
+       * Otherwise it calculates a new TreeStuff from the DataNode,
        * and stores a GUI Node appropriate for displaying theDataNode
        * at the center of the content BorderPane of the DataNode Scene 
-       * so that theDataNode will be displayed.
+       * so that the DataNode will be displayed.
        */
       {
         rebuildWithButtonTheBottomFlowPaneV(theDataNodeShowTreeButton);

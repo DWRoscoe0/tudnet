@@ -41,6 +41,7 @@ public class VolumeDetector
           myToString()+"VolumeDetector.VolumeChecker(.) ends, nameString='"+nameString+"'");
         }
 
+    @Override
     protected void mainThreadLogicV()
       // This should be overridden by subclasses. 
       {

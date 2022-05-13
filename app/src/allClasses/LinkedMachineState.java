@@ -267,7 +267,7 @@ public class LinkedMachineState
       return;
     }
 
-    Color getBackgroundColor(Color defaultBackgroundColor) {
+    public Color getBackgroundColor(Color defaultBackgroundColor) {
       return activityBasedBackgroundColor(UIColor.activeWaitingWithoutLimitStateColor);
     }
 
@@ -312,7 +312,7 @@ public class LinkedMachineState
       }
     }
 
-    Color getBackgroundColor(Color defaultBackgroundColor) {
+    public Color getBackgroundColor(Color defaultBackgroundColor) {
       return activityBasedBackgroundColor(UIColor.activeAfterTimeOutStateColor);
     }
 
@@ -363,7 +363,7 @@ public class LinkedMachineState
           }
     }
 
-    Color getBackgroundColor(Color defaultBackgroundColor) {
+    public Color getBackgroundColor(Color defaultBackgroundColor) {
       return activityBasedBackgroundColor(UIColor.activeInErrorStateColor);
     }
 
@@ -491,7 +491,7 @@ public class LinkedMachineState
       super.onExitV();
       }
 
-    Color getBackgroundColor(Color defaultBackgroundColor) {
+    public Color getBackgroundColor(Color defaultBackgroundColor) {
       return activityBasedBackgroundColor(UIColor.activeBeforeTimeOutStateColor);
       }
 

@@ -23,37 +23,36 @@ public class ConsoleBase
   extends NamedDataNode
   implements Runnable
 
-  /* This class is the DataNode basis for features that use 
-   * a simple console-like user interface.
-   * It and its subclasses work with the ConsoleNode class
-   * to provide this behavior.
-   * It provides keyboard input and text display output.
-   * The text output is intentionally slowed for 
-   * readability and comprehension.
-   */
-
   {
-  
-    // static variables.
 
-  
+    /* This class is the base class for DataNodes that use 
+     * a simple console-like user interface.
+     * It and its subclasses work with the ConsoleNode class
+     * to provide this behavior.
+     * It provides keyboard input and text display output.
+     * The text output is intentionally slowed for 
+     * readability and comprehension.
+     */
+
     // instance variables.
 
     // Constructor-injected variables.
       ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor;
 
     // Other variables.
-    private boolean threadRunningB= false;
+    private boolean threadIsRunningB= false;
     private StringBuffer inputStringBuffer= new StringBuffer();
     private StringBuffer outputStringBuffer= new StringBuffer();
     protected LockAndSignal theLockAndSignal= new LockAndSignal();
       // processInputKeyV(.) uses this for notification.
       // Subclasses may add notifications for additional inputs.
-    protected PlainDocument thePlainDocument= new PlainDocument();
-      // Internal document store.
-      // Unlike thePlainDocument in TextStream2,
-      // this has no EDT (Event Dispatch Thread) restrictions,
-      // because it is not used directly by any GUI TextArea.
+    protected PlainDocument thePlainDocument= new PlainDocument(); /* 
+      This is a document that is used to simulate a console-like display.
+      It is not part of a TextArea or any other part of a user-interface,
+      so there are no EDT or JAT thread restrictions on its use.
+      There are methods for getting, setting, 
+      and listening for changes in its content.
+       */
 
     public ConsoleBase( // constructor
         String nameString, // Node name.
@@ -72,13 +71,14 @@ public class ConsoleBase
         }
 
     private synchronized void startThreadIfNeededV()
+      /* This method starts our thread if it hasn't started yet.  */
       {
-        if (! threadRunningB) { // If our thread is not running
+        if (! threadIsRunningB) { // If our thread is not running
           theScheduledThreadPoolExecutor.execute(this); // start our thread
-          threadRunningB|= true; // and record same.
+          threadIsRunningB|= true; // and record same.
           }
         }
-    
+
     protected String myToString()
       // Method to simulate Object.toString().
       {
@@ -90,7 +90,8 @@ public class ConsoleBase
         return "";
         }
 
-    public void run() // For our Thread.
+    public void run()
+      // This method makes this class a Runnable to be run by our Thread.
       {
         /// theAppLog.debug(myToString()+"ConsoleBase.run() begins.");
         mainThreadLogicV();
@@ -98,7 +99,10 @@ public class ConsoleBase
         }
 
     protected void mainThreadLogicV()
-      // This should be overridden by subclasses. 
+      /* This method contains the code run by our thread.
+        It is a simple loop that reads and echoes keys.
+        It should be overridden by subclasses to provide other behaviors.
+        */
       {
         queueOutputV("ConsoleBase echo test.\n\n");
         while(true) {
@@ -112,26 +116,29 @@ public class ConsoleBase
           } 
         }
 
-    protected void reportWithPromptSlowlyAndWaitForKeyV(String reportString)
-      /* This method outputs slowly any queued output text
-       * followed by reportString, followed by a prompt to press Enter.
-       * Then it waits for any key press or thread termination request
-       * and returns.
+    protected void appendWithPromptSlowlyAndWaitForKeyV(String theString)
+      /* This method appends slowly to the document any queued output text
+       * followed by theString, followed by a prompt to press Enter.
+       * Next it flushes keyboard input and waits for 
+       * an Enter-terminated String or a thread termination request.
+       * Then it returns.
        */
       {
         queueOutputV(
             "\n\n"
-            + reportString
+            + theString
             + "\nPress Enter key to continue: "
             );
         promptSlowlyAndGetKeyString();
         }
 
     protected String promptSlowlyAndGetKeyString(String promptString)
-      /* This method outputs slowly any queued output text
-       * followed by prompt string,
-       * then waits for and returns a key string, 
-       * or null if thread termination is requested.
+      /* This method appends slowly to the document any queued output text
+       * followed by promptString.
+       * Next it flushes keyboard input and waits for
+       * an Enter-terminated key String or a thread termination request.
+       * It returns the entered String, 
+       * or null if thread termination was requested.
        */
       { 
         queueOutputV(promptString);
@@ -139,36 +146,41 @@ public class ConsoleBase
         }
 
     protected String promptSlowlyAndGetKeyString()
-      /* This method outputs slowly any queued output text,
-       * then waits for and returns a key string, 
-       * or returns null if thread termination is requested first.
+      /* This method appends slowly to the document any queued output text.
+       * Next it flushes keyboard input and waits for
+       * an Enter-terminated key String or a thread termination request.
+       * It returns the entered String, 
+       * or null if thread termination was requested.
        */
       {
         promptSlowlyV();
-        return getKeyString(); // Wait for and return a new key.
+        return getKeyString();
         }
 
     protected void promptSlowlyV()
-      /* This method outputs slowly any queued output text,
-       * then flushes the keyboard input queue in preparation for
-       * possible keyboard input.
+      /* This method appends slowly to the document any queued output text.
+       * Next it flushes the keyboard input queue in preparation for
+       * possible new keyboard input.
        */
       {
-        displayQueuedOutputSlowV();
+        appendQueuedOutputSlowV();
         flushKeysV();
         }
 
-    protected void outputSlowlyV(String theString)
-      /* This method outputs theString slowly along with 
-       * anything else previously queued.
+    protected void appendSlowlyV(String theString)
+      /* This method appends slowly to the document any queued output text
+       * followed by promptString.
        */
       {
         queueOutputV(theString);
-        displayQueuedOutputSlowV();
+        appendQueuedOutputSlowV();
         }
 
     protected void flushKeysV()
       /* This method flushes the keyboard input queue.
+       * This is done to prevent processing any keyboard keys
+       * that were input before the app was ready to accept them.
+       * This is to reduce the risk of executing a command that destroys data. 
        */
       {
         String keyString;
@@ -180,24 +192,29 @@ public class ConsoleBase
             + ">");
           }
         }
-      
+
     protected void queueAndDisplayOutputSlowV(String theString)
+      /* This method appends theString to the output queue.
+       * Next it appends slowly to the document any queued output text,
+       * which includes anything previously queued plus theString.
+       * Next it returns.
+       */
       {
         queueOutputV(theString);
-        displayQueuedOutputSlowV();
+        appendQueuedOutputSlowV();
         }
       
     protected void queueOutputV(String theString)
-      /* Use this method to add content to the outputStringBuffer.
-       * The content is always appended.
+      /* This method adds theString to the output queue.
        */
       {
         outputStringBuffer.append(theString);
         }
 
     protected String getKeyString()
-      /* This method waits for and returns the next key to appear in the queue.
-       * It returns this key as a String,
+      /* This method waits for and returns
+       * the next key to appear in the input queue.
+       * It returns the key as a String,
        * or returns null if thread termination is requested first.
        * It will wait until one of those input types happens.
        */
@@ -221,7 +238,8 @@ public class ConsoleBase
 
     protected String tryToGetFromQueueKeyString()
       /* This method tries to extract the next key as a String
-       * from the keyboard input queue, or null if there is none.
+       * from the keyboard input queue.  It always returns immediately.
+       * If there is no key available then it returns null.
        */
       {
         String inString= testGetFromQueueKeyString();
@@ -234,11 +252,12 @@ public class ConsoleBase
         }
 
     protected String testGetFromQueueKeyString()
-      /* This method test whether there it is possible 
-       * to extract the next key as a String
-       * from the keyboard input queue.
-       * It returns the key if so, or null if there is none.
+      /* This method tests whether it is possible 
+       * to return a key from the keyboard input queue.
+       * It returns the next key as a String if there is one, 
+       * otherwise it returns null.
        * All control characters are translated to \n.
+       * It does not remove the key from the queue.
        */
       {
         String inString= null;
@@ -254,30 +273,30 @@ public class ConsoleBase
         return inString;
         }
 
-    protected void displayQueuedOutputSlowV()
-      /* This method outputs the content of the outputStringBuffer slowly,
+    protected void appendQueuedOutputSlowV()
+      /* This method appends slowly to the document any queued output text.
+       * It does this by removing each character from the output queue, 
        * one character at a time, appending each to the end of theDocument,
-       * with a small delay between them.
-       * This makes it clear to the user that output is occurring,
-       * and makes it easier to follow the output.
-       * It doesn't stop until the outputStringBuffer is empty.
+       * with a small delay after each character.
+       * These delays makes it clearer to the user that output is occurring,
+       * and makes it easier to follow the output,
+       * if the document is being displayed to a user interface.
+       * This method doesn't stop until the outputStringBuffer is empty.
        */
       {
         while (0 < outputStringBuffer.length()) {
-          //// int charactersToOutputI= outputStringBuffer.length();
           int charactersToOutputI= 1;
           String outString= outputStringBuffer.substring(0,charactersToOutputI);
           /// theAppLog.debug(myToString()+"ConsoleBase.mainThreadLogicV() "
           ///     + "processing from outputStringBuffer \""+outString+"\"");
           appendToDocumentV(outString);
           outputStringBuffer.delete(0,charactersToOutputI);
-          //// EpiThread.interruptibleSleepB(5);
           EpiThread.interruptibleSleepB(2);
           }
         }
 
     private void appendToDocumentV(String theString)
-      // Convenience method that appends and handles exceptions.
+      // Convenience method that appends to the document and handles exceptions.
       {
         replaceInDocumentV(
           thePlainDocument.getLength(),
@@ -290,7 +309,7 @@ public class ConsoleBase
         int tailOffsetI,String newTailString)
       /* This method replaces the tail end of the document.
        * This is used mainly for when the tail of the document
-       * is being used as an update-able display area.  
+       * is being used as an update-able text display area.  
        */
       {
         replaceInDocumentV( // Replace the text in the document
@@ -325,18 +344,18 @@ public class ConsoleBase
           thePlainDocument.replace( // Replace in document the old text
             oldTextOffsetI, // that starts here
             oldTextLengthI, // and is this long
-            newTextString, // by this new text
+            newTextString, // with this new text
             SimpleAttributeSet.EMPTY // with no special attributes.
             );
           ///dbg logPlainDocumentStateV("after..replace");
-        } catch (BadLocationException e) {
+        } catch (BadLocationException theBadLocationException) {
           theAppLog.warning(
-              "ConsoleBase.replaceInDocumentV(.) failed, "+e);
-          e.printStackTrace();
+            "ConsoleBase.replaceInDocumentV(.) " + theBadLocationException);
         }
       }
 
-    /*  ///dbg
+    /*  ///dbg  Some methods I was using to debug.
+
     private void logPlainDocumentStateV(String contextString)
       {
         int lengthI= thePlainDocument.getLength();
@@ -351,7 +370,7 @@ public class ConsoleBase
         }
 
     private String getTextFromDocumentString(int offsetI,int lengthI)
-      // This method get some document text and and handles exceptions.
+      // This method gets some document text and and handles exceptions.
       {
         String resultString;
         try {
@@ -363,41 +382,43 @@ public class ConsoleBase
         }
       return resultString;
       }
+
     */  ///dbg
 
     public void addDocumentListener(DocumentListener listener)
-      /* This method simply forwards to thePlainDocument. */
+      /* This method simply forwards to thePlainDocument. 
+       * thePlainDocument will be the actual event source.  
+       * */
       { 
         thePlainDocument.addDocumentListener(listener); 
         startThreadIfNeededV();
         }
 
-    public void processInputKeyV(String theKeyString) {
-      inputStringBuffer.append(theKeyString);
-
-      theLockAndSignal.notifyingV();
-
-      startThreadMaybeV();
-      }
-
-    private synchronized void startThreadMaybeV()
+    public void processInputKeyV(String theKeyString) 
+      /* This method processes key input from the user.
+       * It is meant to be called from a JavaFX Node handling KeyEvent's.
+       * Key input is in theKeyString.  
+       * It is normally one character but can be more.
+       * The key or keys are appended to the key input queue
+       * and appropriate notifications are made.
+       */
       {
+        inputStringBuffer.append(theKeyString);
+
+        theLockAndSignal.notifyingV();
+        startThreadIfNeededV();
         }
 
-    
-    // Swing, TreeAware, and TreeHelper code.
 
-    public TreeHelper theTreeHelper;
+    // Swing and JavaFX helper code.
 
-    public TreeHelper getTreeHelper() { return theTreeHelper; }
-
+    @Override
     public JComponent getDataJComponent( 
         TreePath inTreePath, DataTreeModel inDataTreeModel 
         ) 
-      /* Returns a JComponent which should be a viewer capable of displaying 
-       * this DataNode and executing the command associated with it.
-       * The DataNode to be viewed should be 
-       * the last element of inTreePath,
+      /* This is a mostly non-functional stub.
+       * It exists so that something will be displayed 
+       * if this DataNode is displayed in the old Java Swing UI.
        */
       {
           JComponent theJComponent;
@@ -411,6 +432,7 @@ public class ConsoleBase
           return theJComponent;
         }
 
+    @Override
     public TreeStuff makeTreeStuff( 
         DataNode selectedDataNode,
         Persistent thePersistent,
@@ -418,27 +440,28 @@ public class ConsoleBase
         EpiTreeItem theRootEpiTreeItem,
         Selections theSelections
         )
-      /* This is the JavaFX version of getDataJComponent(.).
-       * See DataNode for base version.
-       * 
-       * This method creates a ConsoleViewer Node object 
-       * for displaying this DataNode.
+      /* This method creates a TreeStuff appropriate for 
+       * use in interacting with this DataNode subclass object
+       * using the JavaFX GUI.
+       * That object will contain a reference to an appropriate 
+       * ConsoleNode JavaFX UI Node subclass object.
        */
       {
         TreeStuff resultTreeStuff= null;
         try {
-          resultTreeStuff = ConsoleNode.makeTreeStuff(
-                  this,
-                  selectedDataNode,
-                  thePlainDocument.getText(0,thePlainDocument.getLength()),
-                  thePersistent,
-                  theDataRoot,
-                  theRootEpiTreeItem,
-                  theSelections
-                  );
-        } catch (BadLocationException e) {
-          ////// TODO Auto-generated catch block
-          e.printStackTrace();
+          resultTreeStuff= // Delegate to ConsoleNode.
+            ConsoleNode.makeTreeStuff(
+              this,
+              selectedDataNode,
+              thePlainDocument.getText(0,thePlainDocument.getLength()),
+              thePersistent,
+              theDataRoot,
+              theRootEpiTreeItem,
+              theSelections
+              );
+        } catch (BadLocationException theBadLocationException) {
+          theAppLog.warning(
+            "ConsoleBase.makeTreeStuff(.) " + theBadLocationException);
         }
         return resultTreeStuff; // Return the view that was created.
         }

@@ -830,6 +830,7 @@ public class AppLog
         }
 
     public static String glyphifyString(String theString)
+      // This method converts control characters to printable ones.
       {
         StringBuilder resultStringBuilder= new StringBuilder();
         for (int indexI = 0; indexI < theString.length(); indexI++) {

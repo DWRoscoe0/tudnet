@@ -46,8 +46,8 @@ public class InstallerBuilder
         this.thePersistent= thePersistent;
         }
 
+    @Override
     protected void mainThreadLogicV()
-      // This overrides the superclass method. 
       {
         queueAndDisplayOutputSlowV(
           "This feature installs the app to storage volumes "
@@ -106,11 +106,11 @@ public class InstallerBuilder
         if (! EpiString.isAbsentB(resultString)) break goFinish;
       }  // goFinish:
         if (! EpiString.isAbsentB(resultString)) { // Report error.
-          reportWithPromptSlowlyAndWaitForKeyV(
+          appendWithPromptSlowlyAndWaitForKeyV(
               "Abnormal termination:\n" + resultString);
           break goReturn;
           }
-        reportWithPromptSlowlyAndWaitForKeyV(
+        appendWithPromptSlowlyAndWaitForKeyV(
           "The operation completed without error.");
       }  // goReturn:
         theAppLog.debug("InstallerBuilder.installToVolumeV(.) ends.");

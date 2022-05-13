@@ -48,13 +48,14 @@ public abstract class DataNode
       ///opt: Remove theMaxLogLevelto reduce node storage, 
         also the methods what use it,
         because this feature hasn't been used for a long time,
-        and there are probably better ways to do controlled logging.
+        and there are probably better ways to do control logging.
 
       ///enh Possible methods to add:
   
         ?? Add getEpiThread() which returns the EpiThread associated with
           this DataNode, or null if there is none, which is the default.
-          This would standardize and simplify thread starting and stopping.
+          This could be used to standardize and simplify 
+          thread starting and stopping.
            
         ?? Add JComponent getSummaryJComponent() which returns 
           a component, such as a Label, which summarizes this DataNode,
@@ -89,10 +90,11 @@ public abstract class DataNode
        * rooted at this DataNode, meaning this node and its descendants.
        * This method returns the number of DataNodes finalized.
        *
-       * This version of the method has no children, so it returns the value 1.
+       * This version of the method assumes that the DataNode has no children, 
+       * so it returns the value 1.
        *
        * The main purpose of finalization is
-       * to close any resources associated DataNodes.
+       * to close resources associated with DataNodes.
        * 
        * See NamedList for an override example.
        */
@@ -104,20 +106,21 @@ public abstract class DataNode
 
 
     // Code dealing with this DataNode's parent.
-    
-    private NamedList treeParentNamedList= null; /* Parent node of this node.
-      If there is a parent, the parent must be a list, hence NamedList.
 
-      The value in this variable has multiple uses.
+    private NamedList treeParentNamedList= null; /* Parent node of this node.
+      If there is a parent then the parent must be a list, hence NamedList.
+
+      This variable has multiple uses.
       * It is used for propagation of change notifications towards the root,
-        needed for timely updating of displays.
+        used for lazy evaluation updating of displays.
       * It is used in the first phase of translating
         a DataNode to an associated 
-        * MapEpiNode or MetaNode in order to access metadata.
+        * MapEpiNode or MetaNode in order to access Swing UI metadata.
         * TreeItem for JavaFX TreeViewer. 
 
-      This variable might be replaced by a list later, possibly a MultiLink,
-      when and if DAGs are supported and multiple parents are required.
+      This variable might be replaced by a list later, 
+      possibly a MultiLink instance, multiple parents are required
+      if the tree DataNode hierarchy is replaced with a DAG hierarchy.
 
       ///opt If we eliminate StateList.parentStateList then
       // this would need to be changed to a StateList,
@@ -130,19 +133,16 @@ public abstract class DataNode
         or one of its subclasses.  
         This method stores treeParentNamedList within this node, 
         because every node has a parent and needs access to its parent.
+
+        This method does NOT attempt to unlink from
+        an existing parent if there is one. 
         */
-            {
+      {
         this.treeParentNamedList= treeParentNamedList;
         }
 
     public NamedList getTreeParentNamedList()
       /* This method returns a reference to this node's tree parent node.
-       * 
-       * This method has different uses, depending on context.
-       * * Sometimes it is used to get the parent DataNode.  
-       *   This is the tree sense.
-       * * Sometimes it is used to access the viewer of the parent DataNode.
-       *   This is the DAG sense.
        * 
        * This method might be replaced by multiple methods later,
        * one for trees and one for DAGs.
@@ -153,9 +153,7 @@ public abstract class DataNode
 
 
     /* DataNode hierarchy change notification system, common part.
-     * 
-     * !!!!!!!!!!!!!!!!!!!! BEING REWRITTEN.
-     
+
       This is part of a system that aggregates and processes 
       DataNode change notifications from multiple threads,
       and eventually outputs changed nodes to the GUI.
@@ -167,20 +165,21 @@ public abstract class DataNode
       This is an example of restricted value multitasking communication. 
       No locks are used.
       * Threads that report and aggregate node changes write
-        values other than TreeChange.NONE to the variables and
+        values other than TreeChange.NONE to the variable and
         propagates these changes toward the DataNode root.
       * The thread that processes and outputs node changes to the GUI
-        writes the value TreeChange.NONE to the variables
-        and propagate those changes toward the leaves.
+        writes the value TreeChange.NONE to the variable
+        and propagates those changes toward the leaves.
 
       In the Java Swing UI, this system is used for deciding when to repaint
       cells representing DataNodes in JTrees and JLists.
 
       In the JavaFX UI, changes output to the JavaFX UI 
       are not immediately displayed.  Changes are aggregated in
-      JavaFX's own aggregation system, in Nodes and TreeItems.
+      JavaFX's own capture-and-bubble aggregation system, 
+      using JavaFX Node and TreeItem instances.
       Display doesn't actually happen until JavaFX's next Pulse-time.
-      ///enh Make it work with the JavaFX UI also.  This is work in progress.
+      ///fix This doesn't work yet.  Make it work.
 
       */
 
@@ -373,10 +372,10 @@ public abstract class DataNode
      * Changes output to the Swing UI are displayed immediately.
      *  
      * Changes output to the JavaFX UI are NOT displayed immediately.
-     * Changes are aggregated in JavaFX's own aggregation system, 
-     * in Nodes and TreeItems.
+     * Changes are aggregated in JavaFX's own capture-and-bubble
+     * aggregation system, in Nodes and TreeItems.
      * Display doesn't actually happen until JavaFX's next Pulse-time.
-     * ///fox Not working yet.
+     * ///fix Not working yet.
      * 
      * */
 
@@ -838,6 +837,116 @@ public abstract class DataNode
         }
 
 
+    /* Java Swing and JavaFX UI methods.
+     * 
+     * The app uses both the older Java Swing UI and the newer JavaFX UI.
+     * The following 2 method create UI-dependent objects for doing this.
+     * 
+     * getDataJComponent(.) creates and returns a Java Swing JComponent 
+     * that is useful for interacting with this DataNode with the Java Swing UI.
+     * The JComponent uses a TreeHelper object useful for dealing with
+     * the DataNode hierarchy.
+     * 
+     * makeTreeStuff(.) creates and returns a TreeStuff object 
+     * that is useful for dealing with the DataNode hierarchy,
+     * and also can return a JavaFX Node object  
+     * that is useful for interacting with this DataNode in the JavaFX UI.
+     */
+
+    public JComponent getDataJComponent( 
+        TreePath inTreePath, DataTreeModel inDataTreeModel 
+        ) 
+      /* This method returns a Java Swing UI JComponent 
+        that is capable of at least displaying this DataNode.
+
+        inTreePath must be a TreePath to this DataNode. which means
+        that this DataNode must be the last element of inTreePath.
+
+        inDataTreeModel may provide context to the JComponent.
+
+        This base class method returns useful defaults, specifically
+        * a TextViewer for DataNode leaves and 
+        * a ListViewer for DataNode non-leaves.
+        This base class method may be overridden if 
+        a more specialized JComponent is needed, 
+        or to allow the user to edit the DataNode.
+
+        */
+      {
+        JComponent resultJComponent= null;
+
+        if ( isLeaf() ) // Using TitledTextViewer if node is leaf.
+          resultJComponent= // Using TitledTextViewer.
+            new TitledTextViewer( 
+              inTreePath, 
+              inDataTreeModel, 
+              getContentString()
+              );
+          else  // Using TitledListViewer if not a leaf.
+          resultJComponent= // Using TitledListViewer.
+            new TitledListViewer( inTreePath, inDataTreeModel );
+
+        return resultJComponent;  // Returning result from above.
+        }
+
+    public TreeStuff makeTreeStuff( 
+        DataNode selectedDataNode,
+        Persistent thePersistent,
+        DataRoot theDataRoot,
+        EpiTreeItem theRootEpiTreeItem,
+        Selections theSelections
+        )
+      /* This method creates a TreeStuff object that will be useful for 
+       * displaying and manipulating this DataNode in the JavaFX UI.
+       * * selectedDataNode is the DataNode to be the selected child data node,
+       *   or null if there is to be no selected child DataNode,
+       *   or the selection should come from the selection history.
+       * * thePersistent provides access to persistent data storage.
+       * * theDataRoot provides access to the root of the data hierarchy.
+       * * theSelections provides access to the DataNode selection history.
+       * 
+       * This implementation creates 1 of 2 default TreeStuffs:
+       * * one for displaying leaves as text
+       * * one for displaying branches as a list
+       * A DataNode subclass may override this method to create TreeStuffs
+       * customized for doing tree operations with that particular subclass. 
+       */
+      {
+        TreeStuff resultTreeStuff;
+        if ( isLeaf() ) // Create a TreeStuff for text viewers if a leaf.
+          resultTreeStuff= TitledTextNode.makeTreeStuff(
+                this,
+                selectedDataNode,
+                getContentString(),
+                thePersistent,
+                theDataRoot,
+                theRootEpiTreeItem,
+                theSelections
+                );
+          else // Create a TreeStuff for list viewers if not a leaf.
+          resultTreeStuff= TitledListNode.makeTreeStuff(
+                this,
+                selectedDataNode,
+                theDataRoot,
+                theRootEpiTreeItem,
+                thePersistent,
+                theSelections
+                );
+        return resultTreeStuff; // Return the view that was created.
+        }
+
+    public Color getBackgroundColor( Color defaultBackgroundColor )
+      /* This method returns the background color 
+        which should be used to display this DataNode.
+        The default is input parameter defaultBackgroundColor,
+        but this method may be overridden to return any other color 
+        which is a function of class, state, or other data.
+       */
+      {
+        return defaultBackgroundColor;
+        }
+
+
     // Other functions of this DataNode.
 
     static boolean isAUsableDataNodeB( DataNode inDataNode )
@@ -904,89 +1013,6 @@ public abstract class DataNode
         return resultTreePath;   
         }
 
-    public JComponent getDataJComponent( 
-        TreePath inTreePath, DataTreeModel inDataTreeModel 
-        ) 
-      /* This method returns a Java Swing UI JComponent 
-        that is capable of at least displaying this DataNode.
-
-        inTreePath must be a TreePath to this DataNode. which means
-        that this DataNode must be the last element of inTreePath.
-
-        inDataTreeModel may provide context to the JComponent.
-
-        This base class method returns useful defaults, specifically
-        * a TextViewer for DataNode leaves and 
-        * a ListViewer for DataNode non-leaves.
-        This base class method may be overridden if 
-        a more specialized JComponent is needed, 
-        or to allow the user to edit the DataNode.
-
-        */
-      {
-        JComponent resultJComponent= null;
-
-        if ( isLeaf() ) // Using TitledTextViewer if node is leaf.
-          resultJComponent= // Using TitledTextViewer.
-            new TitledTextViewer( 
-              inTreePath, 
-              inDataTreeModel, 
-              getContentString()
-              );
-          else  // Using TitledListViewer if not a leaf.
-          resultJComponent= // Using TitledListViewer.
-            new TitledListViewer( inTreePath, inDataTreeModel );
-
-        return resultJComponent;  // Returning result from above.
-        }
-
-    public TreeStuff makeTreeStuff( 
-        DataNode selectedDataNode,
-        Persistent thePersistent,
-        DataRoot theDataRoot,
-        EpiTreeItem theRootEpiTreeItem,
-        Selections theSelections
-        )
-      /* This is the JavaFX version of getDataJComponent(.).
-       * 
-       * This method creates a TreeStuff object for displaying this DataNode.
-       * * selectedDataNode is the DataNode to be the selected child data node,
-       *   or null if there is to be no selected child DataNode,
-       *   or the selection should come from the selection history.
-       * * thePersistent provides access to persistent data storage.
-       * * theDataRoot provides access to the root of the data hierarchy.
-       * * theSelections provides access to the DataNode selection history.
-       * 
-       * This implementation creates one of 2 default JavaFX Node viewers:
-       * * one for displaying leaves as text
-       * * one for displaying branches as a list
-       * A DataNode subclass may override this method to create viewers
-       * customized for viewing that particular subclass. 
-       */
-      {
-        TreeStuff resultTreeStuff;
-        if ( isLeaf() ) // Create a text viewer Node if this DataNode is leaf.
-          resultTreeStuff= TitledTextNode.makeTreeStuff(
-                this,
-                selectedDataNode,
-                getContentString(),
-                thePersistent,
-                theDataRoot,
-                theRootEpiTreeItem,
-                theSelections
-                );
-          else  // Create a list viewer Node if this DataNode is not a leaf.
-          resultTreeStuff= TitledListNode.makeTreeStuff(
-                this,
-                selectedDataNode,
-                theDataRoot,
-                theRootEpiTreeItem,
-                thePersistent,
-                theSelections
-                );
-        return resultTreeStuff; // Return the view that was created.
-        }
-
     public int getIndexOfNamedChild( String inString )
       /* Returns the index of the child whose name is inString,
         or -1 if this DataNode has no such child. 
@@ -1043,17 +1069,6 @@ public abstract class DataNode
         return childDataNode;  // Return DataNode.
         }
 
-    Color getBackgroundColor( Color defaultBackgroundColor )
-      /* This method returns the background color 
-        which should be used to display this DataNode.
-        The default is input parameter defaultBackgroundColor,
-        but this method may be overridden to return any other color 
-        which is a function of class, state, or other data.
-       */
-      {
-        return defaultBackgroundColor;
-        }
-
 
     /* Code to do customized logging.
 
@@ -1094,24 +1109,20 @@ public abstract class DataNode
             }
         }
 
-
     protected boolean logB( LogLevel theLogLevel )
       {
         return ( theLogLevel.compareTo( theMaxLogLevel ) <= 0 ) ;
         }
-
 
     protected boolean logB( LogLevel theLogLevel, String theLogString )
       {
         return logB( theLogLevel, theLogString, null, false );
         }
 
-
     protected void logV( LogLevel theLogLevel, String theLogString )
       {
         logV( theLogLevel, theLogString, null, false );
         }
-
 
     protected boolean logB( 
         LogLevel theLogLevel, 
@@ -1129,7 +1140,6 @@ public abstract class DataNode
               theLogLevel, null, theLogString, theThrowable, consoleB );
         return loggingB;
         }
-
 
     protected void logV( 
         LogLevel theLogLevel, 
@@ -1165,7 +1175,6 @@ public abstract class DataNode
       {
         this.theDataTreeModel=  theDataTreeModel;
         }
-
 
     protected boolean tryProcessingMapEpiNodeB(MapEpiNode theMapEpiNode)
       /* This method is not used for anything now.  It has not been tested.

@@ -1299,7 +1299,7 @@ public class StateList extends MutableList implements Runnable {
 
   /* Methods for UI coloring.  */
 
-  Color getBackgroundColor( Color defaultBackgroundColor )
+  public Color getBackgroundColor( Color defaultBackgroundColor )
     /* This method returns the background color 
       which should be used to display this State.
       It overrides the superclass DataNode default.
@@ -1487,7 +1487,7 @@ class OrState extends AndOrState { //? StateList {
       }
   */  //?
 
-  Color getBackgroundColor( Color defaultBackgroundColor )
+  public Color getBackgroundColor( Color defaultBackgroundColor )
     /* This method returns the background color from the selected sub-state. 
       In other words, this state takes on the color of its active sub-state.
      */
