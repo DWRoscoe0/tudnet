@@ -11,10 +11,10 @@ public interface TreeAware
     see the TreeHelper class.
     */
 
-	{
+  {
 
     public TreeHelper getTreeHelper(); 
       /* Returns the TreeHelper object associated with this object. */
     
-	  }
+    }
   

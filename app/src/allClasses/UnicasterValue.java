@@ -3,7 +3,7 @@ package allClasses;
 
 public class UnicasterValue
 
-	extends DataNodeWithKeyAndThreadValue< Unicaster, IPAndPort >
+  extends DataNodeWithKeyAndThreadValue< Unicaster, IPAndPort >
 
   {
 
@@ -12,13 +12,13 @@ public class UnicasterValue
         Unicaster theUnicaster
         )
       {
-    	  super( 
-    	  		theUnicaster,
-        		new EpiThread( 
-  		          theUnicaster,
-  		          "Unicaster-"+remoteIPAndPort
-  		          )
-    	  		);
+        super( 
+            theUnicaster,
+            new EpiThread( 
+                theUnicaster,
+                "Unicaster-"+remoteIPAndPort
+                )
+            );
         }
 
     }

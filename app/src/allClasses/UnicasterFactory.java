@@ -14,94 +14,94 @@ public class UnicasterFactory {
     */
 
   // Injected dependencies that need saving for later.
-	public final AppFactory theAppFactory;
-	private final Shutdowner theShutdowner;
-	private final int queueCapacityI;
-	
-	// Other objects that will be needed later.
-	private final UnicasterValue unicasterUnicasterValue; 
-	private final SubcasterQueue subcasterToUnicasterSubcasterQueue;
-	private final NamedLong initialRetryTimeOutMsNamedLong;
+  public final AppFactory theAppFactory;
+  private final Shutdowner theShutdowner;
+  private final int queueCapacityI;
+  
+  // Other objects that will be needed later.
+  private final UnicasterValue unicasterUnicasterValue; 
+  private final SubcasterQueue subcasterToUnicasterSubcasterQueue;
+  private final NamedLong initialRetryTimeOutMsNamedLong;
 
-	
+  
   public UnicasterFactory(   // Factory constructor. 
-  		AppFactory theAppFactory,
-  		UnicasterManager theUnicasterManager,
-  		IPAndPort unicasterIPAndPort,
-  		String unicasterIdString,
-  		TCPCopier theTCPCopier,
-  		Shutdowner theShutdowner,
-  		int queueCapacityI,
-  		ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor,
-  		Persistent thePersistent,
+      AppFactory theAppFactory,
+      UnicasterManager theUnicasterManager,
+      IPAndPort unicasterIPAndPort,
+      String unicasterIdString,
+      TCPCopier theTCPCopier,
+      Shutdowner theShutdowner,
+      int queueCapacityI,
+      ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor,
+      Persistent thePersistent,
       NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes,
       ConnectionManager theConnectionManager
-  		)
-  	/* This builds all objects that are or comprise 
-  	  unconditional singletons relative to their Unicaster.
-  	  */
+      )
+    /* This builds all objects that are or comprise 
+      unconditional singletons relative to their Unicaster.
+      */
     {
-  	  LockAndSignal unicasterLockAndSignal= new LockAndSignal();
-			NetcasterQueue receiverToUnicasterNetcasterQueue= 
-    		new NetcasterQueue( unicasterLockAndSignal, queueCapacityI, "uruc" );
+      LockAndSignal unicasterLockAndSignal= new LockAndSignal();
+      NetcasterQueue receiverToUnicasterNetcasterQueue= 
+        new NetcasterQueue( unicasterLockAndSignal, queueCapacityI, "uruc" );
       NotifyingQueue<String> unicasterInputQueueOfStrings=
         new NotifyingQueue<String>(
             unicasterLockAndSignal, Config.STRING_QUEUE_SIZE, "ucs");
-			NetcasterInputStream unicasterNetcasterInputStream=
-					theAppFactory.makeNetcasterInputStream( 
-							receiverToUnicasterNetcasterQueue, 
-				  		Config.delimiterC
-							);
-		  NetcasterPacketManager theNetcasterPacketManager=
-		  		new NetcasterPacketManager( unicasterIPAndPort );
-			NetcasterOutputStream unicasterNetcasterOutputStream= 
-					theAppFactory.makeNetcasterOutputStream( 
-						theNetcasterPacketManager 
-						);
-			subcasterToUnicasterSubcasterQueue= 
-					new SubcasterQueue( unicasterLockAndSignal, queueCapacityI, "scuc" );
+      NetcasterInputStream unicasterNetcasterInputStream=
+          theAppFactory.makeNetcasterInputStream( 
+              receiverToUnicasterNetcasterQueue, 
+              Config.delimiterC
+              );
+      NetcasterPacketManager theNetcasterPacketManager=
+          new NetcasterPacketManager( unicasterIPAndPort );
+      NetcasterOutputStream unicasterNetcasterOutputStream= 
+          theAppFactory.makeNetcasterOutputStream( 
+            theNetcasterPacketManager 
+            );
+      subcasterToUnicasterSubcasterQueue= 
+          new SubcasterQueue( unicasterLockAndSignal, queueCapacityI, "scuc" );
       DefaultBooleanLike leadingDefaultBooleanLike=
-      		new DefaultBooleanLike(false);  // Used to settle race conditions.
-		  SubcasterManager theSubcasterManager= new SubcasterManager( 
-		  		theAppFactory, this, leadingDefaultBooleanLike 
-		  		);
+          new DefaultBooleanLike(false);  // Used to settle race conditions.
+      SubcasterManager theSubcasterManager= new SubcasterManager( 
+          theAppFactory, this, leadingDefaultBooleanLike 
+          );
       NamedLong initialRetryTimeOutMsNamedLong= new NamedLong( 
-					"Initial-Retry-Time-Out (ms)",
-					Config.initialRoundTripTime100MsL * 2 // Unicaster will overwrite this.
-					);
+          "Initial-Retry-Time-Out (ms)",
+          Config.initialRoundTripTime100MsL * 2 // Unicaster will overwrite this.
+          );
       PeersCursor thePeersCursor= PeersCursor.makeOnFirstEntryPeersCursor(thePersistent);
       
       thePeersCursor.findOrAddPeerV(unicasterIPAndPort, unicasterIdString);
-	    Unicaster theUnicaster= new Unicaster(
-	    		theUnicasterManager,
-	    		theSubcasterManager,
-					unicasterLockAndSignal,
-      		unicasterNetcasterInputStream,
-		  		unicasterNetcasterOutputStream,
-		  		unicasterIPAndPort,
-		  		theTCPCopier,
-			   	theShutdowner,
-			   	subcasterToUnicasterSubcasterQueue,
-			   	theScheduledThreadPoolExecutor,
-			   	thePersistent,
-			   	thePeersCursor,
-		      initialRetryTimeOutMsNamedLong,
-		      leadingDefaultBooleanLike,
-		      unicasterInputQueueOfStrings,
-	        toConnectionManagerNotifyingQueueOfMapEpiNodes,
-	        theConnectionManager
-			  	);
-  	
-	    
-	    UnicasterValue unicasterUnicasterValue=  
-  				new UnicasterValue( unicasterIPAndPort, theUnicaster );
+      Unicaster theUnicaster= new Unicaster(
+          theUnicasterManager,
+          theSubcasterManager,
+          unicasterLockAndSignal,
+          unicasterNetcasterInputStream,
+          unicasterNetcasterOutputStream,
+          unicasterIPAndPort,
+          theTCPCopier,
+           theShutdowner,
+           subcasterToUnicasterSubcasterQueue,
+           theScheduledThreadPoolExecutor,
+           thePersistent,
+           thePeersCursor,
+          initialRetryTimeOutMsNamedLong,
+          leadingDefaultBooleanLike,
+          unicasterInputQueueOfStrings,
+          toConnectionManagerNotifyingQueueOfMapEpiNodes,
+          theConnectionManager
+          );
+    
+      
+      UnicasterValue unicasterUnicasterValue=  
+          new UnicasterValue( unicasterIPAndPort, theUnicaster );
 
       // Save in instance variables injected objects that are needed later.
-  		this.theAppFactory= theAppFactory;
-	  	this.theShutdowner= theShutdowner;
-  		this.queueCapacityI= queueCapacityI;
+      this.theAppFactory= theAppFactory;
+      this.theShutdowner= theShutdowner;
+      this.queueCapacityI= queueCapacityI;
 
-	  	// Save in instance variables other objects that are needed later.
+      // Save in instance variables other objects that are needed later.
       this.unicasterUnicasterValue= unicasterUnicasterValue;
       this.initialRetryTimeOutMsNamedLong= initialRetryTimeOutMsNamedLong;
       }
@@ -109,75 +109,75 @@ public class UnicasterFactory {
   // Unconditional singleton getters.
 
   public UnicasterValue getUnicasterValue() // Returns created Unicaster.
-  	{ return unicasterUnicasterValue; }
+    { return unicasterUnicasterValue; }
   
   // Conditional singleton getters and storage.
   // None.
 
   // Maker methods.  These construct using new operator each time called.
   // None.
-	
+  
 
   public SubcasterValue makeSubcasterValue( 
-  		String keyString,
-  		DefaultBooleanLike leadingDefaultBooleanLike
+      String keyString,
+      DefaultBooleanLike leadingDefaultBooleanLike
       )
-	  { 
-		  LockAndSignal subcasterLockAndSignal= new LockAndSignal();
-			SubcasterPacketManager theSubcasterPacketManager=
-					new SubcasterPacketManager( keyString ); 
-			SubcasterQueue unicasterToSubcasterSubcasterQueue=
-					new SubcasterQueue( subcasterLockAndSignal, queueCapacityI, "ucsc" );
-			SubcasterInputStream theSubcasterInputStream= 
-			  	makeSubcasterInputStream( 
-			  			unicasterToSubcasterSubcasterQueue, 
-				  		Config.delimiterC
-			  			);
-			SubcasterOutputStream theSubcasterOutputStream= 
-					makeSubcasterOutputStream( 
-							keyString, theSubcasterPacketManager
-							);
-  	  Subcaster unicasterSubcaster= new Subcaster(
-  	  		subcasterLockAndSignal,
-  	  		theSubcasterInputStream,
-  				theSubcasterOutputStream,
-  	      keyString,
-  	      theShutdowner,
-  	      leadingDefaultBooleanLike,
-  	      initialRetryTimeOutMsNamedLong 
-  	  		);
-	    SubcasterValue unicasterSubcasterValue=  
-  				new SubcasterValue( keyString, unicasterSubcaster );
-	    return unicasterSubcasterValue;
-	  	}
+    { 
+      LockAndSignal subcasterLockAndSignal= new LockAndSignal();
+      SubcasterPacketManager theSubcasterPacketManager=
+          new SubcasterPacketManager( keyString ); 
+      SubcasterQueue unicasterToSubcasterSubcasterQueue=
+          new SubcasterQueue( subcasterLockAndSignal, queueCapacityI, "ucsc" );
+      SubcasterInputStream theSubcasterInputStream= 
+          makeSubcasterInputStream( 
+              unicasterToSubcasterSubcasterQueue, 
+              Config.delimiterC
+              );
+      SubcasterOutputStream theSubcasterOutputStream= 
+          makeSubcasterOutputStream( 
+              keyString, theSubcasterPacketManager
+              );
+      Subcaster unicasterSubcaster= new Subcaster(
+          subcasterLockAndSignal,
+          theSubcasterInputStream,
+          theSubcasterOutputStream,
+          keyString,
+          theShutdowner,
+          leadingDefaultBooleanLike,
+          initialRetryTimeOutMsNamedLong 
+          );
+      SubcasterValue unicasterSubcasterValue=  
+          new SubcasterValue( keyString, unicasterSubcaster );
+      return unicasterSubcasterValue;
+      }
 
-  	private SubcasterOutputStream makeSubcasterOutputStream( 
-  			String keyString, 
-  			SubcasterPacketManager theSubcasterPacketManager
-  		  )
-  	  {
-  		  NamedLong packetsSentNamedLong= 
-  					new NamedLong( "Outgoing-Packets-Sent", 0 );
-  		  return new SubcasterOutputStream(
-  		  	subcasterToUnicasterSubcasterQueue,
-  		  	theSubcasterPacketManager,
-  		  	packetsSentNamedLong,
-  	  		Config.delimiterC
-  	      );
-  	    }
+    private SubcasterOutputStream makeSubcasterOutputStream( 
+        String keyString, 
+        SubcasterPacketManager theSubcasterPacketManager
+        )
+      {
+        NamedLong packetsSentNamedLong= 
+            new NamedLong( "Outgoing-Packets-Sent", 0 );
+        return new SubcasterOutputStream(
+          subcasterToUnicasterSubcasterQueue,
+          theSubcasterPacketManager,
+          packetsSentNamedLong,
+          Config.delimiterC
+          );
+        }
 
-  	public SubcasterInputStream makeSubcasterInputStream(
-  			SubcasterQueue receiverToSubcasterSubcasterQueue,
-  			char delimiterChar
-				)
-  	  {
-  			NamedLong packetsReceivedNamedLong=  
-  					new NamedLong( "Incoming-Packets-Received", 0 );
-  	  	return new SubcasterInputStream(
-  	  	  receiverToSubcasterSubcasterQueue, 
-  	  	  packetsReceivedNamedLong, 
-  	  	  delimiterChar
-  				);
-  	  	}
+    public SubcasterInputStream makeSubcasterInputStream(
+        SubcasterQueue receiverToSubcasterSubcasterQueue,
+        char delimiterChar
+        )
+      {
+        NamedLong packetsReceivedNamedLong=  
+            new NamedLong( "Incoming-Packets-Received", 0 );
+        return new SubcasterInputStream(
+          receiverToSubcasterSubcasterQueue, 
+          packetsReceivedNamedLong, 
+          delimiterChar
+          );
+        }
 
 } // class UnicasterFactory.

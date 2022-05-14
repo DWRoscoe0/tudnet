@@ -11,57 +11,57 @@ import static allClasses.SystemSettings.NL;
 
 public class UnicasterManager
 
-	extends StreamcasterManager<
-		IPAndPort, // Key for map.
-		Unicaster, // DataNode in Value.
-		UnicasterValue // Value for map. 
-		>
+  extends StreamcasterManager<
+    IPAndPort, // Key for map.
+    Unicaster, // DataNode in Value.
+    UnicasterValue // Value for map. 
+    >
 
-	/* This class manages the app's Unicasters.
-	  It provides methods for creating them, storing references to them,
-	  displaying them, testing for their existence, and destroying them.
-	  Most of its methods are synchronized.
-	  
-	  It extends StreamcasterManager.
-	  The of the keys for the map maintained by this class is IPAndPort.
-	  */
+  /* This class manages the app's Unicasters.
+    It provides methods for creating them, storing references to them,
+    displaying them, testing for their existence, and destroying them.
+    Most of its methods are synchronized.
+    
+    It extends StreamcasterManager.
+    The of the keys for the map maintained by this class is IPAndPort.
+    */
 
   {
-  	private final Persistent thePersistent;
-  	private final TCPCopier theTCPCopier; 
+    private final Persistent thePersistent;
+    private final TCPCopier theTCPCopier; 
   
-		public UnicasterManager(  // Constructor. 
-	      AppFactory theAppFactory,
-			  Persistent thePersistent,
-			  TCPCopier theTCPCopier
-			  )
-	    {
-	  		// Superclass's injections.
-	      super( // Constructing MutableListWithMap superclass.
-		        "Unicasters",
-		        theAppFactory,
-			  		new DataNode[]{} // Initially empty of children.
-	      		);
-			  this.thePersistent= thePersistent;
-			  this.theTCPCopier= theTCPCopier; 
-			  }
+    public UnicasterManager(  // Constructor. 
+        AppFactory theAppFactory,
+        Persistent thePersistent,
+        TCPCopier theTCPCopier
+        )
+      {
+        // Superclass's injections.
+        super( // Constructing MutableListWithMap superclass.
+            "Unicasters",
+            theAppFactory,
+            new DataNode[]{} // Initially empty of children.
+            );
+        this.thePersistent= thePersistent;
+        this.theTCPCopier= theTCPCopier; 
+        }
 
     public synchronized Unicaster getOrBuildAndAddUnicaster(
-    		String IPString , String portString, String theIdString )
-    	/* This method returns a Unicaster associated with
+        String IPString , String portString, String theIdString )
+      /* This method returns a Unicaster associated with
         the remote peer address in theNetcasterPacket.
         If a Unicaster doesn't already exist then it creates one.
         It does not start the Unicaster thread.
         */
-	    { 
-    		IPAndPort theIPAndPort= new IPAndPort(IPString, portString);
-	    	Unicaster theUnicaster= getOrBuildAddAndStartUnicaster( theIPAndPort, theIdString );
-		    return theUnicaster;
-		    }
+      { 
+        IPAndPort theIPAndPort= new IPAndPort(IPString, portString);
+        Unicaster theUnicaster= getOrBuildAddAndStartUnicaster( theIPAndPort, theIdString );
+        return theUnicaster;
+        }
 
     public synchronized Unicaster getOrBuildAddAndStartUnicaster(
-    		NetcasterPacket theNetcasterPacket 
-    		)
+        NetcasterPacket theNetcasterPacket 
+        )
       /* This method returns a Unicaster associated with
         the remote peer address in theNetcasterPacket.
         If a Unicaster doesn't already exist then this method 
@@ -70,14 +70,14 @@ public class UnicasterManager
         the Unicaster is started in a state to cause 
         its state machine to do a connect and not a reconnect.
         */
-	    { 
+      { 
         /// theAppLog.debug( 
         ///  "ConnectionManager.getOrBuildAddAndStartUnicaster(NetcasterPacket) called.");
 
         IPAndPort theIPAndPort= makeIPAndPort(theNetcasterPacket);
 
-		    return getOrBuildAddAndStartUnicaster(theIPAndPort,null);
-		    }
+        return getOrBuildAddAndStartUnicaster(theIPAndPort,null);
+        }
 
     public synchronized Unicaster getOrBuildAddAndStartUnicaster(
         IPAndPort theIPAndPort, String theIdString)
@@ -104,8 +104,8 @@ public class UnicasterManager
         }
 
     public synchronized Unicaster tryingToGetUnicaster( 
-    		NetcasterPacket theNetcasterPacket
-    		)
+        NetcasterPacket theNetcasterPacket
+        )
       /* This method returns the Unicaster associated with the
         address in theNetcasterPacket, if such a Unicaster exists.
         If it doesn't exist then it returns null.
@@ -113,7 +113,7 @@ public class UnicasterManager
         the appropriate Unicasters, so it should be reasonably fast.
         */
       {
-    		IPAndPort theIPAndPort= makeIPAndPort(theNetcasterPacket);
+        IPAndPort theIPAndPort= makeIPAndPort(theNetcasterPacket);
         return tryToGetUnicaster( theIPAndPort );
         }
 
@@ -124,10 +124,10 @@ public class UnicasterManager
         DatagramPacket theDatagramPacket=  // Getting DatagramPacket.
           theNetcasterPacket.getDatagramPacket();
         IPAndPort theIPAndPort= // Building its remote address keyK
-	          AppFactory.makeIPAndPort(		
-	              theDatagramPacket.getAddress(), // IP and
-	              theDatagramPacket.getPort()  // port #.
-	          		);
+            AppFactory.makeIPAndPort(    
+                theDatagramPacket.getAddress(), // IP and
+                theDatagramPacket.getPort()  // port #.
+                );
         return theIPAndPort;
         }
 
@@ -144,30 +144,30 @@ public class UnicasterManager
         This method returns the Unicaster, 
         whether it existed already or was built by this method.
         */
-	    { 
+      { 
         /// theAppLog.debug( "ConnectionManager.buildAndAddUnicaster(IPAndPort) called.");
         Unicaster theUnicaster= tryToGetXorLogUnicaster( theIPAndPort );
         if ( theUnicaster == null ) // Unicaster does not yet exist.
           { // So build, add, and start the non-existent Unicaster.
-        	  UnicasterFactory theUnicasterFactory= 
-        	    theAppFactory.makeUnicasterFactory(
-        	      theIPAndPort, theIdString, theTCPCopier);
-    	      final UnicasterValue resultUnicasterValue= // Getting the Unicaster. 
-    	      	theUnicasterFactory.getUnicasterValue();
-    	      theUnicaster= resultUnicasterValue.getDataNodeD(); 
+            UnicasterFactory theUnicasterFactory= 
+              theAppFactory.makeUnicasterFactory(
+                theIPAndPort, theIdString, theTCPCopier);
+            final UnicasterValue resultUnicasterValue= // Getting the Unicaster. 
+              theUnicasterFactory.getUnicasterValue();
+            theUnicaster= resultUnicasterValue.getDataNodeD(); 
             try { // Operations that might produce an IOException.
-          			theUnicaster.initializeWithIOExceptionV(
-          			    resultUnicasterValue.getEpiThread());
-            	} catch( IOException e ) {
-            		Misc.logAndRethrowAsRuntimeExceptionV( 
-            		  "UnicasterManager.buildAddAndStartUnicaster(IPAndPort) IOException", e );
+                theUnicaster.initializeWithIOExceptionV(
+                    resultUnicasterValue.getEpiThread());
+              } catch( IOException e ) {
+                Misc.logAndRethrowAsRuntimeExceptionV( 
+                  "UnicasterManager.buildAddAndStartUnicaster(IPAndPort) IOException", e );
               }
-    	      addingV( // Adding the new Unicaster to tree data structures.
-    	          theIPAndPort, resultUnicasterValue ); // This might trigger display.
+            addingV( // Adding the new Unicaster to tree data structures.
+                theIPAndPort, resultUnicasterValue ); // This might trigger display.
             startV(theUnicaster); // Start Unicaster's thread.
             }
-	      return theUnicaster;
-	      }
+        return theUnicaster;
+        }
 
     public synchronized Unicaster tryToGetXorLogUnicaster(
         IPAndPort theIPAndPort)
@@ -261,21 +261,21 @@ public class UnicasterManager
         }
 
     public String getSummaryString( )
-	    /* Returns a string indicating the numbers of Unicasters being managed,
-				both connected and disconnected.
-       	*/
+      /* Returns a string indicating the numbers of Unicasters being managed,
+        both connected and disconnected.
+         */
       {
-    	  int connectedI= 0;
-    	  int disconnectedI= 0;
+        int connectedI= 0;
+        int disconnectedI= 0;
         for // For each child
           ( DataNode childDataNode : 
             childMultiLinkOfDataNodes.getLinksIterable()
             )
-    	  	if (((Unicaster)childDataNode).isConnectedB())
-    	  		connectedI++; 
-    	  		else 
-    	  		disconnectedI++;
-    	  return "("+connectedI+" connected, "+disconnectedI+" disconnected)";
+          if (((Unicaster)childDataNode).isConnectedB())
+            connectedI++; 
+            else 
+            disconnectedI++;
+        return "("+connectedI+" connected, "+disconnectedI+" disconnected)";
         }
     
 
@@ -298,4 +298,4 @@ public class UnicasterManager
             }
         }
 
-  	}
+    }

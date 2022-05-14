@@ -13,7 +13,7 @@ import static allClasses.SystemSettings.NL;
 
 public class Unicaster
 
-	extends Netcaster
+  extends Netcaster
 
   implements Runnable 
 
@@ -32,9 +32,9 @@ public class Unicaster
     * Send packets to the remote peer.
     * Implements several protocols for various purposes, such as:
       * Establishing and shutting down a connection.
-	    * Exchanging sequence numbers to measure packet loss and round-trip-time. 
-	    * Multiplexing packets from and de-multiplexing packets to other threads
-	      which implement their own protocols.  This is not presently used.
+      * Exchanging sequence numbers to measure packet loss and round-trip-time. 
+      * Multiplexing packets from and de-multiplexing packets to other threads
+        which implement their own protocols.  This is not presently used.
 
     
     Originally it was planned for each Unicaster thread to 
@@ -76,125 +76,125 @@ public class Unicaster
       private NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes;
       private ConnectionManager theConnectionManager;
 
-  		// Other instance variables.
+      // Other instance variables.
       private EpiThread theEpiThread;
-  		private LinkedMachineState theLinkedMachineState;
+      private LinkedMachineState theLinkedMachineState;
       private MapEpiNode thisMapEpiNode;
 
-  	  public Color getBackgroundColor( Color defaultBackgroundColor )
-  	    /* This method is a kludge to return the background color from 
-  	      the theLinkedMachineState without needing to add code to 
-  	      AndState or AndOrState.
-  	     */
-  	    {
-  	      return theLinkedMachineState.getBackgroundColor( defaultBackgroundColor );
-  	      }
-  		
-  	public Unicaster(  // Constructor. 
-			  UnicasterManager theUnicasterManager,
-			  SubcasterManager theSubcasterManager,
-	    	LockAndSignal theLockAndSignal,
-	      NetcasterInputStream theNetcasterInputStream,
-	      NetcasterOutputStream theNetcasterOutputStream,
-	      IPAndPort remoteIPAndPort,
-	      TCPCopier theTCPCopier,
-	      Shutdowner theShutdowner,
-	      SubcasterQueue subcasterToUnicasterSubcasterQueue, ///opt Subcasters?
-	  		ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor,
-	  		Persistent thePersistent,
-	  		PeersCursor thePeersCursor,
-	  		NamedLong initialRetryTimeOutMsNamedLong,
-	  		DefaultBooleanLike leadingDefaultBooleanLike,
-	  		NotifyingQueue<String> unicasterNotifyingQueueOfStrings,
+      public Color getBackgroundColor( Color defaultBackgroundColor )
+        /* This method is a kludge to return the background color from 
+          the theLinkedMachineState without needing to add code to 
+          AndState or AndOrState.
+         */
+        {
+          return theLinkedMachineState.getBackgroundColor( defaultBackgroundColor );
+          }
+      
+    public Unicaster(  // Constructor. 
+        UnicasterManager theUnicasterManager,
+        SubcasterManager theSubcasterManager,
+        LockAndSignal theLockAndSignal,
+        NetcasterInputStream theNetcasterInputStream,
+        NetcasterOutputStream theNetcasterOutputStream,
+        IPAndPort remoteIPAndPort,
+        TCPCopier theTCPCopier,
+        Shutdowner theShutdowner,
+        SubcasterQueue subcasterToUnicasterSubcasterQueue, ///opt Subcasters?
+        ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor,
+        Persistent thePersistent,
+        PeersCursor thePeersCursor,
+        NamedLong initialRetryTimeOutMsNamedLong,
+        DefaultBooleanLike leadingDefaultBooleanLike,
+        NotifyingQueue<String> unicasterNotifyingQueueOfStrings,
         NotifyingQueue<MapEpiNode> toConnectionManagerNotifyingQueueOfMapEpiNodes,
         ConnectionManager theConnectionManager
-	  		)
-	    /* This constructor constructs a Unicaster for the purpose of
-	      communicating with the node at remoteInetSocketAddress,
-	      but no response has yet been made.
-	      Fields are defined in a way to cause an initial response.
-	      
-	      ?? Add parameter which controls whether thread first waits for
-	      a PING or an REPLY, to reduce or eliminate ping-ping conflicts.
-	      Implement protocol with a state-machine.
-	      */
-	    {
-	      super(
-	      		theLockAndSignal,
-	  	      theNetcasterInputStream,
-	  	      theNetcasterOutputStream,
-	          theShutdowner,
-		        remoteIPAndPort,
-	      		"Unicaster", 
-	          initialRetryTimeOutMsNamedLong, 
-	          leadingDefaultBooleanLike
-	          );
-	
-	      // Storing injected dependency arguments not stored in superclass.
-				  this.theUnicasterManager= theUnicasterManager;
-				  this.theSubcasterManager= theSubcasterManager;
-				  this.theTCPCopier= theTCPCopier;
+        )
+      /* This constructor constructs a Unicaster for the purpose of
+        communicating with the node at remoteInetSocketAddress,
+        but no response has yet been made.
+        Fields are defined in a way to cause an initial response.
+        
+        ?? Add parameter which controls whether thread first waits for
+        a PING or an REPLY, to reduce or eliminate ping-ping conflicts.
+        Implement protocol with a state-machine.
+        */
+      {
+        super(
+            theLockAndSignal,
+            theNetcasterInputStream,
+            theNetcasterOutputStream,
+            theShutdowner,
+            remoteIPAndPort,
+            "Unicaster", 
+            initialRetryTimeOutMsNamedLong, 
+            leadingDefaultBooleanLike
+            );
+  
+        // Storing injected dependency arguments not stored in superclass.
+          this.theUnicasterManager= theUnicasterManager;
+          this.theSubcasterManager= theSubcasterManager;
+          this.theTCPCopier= theTCPCopier;
           this.theScheduledThreadPoolExecutor= theScheduledThreadPoolExecutor; 
-		  		this.thePersistent= thePersistent;
-		      this.thePeersCursor= thePeersCursor;
-	        this.unicasterNotifyingQueueOfStrings= unicasterNotifyingQueueOfStrings;
+          this.thePersistent= thePersistent;
+          this.thePeersCursor= thePeersCursor;
+          this.unicasterNotifyingQueueOfStrings= unicasterNotifyingQueueOfStrings;
           this.toConnectionManagerNotifyingQueueOfMapEpiNodes=
               toConnectionManagerNotifyingQueueOfMapEpiNodes;
           this.theConnectionManager= theConnectionManager;
 
-	      }
+        }
 
     protected void initializeWithIOExceptionV( 
         EpiThread theEpiThread
         ) 
       throws IOException
-	    {
-    		super.initializeWithoutStreamsV(); // Stream counts are added below in
-    		  // one of the sub-state machines.
+      {
+        super.initializeWithoutStreamsV(); // Stream counts are added below in
+          // one of the sub-state machines.
 
         this.thisMapEpiNode= thePeersCursor.getSelectedMapEpiNode();
-    		this.theEpiThread= theEpiThread;
+        this.theEpiThread= theEpiThread;
 
         this.toUnicasterNotifyingQueueOfMapEpiNodes= // Make empty MapEpiNode queue. 
             new NotifyingQueue<MapEpiNode>(theLockAndSignal, 5,"ucn");
 
-	  		// Create and start the sub-state machines.
+        // Create and start the sub-state machines.
 
-    		{ // Create and add actual sub-states.
-    			
-    			LinkMeasurementState theLinkMeasurementState= 
-    				 new LinkMeasurementState( 
-  		    				theScheduledThreadPoolExecutor,
-  		    				theEpiInputStreamI,
-  			  				theEpiOutputStreamO,
-  			  				initialRetryTimeOutMsNamedLong,
-  			  				this
-  			      		);
-    			theLinkMeasurementState.initializeWithIOExceptionStateList();
+        { // Create and add actual sub-states.
+          
+          LinkMeasurementState theLinkMeasurementState= 
+             new LinkMeasurementState( 
+                  theScheduledThreadPoolExecutor,
+                  theEpiInputStreamI,
+                  theEpiOutputStreamO,
+                  initialRetryTimeOutMsNamedLong,
+                  this
+                  );
+          theLinkMeasurementState.initializeWithIOExceptionStateList();
 
-  				theLinkedMachineState= new LinkedMachineState();
-  				theLinkedMachineState.initializeWithIOExceptionLinkedMachineState(
-		  				theScheduledThreadPoolExecutor,
-		  			  theEpiInputStreamI,
-		  				theEpiOutputStreamO,
-		  				initialRetryTimeOutMsNamedLong,
-		  				theTCPCopier,
-		  				this,
-		  				thePersistent,
-		          thePeersCursor,
-		  				theLinkMeasurementState,
-		  	      toConnectionManagerNotifyingQueueOfMapEpiNodes,
-		  	      theConnectionManager
-		  	  		);
-  				addStateListV( theLinkedMachineState );
+          theLinkedMachineState= new LinkedMachineState();
+          theLinkedMachineState.initializeWithIOExceptionLinkedMachineState(
+              theScheduledThreadPoolExecutor,
+              theEpiInputStreamI,
+              theEpiOutputStreamO,
+              initialRetryTimeOutMsNamedLong,
+              theTCPCopier,
+              this,
+              thePersistent,
+              thePeersCursor,
+              theLinkMeasurementState,
+              toConnectionManagerNotifyingQueueOfMapEpiNodes,
+              theConnectionManager
+              );
+          addStateListV( theLinkedMachineState );
 
-  				} // Create and add actual sub-states.
+          } // Create and add actual sub-states.
 
-	  	  addAtEndV( theSubcasterManager );
-	  	  
-	  	  // propagateIntoSubtreeB( LogLevel.TRACE ); ///dbg /// tmp
-	  	  
-	  	  }
+        addAtEndV( theSubcasterManager );
+        
+        // propagateIntoSubtreeB( LogLevel.TRACE ); ///dbg /// tmp
+        
+        }
 
     public EpiThread getEpiThread()
       {
@@ -202,11 +202,11 @@ public class Unicaster
         }
 
     protected void finalizingV() throws IOException
-	    // This is the opposite of initilizingV().
-	    {
-	    	theEpiOutputStreamO.close(); // Closing output stream.
-	    	super.finalizeV();
-	    	}
+      // This is the opposite of initilizingV().
+      {
+        theEpiOutputStreamO.close(); // Closing output stream.
+        super.finalizeV();
+        }
 
     public void run()  // Main Unicaster thread.
       /* This method contains the main thread logic.
@@ -222,48 +222,48 @@ public class Unicaster
         /// appLogger.info("run() begins.");
         try { // Operations that might produce an IOException.
             /// appLogger.info("run() activating root state machine.");
-	          doOnEntryV(); // Recursively activate all states that should be. 
-	          /// appLogger.info("run() machine activated, doing first display.");
-        		/// theDataTreeModel.displayTreeModelChangesV(); // Display tree after arrival.
+            doOnEntryV(); // Recursively activate all states that should be. 
+            /// appLogger.info("run() machine activated, doing first display.");
+            /// theDataTreeModel.displayTreeModelChangesV(); // Display tree after arrival.
 
-	      	  runLoop(); // Do actual input processing in a loop.
+            runLoop(); // Do actual input processing in a loop.
 
-	          processInputB( "Shutdown" ); // Make state machine process shutdown message.
-	      	  finalizingV();
-	  	    	theUnicasterManager.removingV( this ); // Removing self from tree.
-	  	    	  // This isn't really needed, but is a good test of display logic.
-	  	    	/// appLogger.info("run() after remove and before final display.");
-	      		/// Nulls.fastFailNullCheckT(theDataTreeModel);
-	      		/// theDataTreeModel.displayTreeModelChangesV(); // Display tree after removal.
-          	}
+            processInputB( "Shutdown" ); // Make state machine process shutdown message.
+            finalizingV();
+            theUnicasterManager.removingV( this ); // Removing self from tree.
+              // This isn't really needed, but is a good test of display logic.
+            /// appLogger.info("run() after remove and before final display.");
+            /// Nulls.fastFailNullCheckT(theDataTreeModel);
+            /// theDataTreeModel.displayTreeModelChangesV(); // Display tree after removal.
+            }
           catch( IOException theIOException) {
-          	Misc.logAndRethrowAsRuntimeExceptionV( 
-          			"run() IOException", theIOException 
-          			);
+            Misc.logAndRethrowAsRuntimeExceptionV( 
+                "run() IOException", theIOException 
+                );
             }
         /// appLogger.info("run() ends.");
         }
 
-	  private void runLoop() throws IOException
-	    /* This method contains the Unicaster input message processing loop.
-		    It reads event messages from various sources and processes them.
-		    It does this until it receives a signal to exit.
-		    
-		    Input message sources now include:
-		    * The EpiInputStream.  These are passed to the superclass state machine. 
-		      Leftover input is sent as a MapEpiNode to the the ConnectionManager.
-		    * The String queue.  These are passed to the superclass state machine.
-		    * the EpiNode queue.  
-		      These comes from the ConnectionManager.
-		      They are serialized to a packet and sent to the remote peer.
+    private void runLoop() throws IOException
+      /* This method contains the Unicaster input message processing loop.
+        It reads event messages from various sources and processes them.
+        It does this until it receives a signal to exit.
+        
+        Input message sources now include:
+        * The EpiInputStream.  These are passed to the superclass state machine. 
+          Leftover input is sent as a MapEpiNode to the the ConnectionManager.
+        * The String queue.  These are passed to the superclass state machine.
+        * the EpiNode queue.  
+          These comes from the ConnectionManager.
+          They are serialized to a packet and sent to the remote peer.
 
         ///fix  Legitimate input is sometimes not consumed!
-		    */
-			{
-	  		theAppLog.debug("UC","runLoop() begins.");
+        */
+      {
+        theAppLog.debug("UC","runLoop() begins.");
         doOnInputsB(); // This first call guarantees that state machine timers start.
-	      processingLoop: while (true) {
-	        if (EpiThread.testInterruptB()) break processingLoop; // Exit if requested.
+        processingLoop: while (true) {
+          if (EpiThread.testInterruptB()) break processingLoop; // Exit if requested.
           // theAppLog.debug("UC","runLoop() before processPacketStreamInputV().");
           processPacketStreamInputV();
           // theAppLog.debug("UC","runLoop() before processNotificationStringInputV().");
@@ -271,11 +271,11 @@ public class Unicaster
           processNotificationMapEpiNodeInputV();
           // theAppLog.debug("UC","runLoop() before waitingForInterruptOrNotificationE().");
           theLockAndSignal.waitingForInterruptOrNotificationE();
-	      	} // processingLoop:
-  			theAppLog.debug("UC","runLoop() loop interrupted, stopping state machine.");
-  			// ? theTimer.cancel(); // Cancel all Timer events for debug tracing, ///dbg
+          } // processingLoop:
+        theAppLog.debug("UC","runLoop() loop interrupted, stopping state machine.");
+        // ? theTimer.cancel(); // Cancel all Timer events for debug tracing, ///dbg
         while (doOnInputsB()) ; // Cycle state machine until nothing remains to be done.
-				}
+        }
 
     private void processNotificationMapEpiNodeInputV() throws IOException
       /* This method gets all MapEpiNodes, if any,
@@ -424,41 +424,41 @@ public class Unicaster
       /* This method does, or will do itself, or will delegate to Subcasters, 
         all protocols of a Unicaster.  This might include:
         * Doing full PING-REPLY protocol by letting a Subcaster do it, 
-        	and forwarding its packets in both directions.
+          and forwarding its packets in both directions.
         * Passing packets from Subcasters to the network.
         * Passing Subcaster packets from the network to Subcasters.
         * Doing simple received message decoding.
         * Connection/Hello handshake state machine cycling.
         */
     /*  ///
-	    { 
-	    	process: {
-		    	if ( super.orStateOnInputsB() ) // Try processing by sub-states first. 
-		    		break process;
-		    	String eventMessageString= theEpiInputStreamI.tryingToGetString();
-	      	if ( eventMessageString != null ) // There is an unprocessed message.
-		      	{ // Log and ignore the message.
-		  	    	theAppLog.debug( 
-		  	    			"Unicaster.onInputsV() unprocessed message: "
-		  	    			+ eventMessageString 
-		  	    			);
-			    		break process;
-		      		}
-	      	theAppLog.debug( 
-  	    			"Unicaster.onInputsV() no message to process!"
-  	    			+ eventMessageString 
-  	    			);
-	    		} // process:
+      { 
+        process: {
+          if ( super.orStateOnInputsB() ) // Try processing by sub-states first. 
+            break process;
+          String eventMessageString= theEpiInputStreamI.tryingToGetString();
+          if ( eventMessageString != null ) // There is an unprocessed message.
+            { // Log and ignore the message.
+              theAppLog.debug( 
+                  "Unicaster.onInputsV() unprocessed message: "
+                  + eventMessageString 
+                  );
+              break process;
+              }
+          theAppLog.debug( 
+              "Unicaster.onInputsV() no message to process!"
+              + eventMessageString 
+              );
+          } // process:
         return false;
-				}
+        }
     */  ///
 
     public String getSummaryString( )
       /* Returns a string indicating whether 
         this Unicaster is presently connected or disconnected.
-       	*/
+         */
       {
-    	  return isConnectedB() ? "Connected" : "Disconnected"; 
+        return isConnectedB() ? "Connected" : "Disconnected"; 
         }
     
     public boolean isConnectedB()
@@ -491,4 +491,4 @@ public class Unicaster
         toUnicasterNotifyingQueueOfMapEpiNodes.put(theMapEpiNode);
         }
     
-	} // Unicaster.
+  } // Unicaster.
