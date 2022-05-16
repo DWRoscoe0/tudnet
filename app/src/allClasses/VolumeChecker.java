@@ -21,21 +21,23 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 public class VolumeChecker
 
-  /* This class is used to check a mass storage volume.
-   * Presently it does the following tests:
-   * 
-   * * Measures usable writable space.
-   * 
-   * * Verifies that each free block can store unique data,
-   *   testing for volumes with fake sizes.
-   * 
-   */
-
   extends VolumeDetector
 
   {
+    /* This class is used to check a mass storage volume and report
+     * the amount of free space.
+
+     * Presently it does the following tests:
+     * 
+     * * Measures usable writable space.
+     * 
+     * * Verifies that each free block can store unique data,
+     *   testing for volumes with fake sizes.
+     * 
+     */
+
     // Locally stored injected dependencies (none).
-    
+
     // Constants.
 
       final int bytesPerBlockI= 512;
@@ -113,19 +115,20 @@ public class VolumeChecker
     protected void mainThreadLogicV()
       {
         queueAndDisplayOutputSlowV(
-          "This feature does simple functional testing of storage volumes "
-          + "attached to this device.");
-        List<File> addedVolumeListOfFiles;
-      theLoop: while(true) {
-        addedVolumeListOfFiles= getTerminationOrKeyOrAddedVolumeListOfFiles();
-        if (LockAndSignal.isInterruptedB()) break; // Process exit request.
-        if (0 < addedVolumeListOfFiles.size()) { // If any volumes added
-          checkVolumeListV( // check each added volume that has user's consent
-              addedVolumeListOfFiles);
-          continue theLoop;
-          }
-        checkVolumeListV( // Check each attached volume that has user's consent.
-            Arrays.asList(getVolumeFiles()));
+          "This feature does simple functional testing "
+          + "and capacity measurement "
+          + "of storage volumes attached to this device.");
+        List<File> volumeListOfFiles;
+      while(true) {
+        volumeListOfFiles= getTerminationOrKeyOrAddedVolumeListOfFiles();
+        if (LockAndSignal.isInterruptedB()) break; // Exit if requested.
+        if (0 < volumeListOfFiles.size()) 
+          ; // At least one volume was added, so use volume list as is.
+          else
+          volumeListOfFiles= // No volumes added, so use
+            Arrays.asList(getVolumeFiles()); // all volumes.
+        checkVolumeListV( // Check each volume in list, with user's consent
+            volumeListOfFiles);
       } // theLoop:
         return;
       }
@@ -146,6 +149,10 @@ public class VolumeChecker
 
     private void checkVolumeV(File volumeFile)
       /* This method checks the volume specified by volumeFile.
+       * This includes optionally deleting all files on the volume,
+       * then doing a write-read test
+       * 
+       * ///rnh Being modified to make write-read test optional.
        */
       {
         theAppLog.debug("VolumeChecker.checkVolumeV(.) begins.");
@@ -172,20 +179,20 @@ public class VolumeChecker
             buildFolderFile);
         if (! EpiString.isAbsentB(resultString)) {
           resultString= EpiString.combine1And2WithNewlineString(
-              "error creating folder", resultString);
+              "error occurred while creating folder", resultString);
           break goFinish;
           }
         outputProgressSlowlyV();
         resultString= writeTestReturnString(buildFolderFile);
         if (! EpiString.isAbsentB(resultString)) {
           resultString= EpiString.combine1And2WithNewlineString(
-              "error during write-test", resultString);
+              "error occurred during write-test", resultString);
           break goFinish;
           }
         resultString= readTestReturnString(buildFolderFile);
         if (! EpiString.isAbsentB(resultString)) {
           resultString= EpiString.combine1And2WithNewlineString(
-              "error during read-test", resultString);
+              "error occurred during read-test", resultString);
           break goFinish;
           }
       }  // goFinish:
@@ -193,12 +200,13 @@ public class VolumeChecker
         theAppLog.debug("VolumeChecker.checkVolumeV(.) deleting.");
         String deleteErrorString= FileOps.deleteRecursivelyReturnString(
             buildFolderFile,FileOps.requiredConfirmationString);
-        resultString= EpiString.combine1And2WithNewlineString(resultString, deleteErrorString);
+        resultString= EpiString.combine1And2WithNewlineString(
+            resultString, deleteErrorString);
         replaceOperationAndRefreshProgressReportV("done");
       }  // goReturn:
         if (! EpiString.isAbsentB(resultString)) // Report error or success.
           appendWithPromptSlowlyAndWaitForKeyV( // Report error.
-              "Abnormal termination:\n" + resultString);
+              "The operation terminated:\n" + resultString);
           else 
           appendWithPromptSlowlyAndWaitForKeyV( // Report success.
             "The operation completed without error.");
@@ -212,18 +220,21 @@ public class VolumeChecker
        * if the user gives permission.
        */
       {
-        String resultString= "Permission to delete was refused.";
+        //// String resultString= "Permission to delete was refused.";
+        String resultString= null;
       goReturn: {
-        if (!getConfirmationKeyPressB(
-            "This operation will first erase "+volumeFile
-            + " !\nDo you really want to do this?") 
+        if (!getConfirmationKeyPressB( // Exit if file deletion is not wanted.
+            //// "This operation will first erase "+volumeFile
+            //// + " !\nDo you really want to do this?")
+            "Do you want erase files on this volume first?")
             )
           break goReturn;
         java.awt.Toolkit.getDefaultToolkit().beep(); // Get user's attention.
-        if (!getConfirmationKeyPressB(
-            "Are you certain that you want to ERASE "+volumeFile+" ! ?"))
+        resultString= "Permission to delete was not confirmed.";
+        if (!getConfirmationKeyPressB( // Exit if permission not confirmed.
+            "\nAre you certain that you want to ERASE "+volumeFile+" ! ?"))
           break goReturn;
-        queueAndDisplayOutputSlowV("\nDeleting files...");
+        queueAndDisplayOutputSlowV("\n\nDeleting files...");
         resultString= FileOps.deleteRecursivelyReturnString(
             volumeFile,FileOps.requiredConfirmationString);
         queueAndDisplayOutputSlowV("done.");
@@ -706,7 +717,7 @@ public class VolumeChecker
             groupsDoneL++;
         long groupsToDoL= totalGroupsL - groupsDoneL;
         String resultString= String.format(
-          "\n%-7s:%12d %12d", groupTypeString, groupsToDoL, groupsDoneL );
+          "\n%-7s:%12d:%12d", groupTypeString, groupsToDoL, groupsDoneL );
         return resultString;
         }
 
@@ -720,7 +731,7 @@ public class VolumeChecker
         String remainingTimeString= timeToString(remainingTimeMsL);
         String doneTimeString= timeToString(doneTimeMsL);
         String resultString= String.format(
-          "\n%-7s:%12s %12s", 
+          "\n%-7s:%12s:%12s", 
           "time",
           remainingTimeString, 
           doneTimeString
@@ -741,7 +752,8 @@ public class VolumeChecker
         long daysL = tL; // The remainder is days.
 
         String resultString= String.format(
-          "%dd%02dh%02dm%02ds",daysL,hoursL,minutesL,secondsL);
+          //// "%dd%02dh%02dm%02ds",daysL,hoursL,minutesL,secondsL);
+          "%dD%2dH%2dM%2dS",daysL,hoursL,minutesL,secondsL);
         return resultString;
         }
 
