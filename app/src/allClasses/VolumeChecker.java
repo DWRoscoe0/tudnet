@@ -58,6 +58,7 @@ public class VolumeChecker
 
       // Feature scope.
       File buildFolderFile;
+      private File volumeFile;
 
       // Volume scope.
       private long volumeTotalBytesL; // Partition size.
@@ -69,6 +70,9 @@ public class VolumeChecker
       private long toCheckTotalBytesL; // This should be the sum of:
         private long toCheckRemainingBytesL; // Down counter and loop control.
         private long toCheckDoneBytesL; // Up counter and # of next byte to do.
+
+      // Volume write pass only scope.
+      private long writtenBytesL; // Counts written.
 
       // Volume read-and-compare pass only scope.
       private long readCheckedBytesL; // Counts bytes read AND compared.
@@ -145,14 +149,15 @@ public class VolumeChecker
           + addedVolumeListOfFiles.toString()
           );
         for (File theFile : addedVolumeListOfFiles) {
+          volumeFile= theFile;
           if (getConfirmationKeyPressB( // Check volume if user okays it.
-               "Would you like to check " + theFile + " ? ")
+               "Would you like to check " + volumeFile + " ? ")
               )
-            checkVolumeV(theFile);
+            checkVolumeV();
           }
         }
 
-    private void checkVolumeV(File volumeFile)
+    private void checkVolumeV()
       /* This method checks the volume specified by volumeFile.
        * This includes optionally deleting all files on the volume,
        * then doing a write-read test
@@ -165,6 +170,7 @@ public class VolumeChecker
       goReturn: {
       goFinish: {
         operationDequeOfStrings= new ArrayDeque<String>();
+        writtenBytesL= 0;
         readCheckedBytesL=0;
         volumeTotalBytesL= volumeFile.getTotalSpace();
         spinnerStateI= 0;
@@ -210,6 +216,7 @@ public class VolumeChecker
             resultString, deleteErrorString);
         replaceOperationAndRefreshProgressReportV("done");
       }  // goReturn:
+        appendResultsOfOperationV();
         if (! EpiString.isAbsentB(resultString)) // Report error or success.
           appendWithPromptSlowlyAndWaitForKeyV( // Report error.
               "The operation terminated:\n" + resultString);
@@ -219,6 +226,23 @@ public class VolumeChecker
         theAppLog.debug("VolumeChecker.checkVolumeV(.) ends.");
         return;
       } // checkVolumeV(.)
+
+    private void appendResultsOfOperationV() 
+      { 
+        queueOutputV("\n");
+        appendBytesResultV( "in volume", volumeTotalBytesL);
+        appendBytesResultV( "free", volumeFile.getUsableSpace());
+        appendBytesResultV( "written", writtenBytesL);
+        appendBytesResultV( "read", readCheckedBytesL);
+        }
+
+    private void appendBytesResultV(String typeString, long countL)
+      {
+        queueOutputV(
+          String.format(
+            "\n  bytes %-9s :%12d", typeString, countL)
+          );
+        }
 
     protected String deleteAllVolumeFilesReturnString(File volumeFile)
       /* This method erases File volumeFile,
@@ -304,6 +328,7 @@ public class VolumeChecker
                 toCheckDoneBytesL+= bytesPerBlockI;
                 toCheckRemainingBytesL-= bytesPerBlockI;
                 remainingFileBytesL-= bytesPerBlockI;
+                writtenBytesL= toCheckDoneBytesL;
                 } // blockLoop:
               }
             catch (IOException theIOException) {
@@ -418,7 +443,7 @@ public class VolumeChecker
             toCheckRemainingBytesL-= bytesPerBlockI;
             remainingFileBytesL-= bytesPerBlockI;
             toCheckDoneBytesL+= bytesPerBlockI;
-            readCheckedBytesL= toCheckDoneBytesL; 
+            readCheckedBytesL= toCheckDoneBytesL;
           } // blockLoop:
             replaceOperationAndRefreshProgressReportV("closing");
             theFileInputStream.close();
@@ -632,6 +657,7 @@ public class VolumeChecker
             + speedString()
             + goodBytesString()
             + "\nOperation: " + operationDequeOfStrings
+            + " " + advanceAndGetSpinnerString()
             ;
         previousReportTimeMsL= nowTimeMsL;
         return outputString;
@@ -772,7 +798,7 @@ public class VolumeChecker
         }
 
     private String advanceAndGetSpinnerString()
-      /* This method steps the spinner, but not too fast,
+      /* This method steps the spinner if it's time, not too fast,
        * and returns a single character string showing the position.
        */
       {
