@@ -34,10 +34,10 @@ public class VolumeChecker
      * * Verifies that each free block can store unique data,
      *   testing for volumes with fake sizes.
      *
-     * ///enh Improve Progress-Report-Number and Spinner coordination.
-     * Make Spinner spin at a only 2 rates: 0 and a constant rate.
-     * It moves only if there was a progress report since 
-     * the previous spinner step.
+     * ///enh Update the Progress-Report and Spinner 
+     *   while doing FileDescriptor.sync() 
+     *   so that the spinner spins and times are updated.
+     *   This will probably require a separate thread.
      *  
      */
 
@@ -77,16 +77,15 @@ public class VolumeChecker
       private long checkingStartTimeMsL;
       private long passStartTimeMsL;
       private long presentTimeMsL;
-      private long excessTimeMsL;
 
       // Progress Reports.
       private int offsetOfProgressReportI; // within Document.
       private int reportNumberI;
-      private long byteOfNextReportL;
       private int spinnerStateI;
+      private long timeOfLastSpinnerStepMsL;
       private Deque<String> operationDequeOfStrings; // Describes operation.
       @SuppressWarnings("unused") ///
-      private long previousReportTimeMsL;
+      private long previousReportTimeMsL; ///del This doesn't appear used?
       private long timeOfNextReportMsL;
       
       // For measuring speed of operation.
@@ -227,12 +226,9 @@ public class VolumeChecker
        * if the user gives permission.
        */
       {
-        //// String resultString= "Permission to delete was refused.";
         String resultString= null;
       goReturn: {
         if (!getConfirmationKeyPressB( // Exit if file deletion is not wanted.
-            //// "This operation will first erase "+volumeFile
-            //// + " !\nDo you really want to do this?")
             "Do you want to erase files on this volume first?")
             )
           break goReturn;
@@ -272,7 +268,6 @@ public class VolumeChecker
         toCheckDoneBytesL=0;
         remainingFileBytesL= bytesPerFileL;
         volumeDoneFilesL= 0; // Index of next file to write.
-        byteOfNextReportL= 0;
         previousReportTimeMsL= timeOfNextReportMsL;
         passStartTimeMsL= getTimeMsL();
         refreshProgressReportV(); // Initial progress report.
@@ -396,7 +391,6 @@ public class VolumeChecker
         toCheckDoneBytesL=0;
         remainingFileBytesL= bytesPerFileL;
         volumeDoneFilesL= 0;
-        byteOfNextReportL= 0;
         passStartTimeMsL= getTimeMsL();
         previousReportTimeMsL= timeOfNextReportMsL;
         pushOperationV("read-and-compare pass");
@@ -593,33 +587,18 @@ public class VolumeChecker
        * since the previous report.
        */
       {
-        /// Thread.yield(); // This didn't help.
       goReturn: {
-
         presentTimeMsL= getTimeMsL(); // [Try to] measure the time.
-        long remainingTimeMsL= presentTimeMsL-timeOfNextReportMsL;
         if // Produce progress report if time remaining in period reached 0.
-          (0 <= remainingTimeMsL)
-          { // Produce progress report.
-            excessTimeMsL= theLockAndSignal.periodCorrectedDelayMsL(
-              timeOfNextReportMsL, msPerReportMsL);
-            long newTimeMsL= presentTimeMsL + excessTimeMsL + msPerReportMsL;
-            /// theAppLog.debug(
-            ///     "VolumeChecker.updateProgressMaybeV() time triggered.");
+          (0 <= (presentTimeMsL-timeOfNextReportMsL))
+          { // Produce progress report and calculate when to do next one.
+            timeOfNextReportMsL= // Calculate time of next report.
+                presentTimeMsL 
+                + theLockAndSignal.periodCorrectedDelayMsL(
+                    timeOfNextReportMsL, msPerReportMsL);
             refreshProgressReportV();
-            timeOfNextReportMsL= newTimeMsL; // Calculate next report time.
             break goReturn;
             }
-
-        if (0 <= toCheckDoneBytesL - byteOfNextReportL)
-          {
-            /// theAppLog.debug(
-            ///     "VolumeChecker.updateProgressMaybeV() byte triggered.");
-            refreshProgressReportV();
-            byteOfNextReportL+= bytesReportPeriodL;
-            break goReturn;
-            }
-
       } // goReturn:
         return;
       }
@@ -734,7 +713,6 @@ public class VolumeChecker
       {
         long safeToCheckDoneBytesL= // Prevent divide-by-zero ahead. 
             (0 == toCheckDoneBytesL) ? 1 : toCheckDoneBytesL;
-        //// long doneTimeMsL= presentTimeMsL - checkingStartTimeMsL;
         long doneTimeMsL= presentTimeMsL - passStartTimeMsL;
         long remainingTimeMsL= 
             (doneTimeMsL * toCheckRemainingBytesL) / safeToCheckDoneBytesL ;
@@ -762,7 +740,6 @@ public class VolumeChecker
         long daysL = tL; // The remainder is days.
 
         String resultString= String.format(
-          //// "%dd%02dh%02dm%02ds",daysL,hoursL,minutesL,secondsL);
           "%dD%2dH%2dM%2dS",daysL,hoursL,minutesL,secondsL);
         return resultString;
         }
@@ -795,10 +772,21 @@ public class VolumeChecker
         }
 
     private String advanceAndGetSpinnerString()
-    {
-      if (4 <= (++spinnerStateI)) spinnerStateI= 0;
-      return "-\\|/".substring(spinnerStateI, spinnerStateI+1);
-      }
+      /* This method steps the spinner, but not too fast,
+       * and returns a single character string showing the position.
+       */
+      {
+        final long stepPeriodMsL= 125;
+        long presentTimeMsL= getTimeMsL(); // [Try to] measure the time.
+        long timeSinceLastStepMsL= presentTimeMsL - timeOfLastSpinnerStepMsL;
+        if // Step spinner if it's time.
+          ((timeSinceLastStepMsL < 0) || (timeSinceLastStepMsL > stepPeriodMsL))
+          { // Step the spinner.
+            if (4 <= (++spinnerStateI)) spinnerStateI= 0; // Step spinner.
+            timeOfLastSpinnerStepMsL= presentTimeMsL; // Save time.
+            }
+        return "-\\|/".substring(spinnerStateI, spinnerStateI+1);
+        }
 
     protected List<File> getTerminationOrKeyOrAddedVolumeListOfFiles()
       /* This method waits for one of several inputs and then returns.
