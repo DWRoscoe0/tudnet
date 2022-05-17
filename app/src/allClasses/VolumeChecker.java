@@ -33,7 +33,12 @@ public class VolumeChecker
      * 
      * * Verifies that each free block can store unique data,
      *   testing for volumes with fake sizes.
-     * 
+     *
+     * ///enh Improve Progress-Report-Number and Spinner coordination.
+     * Make Spinner spin at a only 2 rates: 0 and a constant rate.
+     * It moves only if there was a progress report since 
+     * the previous spinner step.
+     *  
      */
 
     // Locally stored injected dependencies (none).
@@ -70,6 +75,7 @@ public class VolumeChecker
       
       // Time measurement.
       private long checkingStartTimeMsL;
+      private long passStartTimeMsL;
       private long presentTimeMsL;
       private long excessTimeMsL;
 
@@ -163,7 +169,8 @@ public class VolumeChecker
         readCheckedBytesL=0;
         volumeTotalBytesL= volumeFile.getTotalSpace();
         spinnerStateI= 0;
-        checkingStartTimeMsL= presentTimeMsL= getTimeMsL(); // Record start of volume check.
+        presentTimeMsL= getTimeMsL();
+        checkingStartTimeMsL= presentTimeMsL; // Record start of volume check. 
         timeOfNextReportMsL= // Do do first report immediately.
             checkingStartTimeMsL;
         reportNumberI= 0;
@@ -226,13 +233,13 @@ public class VolumeChecker
         if (!getConfirmationKeyPressB( // Exit if file deletion is not wanted.
             //// "This operation will first erase "+volumeFile
             //// + " !\nDo you really want to do this?")
-            "Do you want erase files on this volume first?")
+            "Do you want to erase files on this volume first?")
             )
           break goReturn;
         java.awt.Toolkit.getDefaultToolkit().beep(); // Get user's attention.
         resultString= "Permission to delete was not confirmed.";
         if (!getConfirmationKeyPressB( // Exit if permission not confirmed.
-            "\nAre you certain that you want to ERASE "+volumeFile+" ! ?"))
+            "\nAre you certain that you want to ERASE those files!?"))
           break goReturn;
         queueAndDisplayOutputSlowV("\n\nDeleting files...");
         resultString= FileOps.deleteRecursivelyReturnString(
@@ -267,6 +274,7 @@ public class VolumeChecker
         volumeDoneFilesL= 0; // Index of next file to write.
         byteOfNextReportL= 0;
         previousReportTimeMsL= timeOfNextReportMsL;
+        passStartTimeMsL= getTimeMsL();
         refreshProgressReportV(); // Initial progress report.
         toCheckRemainingBytesL= testFolderFile.getUsableSpace();
         pushOperationV("FILE-NAME");
@@ -389,6 +397,7 @@ public class VolumeChecker
         remainingFileBytesL= bytesPerFileL;
         volumeDoneFilesL= 0;
         byteOfNextReportL= 0;
+        passStartTimeMsL= getTimeMsL();
         previousReportTimeMsL= timeOfNextReportMsL;
         pushOperationV("read-and-compare pass");
         pushOperationV("FILE-NAME");
@@ -725,7 +734,8 @@ public class VolumeChecker
       {
         long safeToCheckDoneBytesL= // Prevent divide-by-zero ahead. 
             (0 == toCheckDoneBytesL) ? 1 : toCheckDoneBytesL;
-        long doneTimeMsL= presentTimeMsL - checkingStartTimeMsL;
+        //// long doneTimeMsL= presentTimeMsL - checkingStartTimeMsL;
+        long doneTimeMsL= presentTimeMsL - passStartTimeMsL;
         long remainingTimeMsL= 
             (doneTimeMsL * toCheckRemainingBytesL) / safeToCheckDoneBytesL ;
         String remainingTimeString= timeToString(remainingTimeMsL);
