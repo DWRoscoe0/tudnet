@@ -62,7 +62,6 @@ public class VolumeChecker
 
       // Volume scope.
       private long volumeTotalBytesL; // Partition size.
-      private long initialVolumeUsedBytesL;
       private long initialVolumeFreeBytesL;
         // Note, free-space/usable-space can change wildly during file IO.
 
@@ -84,7 +83,6 @@ public class VolumeChecker
 
       // Progress Reports.
       private int offsetOfProgressReportI; // within Document.
-      private int reportNumberI;
       private int spinnerStateI;
       private long timeOfLastSpinnerStepMsL;
       private Deque<String> operationDequeOfStrings; // Describes operation.
@@ -178,12 +176,15 @@ public class VolumeChecker
         checkingStartTimeMsL= presentTimeMsL; // Record start of volume check. 
         timeOfNextReportMsL= // Do do first report immediately.
             checkingStartTimeMsL;
-        reportNumberI= 0;
         queueAndDisplayOutputSlowV("\n\nChecking " + volumeFile + "\n");
         resultString= deleteAllVolumeFilesReturnString(volumeFile);
         if (! EpiString.isAbsentB(resultString)) break goReturn;
+        if (!getConfirmationKeyPressB( // Exit if write-read check not wanted.
+            "\nDo you want to write-read check this volume?")
+            )
+          break goReturn;
         offsetOfProgressReportI= thePlainDocument.getLength();
-        pushOperationV("VolumeChecker");
+        pushOperationV("Volume-Check");
         buildFolderFile= new File(volumeFile,Config.appString + "Temp");
         initialVolumeFreeBytesL= volumeFile.getUsableSpace();
         toCheckTotalBytesL= initialVolumeFreeBytesL;
@@ -287,8 +288,6 @@ public class VolumeChecker
         speedStartVolumeDoneBytesL= 0;
         FileOutputStream theFileOutputStream= null;
         FileDescriptor theFileDescriptor= null;
-        initialVolumeUsedBytesL= 
-            volumeTotalBytesL - testFolderFile.getUsableSpace();
         toCheckDoneBytesL=0;
         remainingFileBytesL= bytesPerFileL;
         volumeDoneFilesL= 0; // Index of next file to write.
@@ -647,7 +646,7 @@ public class VolumeChecker
       {
         long nowTimeMsL= getTimeMsL();
         String outputString= ""
-            + "\n\nProgress-Report-Number: " + (++reportNumberI)
+            + "\n\nChecking volume..."
               + " " + advanceAndGetSpinnerString()
             + columnHeadingString()
             + bytesString()
@@ -655,8 +654,8 @@ public class VolumeChecker
             + filesString()
             + timeString()
             + speedString()
-            + goodBytesString()
-            + "\nOperation: " + operationDequeOfStrings
+            //// + goodBytesString()
+            + "\n\nOperation: " + operationDequeOfStrings
             + " " + advanceAndGetSpinnerString()
             ;
         previousReportTimeMsL= nowTimeMsL;
@@ -785,16 +784,6 @@ public class VolumeChecker
             }
         return String.format(
             "\nspeed  : %8d bytes/second", speedL);
-        }
-
-    private String goodBytesString()
-      {
-        return 
-          "\n" + (initialVolumeUsedBytesL + readCheckedBytesL)
-            + " total-usable-bytes = "
-          + "\n  " + initialVolumeUsedBytesL + " used + " 
-            + readCheckedBytesL + " checked"
-          ;
         }
 
     private String advanceAndGetSpinnerString()
