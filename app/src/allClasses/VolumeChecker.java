@@ -64,6 +64,7 @@ public class VolumeChecker
       private long volumeTotalBytesL; // Partition size.
       private long initialVolumeFreeBytesL;
         // Note, free-space/usable-space can change wildly during file IO.
+      private long doneTimeMsL;
 
       // Volume pass scope.  Used for both write and read-compare passes.  
       private long toCheckTotalBytesL; // This should be the sum of:
@@ -82,13 +83,14 @@ public class VolumeChecker
       private long presentTimeMsL;
 
       // Progress Reports.
-      private int offsetOfProgressReportI; // within Document.
+      private int progressReportOffsetI= -1; // within Document.
+      private int progressReportMaxTailLengthI= 0;
+      @SuppressWarnings("unused") ///
+      private long progressReportPreviousTimeMsL; ///del This doesn't appear used?
+      private long progressReportNextTimeMsL;
       private int spinnerStateI;
       private long timeOfLastSpinnerStepMsL;
       private Deque<String> operationDequeOfStrings; // Describes operation.
-      @SuppressWarnings("unused") ///
-      private long previousReportTimeMsL; ///del This doesn't appear used?
-      private long timeOfNextReportMsL;
       
       // For measuring speed of operation.
       private long speedIntervalStartTimeMsL;
@@ -158,9 +160,9 @@ public class VolumeChecker
     private void checkVolumeV()
       /* This method checks the volume specified by volumeFile.
        * This includes optionally deleting all files on the volume,
-       * then doing a write-read test
+       * then doing a write-read test.
        * 
-       * ///rnh Being modified to make write-read test optional.
+       * ///enh Being modified to make write-read test optional.
        */
       {
         theAppLog.debug("VolumeChecker.checkVolumeV(.) begins.");
@@ -170,11 +172,13 @@ public class VolumeChecker
         operationDequeOfStrings= new ArrayDeque<String>();
         writtenBytesL= 0;
         readCheckedBytesL=0;
+        doneTimeMsL= 0;
+        passStartTimeMsL= getTimeMsL();
         volumeTotalBytesL= volumeFile.getTotalSpace();
         spinnerStateI= 0;
         presentTimeMsL= getTimeMsL();
         checkingStartTimeMsL= presentTimeMsL; // Record start of volume check. 
-        timeOfNextReportMsL= // Do do first report immediately.
+        progressReportNextTimeMsL= // Do first report immediately.
             checkingStartTimeMsL;
         queueAndDisplayOutputSlowV("\n\nChecking " + volumeFile + "\n");
         resultString= deleteAllVolumeFilesReturnString(volumeFile);
@@ -183,7 +187,8 @@ public class VolumeChecker
             "\nDo you want to write-read check this volume?")
             )
           break goReturn;
-        offsetOfProgressReportI= thePlainDocument.getLength();
+        progressReportOffsetI= thePlainDocument.getLength();
+        progressReportMaxTailLengthI= 0;
         pushOperationV("Volume-Check");
         buildFolderFile= new File(volumeFile,Config.appString + "Temp");
         initialVolumeFreeBytesL= volumeFile.getUsableSpace();
@@ -195,7 +200,7 @@ public class VolumeChecker
               "error occurred while creating folder", resultString);
           break goFinish;
           }
-        outputProgressSlowlyV();
+        refreshProgressReportV(); // First, slow progress report.
         resultString= writeTestReturnString(buildFolderFile);
         if (! EpiString.isAbsentB(resultString)) {
           resultString= EpiString.combine1And2WithNewlineString(
@@ -217,7 +222,7 @@ public class VolumeChecker
             resultString, deleteErrorString);
         replaceOperationAndRefreshProgressReportV("done");
       }  // goReturn:
-        appendResultsOfOperationV();
+        refreshProgressReportV();
         if (! EpiString.isAbsentB(resultString)) // Report error or success.
           appendWithPromptSlowlyAndWaitForKeyV( // Report error.
               "The operation terminated:\n" + resultString);
@@ -228,21 +233,19 @@ public class VolumeChecker
         return;
       } // checkVolumeV(.)
 
-    private void appendResultsOfOperationV() 
-      { 
-        queueOutputV("\n");
-        appendBytesResultV( "in volume", volumeTotalBytesL);
-        appendBytesResultV( "free", volumeFile.getUsableSpace());
-        appendBytesResultV( "written", writtenBytesL);
-        appendBytesResultV( "read", readCheckedBytesL);
+    private String bytesResultsString()
+      {
+        return "\n"
+          + bytesResultString( "in volume", volumeTotalBytesL)
+          + bytesResultString( "free", volumeFile.getUsableSpace())
+          + bytesResultString( "written", writtenBytesL)
+          + bytesResultString( "read okay", readCheckedBytesL)
+          ;
         }
 
-    private void appendBytesResultV(String typeString, long countL)
+    private String bytesResultString(String typeString, long countL)
       {
-        queueOutputV(
-          String.format(
-            "\n  bytes %-9s :%12d", typeString, countL)
-          );
+        return String.format("\nbytes %-9s :%12d", typeString, countL);
         }
 
     protected String deleteAllVolumeFilesReturnString(File volumeFile)
@@ -291,7 +294,7 @@ public class VolumeChecker
         toCheckDoneBytesL=0;
         remainingFileBytesL= bytesPerFileL;
         volumeDoneFilesL= 0; // Index of next file to write.
-        previousReportTimeMsL= timeOfNextReportMsL;
+        progressReportPreviousTimeMsL= progressReportNextTimeMsL;
         passStartTimeMsL= getTimeMsL();
         refreshProgressReportV(); // Initial progress report.
         toCheckRemainingBytesL= testFolderFile.getUsableSpace();
@@ -416,7 +419,7 @@ public class VolumeChecker
         remainingFileBytesL= bytesPerFileL;
         volumeDoneFilesL= 0;
         passStartTimeMsL= getTimeMsL();
-        previousReportTimeMsL= timeOfNextReportMsL;
+        progressReportPreviousTimeMsL= progressReportNextTimeMsL;
         pushOperationV("read-and-compare pass");
         pushOperationV("FILE-NAME");
         try {
@@ -614,12 +617,12 @@ public class VolumeChecker
       goReturn: {
         presentTimeMsL= getTimeMsL(); // [Try to] measure the time.
         if // Produce progress report if time remaining in period reached 0.
-          (0 <= (presentTimeMsL-timeOfNextReportMsL))
+          (0 <= (presentTimeMsL-progressReportNextTimeMsL))
           { // Produce progress report and calculate when to do next one.
-            timeOfNextReportMsL= // Calculate time of next report.
+            progressReportNextTimeMsL= // Calculate time of next report.
                 presentTimeMsL 
                 + theLockAndSignal.periodCorrectedDelayMsL(
-                    timeOfNextReportMsL, msPerReportMsL);
+                    progressReportNextTimeMsL, msPerReportMsL);
             refreshProgressReportV();
             break goReturn;
             }
@@ -628,20 +631,32 @@ public class VolumeChecker
       }
 
     private void refreshProgressReportV()
+      /* This method update the progress report to the display
+       * by writing it to the thePlainDocument.
+       * 
+       * ///enh It is being modified to output slowly 
+       * any part of the new tail that extends beyond the old tail.
+       */
       {
-        // theAppLog.debug(
-        //   "VolumeChecker.updateProgressV() updating.");
-        // theAppLog.debugClockOutV("pr");
-        String outputString= getProgressReportString();
-        replaceDocumentTailAt1With2V(offsetOfProgressReportI, outputString);
+        String newTailString= getProgressReportString();
+        int newTailLengthI= newTailString.length();
+        if (newTailLengthI <= progressReportMaxTailLengthI) // Document not being extended.
+          replaceDocumentTailAt1With2V( // Do simple and complete replacement.
+              progressReportOffsetI,
+              newTailString
+              );
+          else // We will have a new maximum document length.
+          { // Fast replace tail and slow output remainder.
+            replaceDocumentTailAt1With2V( // Replace common part.
+              progressReportOffsetI, 
+              newTailString.substring(0,progressReportMaxTailLengthI));
+            appendSlowlyV( // Append remainder slowly.
+                newTailString.substring(progressReportMaxTailLengthI));
+            progressReportMaxTailLengthI= newTailLengthI; // Update new maximum length.
+            
+          }
         }
 
-    private void outputProgressSlowlyV()
-      {
-        String outputString= getProgressReportString();
-        appendSlowlyV(outputString);
-        }
-    
     private String getProgressReportString()
       {
         long nowTimeMsL= getTimeMsL();
@@ -654,11 +669,11 @@ public class VolumeChecker
             + filesString()
             + timeString()
             + speedString()
-            //// + goodBytesString()
+            + bytesResultsString()
             + "\n\nOperation: " + operationDequeOfStrings
             + " " + advanceAndGetSpinnerString()
             ;
-        previousReportTimeMsL= nowTimeMsL;
+        progressReportPreviousTimeMsL= nowTimeMsL;
         return outputString;
         }
 
@@ -738,7 +753,7 @@ public class VolumeChecker
       {
         long safeToCheckDoneBytesL= // Prevent divide-by-zero ahead. 
             (0 == toCheckDoneBytesL) ? 1 : toCheckDoneBytesL;
-        long doneTimeMsL= presentTimeMsL - passStartTimeMsL;
+        doneTimeMsL= presentTimeMsL - passStartTimeMsL;
         long remainingTimeMsL= 
             (doneTimeMsL * toCheckRemainingBytesL) / safeToCheckDoneBytesL ;
         String remainingTimeString= timeToString(remainingTimeMsL);
