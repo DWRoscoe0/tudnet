@@ -83,12 +83,12 @@ public class VolumeChecker
       private long presentTimeMsL;
 
       // Progress Reports.
-      private int progressReportOffsetI= -1; // within Document.
-      private int progressReportMaxTailLengthI= 0;
+      private int progressReportHeadOffsetI= -1; /* -1 means report inactive. */
+      private int progressReportMaximumLengthI= -1;
       @SuppressWarnings("unused") ///
       private long progressReportPreviousTimeMsL; ///del This doesn't appear used?
       private long progressReportNextTimeMsL;
-      private int spinnerStateI;
+      private int spinnerStepStateI;
       private long timeOfLastSpinnerStepMsL;
       private Deque<String> operationDequeOfStrings; // Describes operation.
       
@@ -123,10 +123,15 @@ public class VolumeChecker
     @Override
     protected void mainThreadLogicV()
       {
-        queueAndDisplayOutputSlowV(
-          "This feature does simple functional testing "
-          + "and capacity measurement "
-          + "of storage volumes attached to this device.");
+        appendWithPromptSlowlyAndWaitForKeyV(
+          "This feature does functional testing and capacity measurement "
+          + "of storage volumes attached to your device.  "
+          + "\n\n"
+          + "Note, for the read-back test to be valid, "
+          + "your test volume size must be larger than "
+          + "the amount of your device's memory "
+          + "used as a disk-page cache."
+          + "\n");
         List<File> volumeListOfFiles;
       while(true) {
         volumeListOfFiles= getTerminationOrKeyOrAddedVolumeListOfFiles();
@@ -169,13 +174,14 @@ public class VolumeChecker
         String resultString;
       goReturn: {
       goFinish: {
+        progressReportMaximumLengthI= -1; // Prepare for new or next report.
         operationDequeOfStrings= new ArrayDeque<String>();
         writtenBytesL= 0;
         readCheckedBytesL=0;
         doneTimeMsL= 0;
         passStartTimeMsL= getTimeMsL();
         volumeTotalBytesL= volumeFile.getTotalSpace();
-        spinnerStateI= 0;
+        spinnerStepStateI= 0;
         presentTimeMsL= getTimeMsL();
         checkingStartTimeMsL= presentTimeMsL; // Record start of volume check. 
         progressReportNextTimeMsL= // Do first report immediately.
@@ -187,8 +193,6 @@ public class VolumeChecker
             "\nDo you want to write-read check this volume?")
             )
           break goReturn;
-        progressReportOffsetI= thePlainDocument.getLength();
-        progressReportMaxTailLengthI= 0;
         pushOperationV("Volume-Check");
         buildFolderFile= new File(volumeFile,Config.appString + "Temp");
         initialVolumeFreeBytesL= volumeFile.getUsableSpace();
@@ -225,10 +229,10 @@ public class VolumeChecker
         refreshProgressReportV();
         if (! EpiString.isAbsentB(resultString)) // Report error or success.
           appendWithPromptSlowlyAndWaitForKeyV( // Report error.
-              "The operation terminated:\n" + resultString);
+              "\nThe operation terminated:\n" + resultString);
           else 
           appendWithPromptSlowlyAndWaitForKeyV( // Report success.
-            "The operation completed without error.");
+            "\nThe operation completed without error.\n");
         theAppLog.debug("VolumeChecker.checkVolumeV(.) ends.");
         return;
       } // checkVolumeV(.)
@@ -542,7 +546,7 @@ public class VolumeChecker
           (null == tryToGetFromQueueKeyString())
           break toReturn;
         if // Exit if the interruption is not confirmed.
-          (! getConfirmationKeyPressB(confirmationQuestionString))
+          (! getConfirmationKeyPressB("\n"+confirmationQuestionString))
           break toReturn;
         returnString= resultDescriptionString; // Override return value.
       } // toReturn:
@@ -633,27 +637,35 @@ public class VolumeChecker
     private void refreshProgressReportV()
       /* This method update the progress report to the display
        * by writing it to the thePlainDocument.
+       * It outputs slowly any part of the report 
+       * that extends past the existing document,
+       * thereby extending the document for next time.
        * 
        * ///enh It is being modified to output slowly 
        * any part of the new tail that extends beyond the old tail.
        */
       {
+        if (0 > progressReportMaximumLengthI) { // Initialize report if needed.
+          progressReportHeadOffsetI= thePlainDocument.getLength();
+          progressReportMaximumLengthI= 0;
+          }
+
         String newTailString= getProgressReportString();
         int newTailLengthI= newTailString.length();
-        if (newTailLengthI <= progressReportMaxTailLengthI) // Document not being extended.
+        if  // Document not being extended.
+          (newTailLengthI <= progressReportMaximumLengthI)
           replaceDocumentTailAt1With2V( // Do simple and complete replacement.
-              progressReportOffsetI,
+              progressReportHeadOffsetI,
               newTailString
               );
           else // We will have a new maximum document length.
           { // Fast replace tail and slow output remainder.
             replaceDocumentTailAt1With2V( // Replace common part.
-              progressReportOffsetI, 
-              newTailString.substring(0,progressReportMaxTailLengthI));
+              progressReportHeadOffsetI, 
+              newTailString.substring(0,progressReportMaximumLengthI));
             appendSlowlyV( // Append remainder slowly.
-                newTailString.substring(progressReportMaxTailLengthI));
-            progressReportMaxTailLengthI= newTailLengthI; // Update new maximum length.
-            
+                newTailString.substring(progressReportMaximumLengthI));
+            progressReportMaximumLengthI= newTailLengthI; // Update new maximum length.
           }
         }
 
@@ -812,10 +824,10 @@ public class VolumeChecker
         if // Step spinner if it's time.
           ((timeSinceLastStepMsL < 0) || (timeSinceLastStepMsL > stepPeriodMsL))
           { // Step the spinner.
-            if (4 <= (++spinnerStateI)) spinnerStateI= 0; // Step spinner.
+            if (4 <= (++spinnerStepStateI)) spinnerStepStateI= 0; // Step spinner.
             timeOfLastSpinnerStepMsL= presentTimeMsL; // Save time.
             }
-        return "-\\|/".substring(spinnerStateI, spinnerStateI+1);
+        return "-\\|/".substring(spinnerStepStateI, spinnerStepStateI+1);
         }
 
     protected List<File> getTerminationOrKeyOrAddedVolumeListOfFiles()
