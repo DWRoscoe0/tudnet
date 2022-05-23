@@ -584,7 +584,7 @@ public class FileOps
         return Misc.dateString( theFile.lastModified() );
         }
 
-    public static String postorderTraversalAndReturnString(
+    public static String postorderTraversalReturningString(
         File subtreeFile, Function<File,String> fileFunctionReturningString)
       /* This method tries to perform fileFunctionReturningString 
        * for every file in subtreeFile.
@@ -598,7 +598,7 @@ public class FileOps
         if (subtreeFile.isDirectory()) // If file is a directory then
           for (File childFile : subtreeFile.listFiles()) { // for each child
             resultString= // recursively process the child.
-                FileOps.postorderTraversalAndReturnString(
+                FileOps.postorderTraversalReturningString(
                     childFile,fileFunctionReturningString);
             if (null != resultString) break goReturn; // Exit if error.
             }

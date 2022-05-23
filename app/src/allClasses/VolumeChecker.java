@@ -94,9 +94,13 @@ public class VolumeChecker
       private File checkFile; // Name of file containing the active block.
       private long remainingFileBytesL; // Down counter and loop control.
 
+      private int spinnerStepStateI;
+      private long timeOfLastSpinnerStepMsL;
+      private Deque<String> operationDequeOfStrings; // Describes operation.
+
 
     // Constructors and constructor-related methods.
-  
+
     public VolumeChecker( // constructor
         String nameString, // Node name.
         Persistent thePersistent,
@@ -244,8 +248,34 @@ public class VolumeChecker
     
     // Deletion code.
     
-    private File preDeletionFile= null;
-    private int preDeletionCountI= 0;
+    private File deletionScanFile;
+    private long deletionScanByteCountL;
+    private int deletionScanFileCountI;
+    private int deletionScanDirectoryCountI;
+    private Function<File,String> deletionScanFunctionOfFileToString=
+      new Function<File,String>() {
+        public String apply(File subtreeFile){
+          deletionScanFile= subtreeFile;
+          if (subtreeFile.isDirectory())
+            deletionScanDirectoryCountI++;
+            else
+            {
+              deletionScanFileCountI++;
+              deletionScanByteCountL+= subtreeFile.length();
+              }
+          updateProgressReportMaybeV();
+          return (String)null;
+          } 
+        };
+    Supplier<String> deletionScanProgressReportSupplierOfString= 
+        new Supplier<String>() {
+          public String get() { 
+            return "\nBytes: "+deletionScanByteCountL
+                +"\nFiles: "+deletionScanFileCountI
+                +"\nDirectories: "+deletionScanDirectoryCountI
+                +"\nName: "+deletionScanFile ; 
+            }
+          };
 
     protected String maybeDeleteAllVolumeFilesReturnString(File volumeFile)
       /* This method erases File volumeFile,
@@ -255,27 +285,28 @@ public class VolumeChecker
       {
         String resultString= null;
       goReturn: {
-        progressReportResetV( () ->  
-          "\nFiles: "+preDeletionCountI+" at "+preDeletionFile );
-        Function<File,String> tallyFunctionOfFileToString= 
-          new Function<File,String>() {
-            public String apply(File subtreeFile){
-              preDeletionFile= subtreeFile;
-              preDeletionCountI++;
-              updateProgressReportMaybeV();
-              return null;
-              } 
-            };
-        resultString= FileOps.postorderTraversalAndReturnString(
-          volumeFile, tallyFunctionOfFileToString);
+        deletionScanFile= null;
+        deletionScanByteCountL= 0;
+        deletionScanFileCountI= 0;
+        deletionScanDirectoryCountI= 0;
+        progressReportResetV( deletionScanProgressReportSupplierOfString );
+        resultString= FileOps.postorderTraversalReturningString(
+          volumeFile, deletionScanFunctionOfFileToString);
+        if (null != resultString) {
+          resultString= EpiString.combine1And2WithNewlineString(
+              "directory tree traversal returned error",resultString
+              );
+          break goReturn;
+          }
+        updateProgressReportV();
         if (!getConfirmationKeyPressB( // Exit if file deletion is not wanted.
-            "Do you want to erase files on this volume first?")
+            "\nDo you want to ERASE ALL files on this volume first?")
             )
           break goReturn;
         java.awt.Toolkit.getDefaultToolkit().beep(); // Get user's attention.
         resultString= "Permission to delete was not confirmed.";
         if (!getConfirmationKeyPressB( // Exit if permission not confirmed.
-            "\nAre you certain that you want to ERASE those files!?"))
+            "\nAre you CERTAIN that you want to erase the files!?"))
           break goReturn;
         queueAndDisplayOutputSlowV("\n\nDeleting files...");
         resultString= FileOps.deleteRecursivelyReturnString(
@@ -307,7 +338,6 @@ public class VolumeChecker
         toCheckDoneBytesL=0;
         remainingFileBytesL= bytesPerFileL;
         volumeDoneFilesL= 0; // Index of next file to write.
-        progressReportPreviousTimeMsL= progressReportNextTimeMsL;
         passStartTimeMsL= getTimeMsL();
         updateProgressReportV(); // Initial progress report.
         toCheckRemainingBytesL= testFolderFile.getUsableSpace();
@@ -432,7 +462,6 @@ public class VolumeChecker
         remainingFileBytesL= bytesPerFileL;
         volumeDoneFilesL= 0;
         passStartTimeMsL= getTimeMsL();
-        progressReportPreviousTimeMsL= progressReportNextTimeMsL;
         pushOperationV("read-and-compare pass");
         pushOperationV("FILE-NAME");
         try {
@@ -628,7 +657,6 @@ public class VolumeChecker
        * progress report string.
        */
       {
-        long nowTimeMsL= getTimeMsL();
         String outputString= ""
             + "\n\nChecking volume..."
               + " " + advanceAndGetSpinnerString()
@@ -642,7 +670,6 @@ public class VolumeChecker
             + "\n\nOperation: " + operationDequeOfStrings
             + " " + advanceAndGetSpinnerString()
             ;
-        progressReportPreviousTimeMsL= nowTimeMsL;
         return outputString;
         }
 
@@ -827,21 +854,15 @@ public class VolumeChecker
         }
 
 
-    // ProgressReport code.
+    // General ProgressReport code.  This might eventually move to ConsoleBase.
 
     private int progressReportHeadOffsetI= -1; /* -1 means report inactive. */
     private int progressReportMaximumLengthI= -1;
-    @SuppressWarnings("unused") ///
-    private long progressReportPreviousTimeMsL; ///del This doesn't appear used?
     private long progressReportNextTimeMsL;
-    private int spinnerStepStateI;
-    private long timeOfLastSpinnerStepMsL;
-    private Deque<String> operationDequeOfStrings; // Describes operation.
     private Supplier<String> progressReportSupplierOfString= 
       new Supplier<String>() {
         public String get(){ return "PROGRESS REPORT STUB"; } 
         };
-
 
     private void progressReportResetV(
         Supplier<String> newProgressReportSupplierOfString)
