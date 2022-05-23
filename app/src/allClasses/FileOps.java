@@ -13,6 +13,7 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.util.function.Function;
 
 import allClasses.bundles.BundleOf2;
 
@@ -509,6 +510,9 @@ public class FileOps
 
     public static String deleteRecursivelyIfItExistsReturnString(
         File theFile,String confirmationString) 
+      /* This method works like deleteRecursivelyReturnString(.)
+       * but does not return an error String if subtreeFile does not exists.
+       */
       {
         String errorString= null;
         if (theFile.exists()) // Try deleting only if it actually exists. 
@@ -518,7 +522,16 @@ public class FileOps
         }
 
     public static String deleteRecursivelyReturnString(
-        File theFile,String confirmationString) 
+        File subtreeFile,String confirmationString)
+      /* This method tries to delete the file/directory subtree 
+       * that is rooted at subtreeFile.
+       * First it checks that confirmationString is 
+       * the requiredConfirmationString.  
+       * If not then it returns a String describing the error.
+       * Next it deletes the file or recursively deletes the directory 
+       * If an error is countered it returns a String describing the error
+       * and terminates deletion of the remainder of the subtree.
+       */
       {
         String errorString= null;
       goReturn: {
@@ -526,23 +539,26 @@ public class FileOps
           errorString= "FileOps.deleteRecursivelyB(.) Unconfirmed request";
           break goReturn;
           }
-        if (theFile.isDirectory()) // If file is a directory then
-          for (File childFile : theFile.listFiles()) { // for each child
+        if (subtreeFile.isDirectory()) // If file is a directory then
+          for (File childFile : subtreeFile.listFiles()) { // for each child
             errorString= // recursively delete the child.
                 deleteRecursivelyReturnString(childFile,confirmationString);
             if (null != errorString) break goReturn; // Exit if error.
             }
-        if (!theFile.delete()) // Delete what remains after children are gone.
-          errorString= "Failed to delete file: " + theFile;
+        if (!subtreeFile.delete()) // Delete root minus any children.
+          errorString= "Failed to delete file: " + subtreeFile;
       } // goReturn:
         return errorString;
       }
     
     public static void deleteDeleteable(File tmpFile)
+      /* This method deletes tmpFile if tmpFile is not null,
+       * otherwise it does nothing.  */
       {
-        if (tmpFile != null) tmpFile.delete();
+        if (tmpFile != null) 
+          tmpFile.delete();
         }
-    
+
     public static String twoFilesString(
         File sourceFile, File destinationFile)
       {
@@ -567,6 +583,30 @@ public class FileOps
       {
         return Misc.dateString( theFile.lastModified() );
         }
+
+    public static String postorderTraversalAndReturnString(
+        File subtreeFile, Function<File,String> fileFunctionReturningString)
+      /* This method tries to perform fileFunctionReturningString 
+       * for every file in subtreeFile.
+       * fileFunctionReturningString does some operation on a File
+       * and returns a result String, null if success, 
+       * not-null describing a reason for failure.
+       */
+      {
+        String resultString= null;
+      goReturn: {
+        if (subtreeFile.isDirectory()) // If file is a directory then
+          for (File childFile : subtreeFile.listFiles()) { // for each child
+            resultString= // recursively process the child.
+                FileOps.postorderTraversalAndReturnString(
+                    childFile,fileFunctionReturningString);
+            if (null != resultString) break goReturn; // Exit if error.
+            }
+        resultString= // Finish by processing root of subtree. 
+            fileFunctionReturningString.apply(subtreeFile);
+      } // goReturn:
+        return resultString;
+      }
 
     
 

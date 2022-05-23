@@ -45,7 +45,7 @@ public class VolumeDetector
     protected void mainThreadLogicV()
       // This should be overridden by subclasses. 
       {
-        queueAndDisplayOutputSlowV(
+        promptSlowlyV(
           "This feature tests the detection of storage volumes "
           + "attached to this device.\n");
         File[] oldVolumeFiles= getVolumeFiles(); 
@@ -76,7 +76,7 @@ public class VolumeDetector
        */
       {
         File[] newVolumeFiles;
-        queueAndDisplayOutputSlowV(
+        promptSlowlyV(
           "\n\nPresent volumes attached are:\n  "
           + Arrays.toString(oldVolumeFiles)
           + "\n\nPlease insert or connect "

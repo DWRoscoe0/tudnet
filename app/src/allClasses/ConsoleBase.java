@@ -156,6 +156,17 @@ public class ConsoleBase
         return getKeyString();
         }
 
+    protected void promptSlowlyV(String promptString)
+      /* This method appends promptString to the text queue.
+       * Next it appends slowly to the document any queued output text.
+       * Next it flushes the keyboard input queue in preparation for
+       * possible new keyboard input.
+       */
+      {
+        queueOutputV(promptString);
+        promptSlowlyV();
+        }
+
     protected void promptSlowlyV()
       /* This method appends slowly to the document any queued output text.
        * Next it flushes the keyboard input queue in preparation for
