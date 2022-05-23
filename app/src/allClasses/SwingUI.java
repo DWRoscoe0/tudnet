@@ -21,6 +21,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.plaf.FontUIResource;
 
+import allClasses.epinode.MapEpiNode;
+
 class SwingUI
 
   implements KeyEventDispatcher 
@@ -36,6 +38,7 @@ class SwingUI
     private AppFactory theAppFactory;
     private Shutdowner theShutdowner;
     private TracingEventQueue theTracingEventQueue;
+    private MapEpiNode settingsMapEpiNode;
 
     // Other InnerApp instance variables.
     private JFrame theJFrame;  // App's only JFrame (now).
@@ -46,7 +49,8 @@ class SwingUI
         DagBrowserPanel theDagBrowserPanel,
         AppFactory theAppFactory,
         Shutdowner theShutdowner,
-        TracingEventQueue theTracingEventQueue
+        TracingEventQueue theTracingEventQueue,
+        MapEpiNode settingsMapEpiNode
       )
       {
         this.theAppInstanceManager= theAppInstanceManager;
@@ -54,6 +58,7 @@ class SwingUI
         this.theAppFactory= theAppFactory;
         this.theShutdowner= theShutdowner;
         this.theTracingEventQueue= theTracingEventQueue;
+        this.settingsMapEpiNode= settingsMapEpiNode;
         }
 
     public void initializeV()
@@ -216,7 +221,8 @@ class SwingUI
             (int)(screenDimension.getHeight() * 0.75)
             ); // << not working!!!
         theJFrame.setLocationRelativeTo(null);  // center JFrame on screen.
-        //////// theJFrame.setState(Frame.ICONIFIED); // Initially minimize it.
+        if (settingsMapEpiNode.isTrueB("SwingUIIconified"))
+          theJFrame.setState(Frame.ICONIFIED); // Initially minimize it.
         theJFrame.setVisible(true);  // Make the window visible.
         }
 

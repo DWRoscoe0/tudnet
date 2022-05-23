@@ -45,6 +45,7 @@ public class AppFactory {  // For App class lifetimes.
   private final Persistent thePersistent;
 
   // Other objects that will be needed later.
+  private MapEpiNode settingsMapEpiNode;
   private PortManager thePortManager;
   private final Shutdowner theShutdowner;
   private final OuterApp theOuterApp;
@@ -76,6 +77,11 @@ public class AppFactory {  // For App class lifetimes.
       theAppLog.info("AppFactory(.) entry.");
 
       this.thePersistent= inPersistent;
+      
+      MapEpiNode rootMapEpiNode= // Cache Persistent root MapEpiNode. 
+          thePersistent.getRootMapEpiNode();
+      settingsMapEpiNode= // Cache Persistent Settings subtree.
+          rootMapEpiNode.getMapEpiNode("Settings");
 
       thePortManager= new PortManager( thePersistent );
       theShutdowner= new Shutdowner();
@@ -228,7 +234,8 @@ public class AppFactory {  // For App class lifetimes.
         theDagBrowserPanel,
         this, // GUIBuilderStarter gets to know the factory that made it. 
         theShutdowner,
-        theTracingEventQueue
+        theTracingEventQueue,
+        settingsMapEpiNode
         );
       InnerApp newInnerApp= new InnerApp( 
         theConnectionManagerEpiThread,
