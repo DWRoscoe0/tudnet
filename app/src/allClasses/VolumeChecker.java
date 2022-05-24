@@ -312,7 +312,6 @@ public class VolumeChecker
         resultString= FileOps.deleteRecursivelyReturnString(
             volumeFile,FileOps.requiredConfirmationString);
         queueAndDisplayOutputSlowV("done.");
-        resultString= null; // Signal success.
       } // goReturn:
       return resultString;
       }

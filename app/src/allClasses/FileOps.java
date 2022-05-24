@@ -505,6 +505,9 @@ public class FileOps
         theFile.setLastModified(timestamp);
         }
 
+
+    // Code that does confirmed deletions.
+
     public final static String requiredConfirmationString= 
         "I AM CERTAIN ABOUT THIS!"; 
 
@@ -539,14 +542,41 @@ public class FileOps
           errorString= "FileOps.deleteRecursivelyB(.) Unconfirmed request";
           break goReturn;
           }
-        if (subtreeFile.isDirectory()) // If file is a directory then
-          for (File childFile : subtreeFile.listFiles()) { // for each child
+        errorString= deleteChildrenRecursivelyReturnString(
+            subtreeFile,confirmationString);
+        if (null != errorString) break goReturn; // Exit if error.
+        if (!subtreeFile.delete()) // Delete root minus any children.
+          errorString= "Failed to delete file: " + subtreeFile;
+      } // goReturn:
+        return errorString;
+      }
+
+    public static String deleteChildrenRecursivelyReturnString(
+        File subtreeFile,String confirmationString)
+      /* This method tries to delete the children of
+       * the file/directory subtree that is rooted at subtreeFile.
+       * It does not delete the root.
+       * First it checks that confirmationString is 
+       * the requiredConfirmationString.  
+       * If not then it returns a String describing the error.
+       * Next it deletes the children, if any, of subtreeFile.
+       * If an error is countered it returns a String describing the error
+       * and terminates deletion of the remainder of the subtree.
+       */
+      {
+        String errorString= null;
+      goReturn: {
+        if (requiredConfirmationString != confirmationString) {
+          errorString= "FileOps.deleteRecursivelyB(.) Unconfirmed request";
+          break goReturn;
+          }
+        File[] childrenListOfFiles= subtreeFile.listFiles();
+        if (null  != childrenListOfFiles) // Process children if a directory.
+          for (File childFile : childrenListOfFiles) { // for each child
             errorString= // recursively delete the child.
                 deleteRecursivelyReturnString(childFile,confirmationString);
             if (null != errorString) break goReturn; // Exit if error.
             }
-        if (!subtreeFile.delete()) // Delete root minus any children.
-          errorString= "Failed to delete file: " + subtreeFile;
       } // goReturn:
         return errorString;
       }
@@ -558,6 +588,9 @@ public class FileOps
         if (tmpFile != null) 
           tmpFile.delete();
         }
+
+
+    // String methods.
 
     public static String twoFilesString(
         File sourceFile, File destinationFile)
@@ -584,6 +617,9 @@ public class FileOps
         return Misc.dateString( theFile.lastModified() );
         }
 
+
+    // Directory tree traversal code.
+
     public static String postorderTraversalReturningString(
         File subtreeFile, Function<File,String> fileFunctionReturningString)
       /* This method tries to perform fileFunctionReturningString 
@@ -595,8 +631,9 @@ public class FileOps
       {
         String resultString= null;
       goReturn: {
-        if (subtreeFile.isDirectory()) // If file is a directory then
-          for (File childFile : subtreeFile.listFiles()) { // for each child
+        File[] childrenListOfFiles= subtreeFile.listFiles();
+        if (null  != childrenListOfFiles) // Process children if a directory.
+          for (File childFile : childrenListOfFiles) { // for each child
             resultString= // recursively process the child.
                 FileOps.postorderTraversalReturningString(
                     childFile,fileFunctionReturningString);
