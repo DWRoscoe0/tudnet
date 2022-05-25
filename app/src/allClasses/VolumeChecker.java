@@ -127,7 +127,7 @@ public class VolumeChecker
           + "your test volume size must be larger than "
           + "the amount of your device's memory "
           + "used as a disk-page cache."
-          + "\n");
+          );
         List<File> volumeListOfFiles;
       while(true) {
         volumeListOfFiles= getTerminationOrKeyOrAddedVolumeListOfFiles();
@@ -213,7 +213,7 @@ public class VolumeChecker
       }  // goFinish:
         pushOperationAndRefreshProgressReportV("deleting temporary files");
         theAppLog.debug("VolumeChecker.checkVolumeV(.) deleting.");
-        String deleteErrorString= FileOps.deleteRecursivelyReturnString(
+        String deleteErrorString= FileOps.deleteParentRecursivelyReturnString(
             buildFolderFile,FileOps.requiredConfirmationString);
         resultString= EpiString.combine1And2WithNewlineString(
             resultString, deleteErrorString);
@@ -225,7 +225,7 @@ public class VolumeChecker
               "\nThe operation terminated:\n" + resultString);
           else 
           appendWithPromptSlowlyAndWaitForKeyV( // Report success.
-            "\nThe operation completed without error.\n");
+            "\nThe operation completed without error.");
         theAppLog.debug("VolumeChecker.checkVolumeV(.) ends.");
         return;
       } // checkVolumeV(.)
@@ -290,7 +290,7 @@ public class VolumeChecker
         deletionScanFileCountI= 0;
         deletionScanDirectoryCountI= 0;
         progressReportResetV( deletionScanProgressReportSupplierOfString );
-        resultString= FileOps.postorderTraversalReturningString(
+        resultString= FileOps.parentPostorderTraversalReturningString(
           volumeFile, deletionScanFunctionOfFileToString);
         if (null != resultString) {
           resultString= EpiString.combine1And2WithNewlineString(
@@ -309,7 +309,7 @@ public class VolumeChecker
             "\nAre you CERTAIN that you want to erase the files!?"))
           break goReturn;
         queueAndDisplayOutputSlowV("\n\nDeleting files...");
-        resultString= FileOps.deleteRecursivelyReturnString(
+        resultString= FileOps.deleteChildrenRecursivelyReturnString(
             volumeFile,FileOps.requiredConfirmationString);
         queueAndDisplayOutputSlowV("done.");
       } // goReturn:
@@ -658,7 +658,7 @@ public class VolumeChecker
       {
         String outputString= ""
             + "\n\nChecking volume..."
-              + " " + advanceAndGetSpinnerString()
+              + " " + advanceAndGetSpinnerString() + "\n"
             + columnHeadingString()
             + bytesString()
             + blocksString()

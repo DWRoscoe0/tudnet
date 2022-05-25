@@ -126,7 +126,7 @@ public class ConsoleBase
       {
         queueOutputV(
             theString
-            + "\nPress the Enter key to continue: "
+            + "\n\nPress the Enter key to continue: "
             );
         promptSlowlyAndGetKeyString();
         }

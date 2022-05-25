@@ -520,11 +520,11 @@ public class FileOps
         String errorString= null;
         if (theFile.exists()) // Try deleting only if it actually exists. 
           errorString= 
-            deleteRecursivelyReturnString(theFile,confirmationString);
+            deleteParentRecursivelyReturnString(theFile,confirmationString);
         return errorString;
         }
 
-    public static String deleteRecursivelyReturnString(
+    public static String deleteParentRecursivelyReturnString(
         File subtreeFile,String confirmationString)
       /* This method tries to delete the file/directory subtree 
        * that is rooted at subtreeFile.
@@ -545,7 +545,7 @@ public class FileOps
         errorString= deleteChildrenRecursivelyReturnString(
             subtreeFile,confirmationString);
         if (null != errorString) break goReturn; // Exit if error.
-        if (!subtreeFile.delete()) // Delete root minus any children.
+        if (!subtreeFile.delete()) // Delete parent, now minus any children.
           errorString= "Failed to delete file: " + subtreeFile;
       } // goReturn:
         return errorString;
@@ -574,7 +574,7 @@ public class FileOps
         if (null  != childrenListOfFiles) // Process children if a directory.
           for (File childFile : childrenListOfFiles) { // for each child
             errorString= // recursively delete the child.
-                deleteRecursivelyReturnString(childFile,confirmationString);
+                deleteParentRecursivelyReturnString(childFile,confirmationString);
             if (null != errorString) break goReturn; // Exit if error.
             }
       } // goReturn:
@@ -620,10 +620,10 @@ public class FileOps
 
     // Directory tree traversal code.
 
-    public static String postorderTraversalReturningString(
+    public static String childrenPostorderTraversalReturningString(
         File subtreeFile, Function<File,String> fileFunctionReturningString)
       /* This method tries to perform fileFunctionReturningString 
-       * for every file in subtreeFile.
+       * for every child file in subtreeFile.
        * fileFunctionReturningString does some operation on a File
        * and returns a result String, null if success, 
        * not-null describing a reason for failure.
@@ -635,17 +635,35 @@ public class FileOps
         if (null  != childrenListOfFiles) // Process children if a directory.
           for (File childFile : childrenListOfFiles) { // for each child
             resultString= // recursively process the child.
-                FileOps.postorderTraversalReturningString(
+                FileOps.parentPostorderTraversalReturningString(
                     childFile,fileFunctionReturningString);
             if (null != resultString) break goReturn; // Exit if error.
             }
-        resultString= // Finish by processing root of subtree. 
-            fileFunctionReturningString.apply(subtreeFile);
       } // goReturn:
         return resultString;
       }
 
-    
+    public static String parentPostorderTraversalReturningString(
+        File subtreeFile, Function<File,String> fileFunctionReturningString)
+      /* This method tries to perform fileFunctionReturningString 
+       * for every file in the children of subtreeFile.
+       * fileFunctionReturningString does some operation on a File
+       * and returns a result String, null if success, 
+       * not-null describing a reason for failure.
+       */
+      {
+        String resultString= null;
+      goReturn: {
+        resultString= // Perform operation on child files. 
+          childrenPostorderTraversalReturningString(
+            subtreeFile, fileFunctionReturningString);
+        if (null != resultString) break goReturn; // Exit if there was an error.
+        resultString= // Finish by performing operation on root of subtree. 
+          fileFunctionReturningString.apply(subtreeFile);
+      } // goReturn:
+        return resultString;
+      }
+
 
     // File path and directory maker methods.
 
