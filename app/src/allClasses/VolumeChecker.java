@@ -300,7 +300,8 @@ public class VolumeChecker
           }
         updateProgressReportV();
         if (!getConfirmationKeyPressB( // Exit if file deletion is not wanted.
-            "\nDo you want to ERASE ALL files on this volume first?")
+            "\nDo you want to ERASE ALL files and subdirectories "
+            + "on this volume first?")
             )
           break goReturn;
         java.awt.Toolkit.getDefaultToolkit().beep(); // Get user's attention.
@@ -315,7 +316,6 @@ public class VolumeChecker
       } // goReturn:
       return resultString;
       }
-
 
     private String writeTestReturnString(File testFolderFile)
       /* This method does a write test by writing files in
