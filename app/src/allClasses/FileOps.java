@@ -439,8 +439,10 @@ public class FileOps
           } 
         catch (IOException theIOException) {
           errorString= "failed because of "+theIOException;
-          theAppLog.exception("FileOps.copyStreamBytesReturnString(.) "
+          if (! containsNoSpaceMessageInB(errorString))
+            theAppLog.exception("FileOps.copyStreamBytesReturnString(.) "
               + "terminated by",theIOException);
+                // Any exception other than disk full is anomaly-logged.
           }
         String logString= errorString;
         if (null==logString) logString= "succeeded";
@@ -451,6 +453,11 @@ public class FileOps
         return errorString;
         }
   
+    public static boolean containsNoSpaceMessageInB(String errorString)
+      {
+        return errorString.contains("There is not enough space on the disk");
+        }
+
     public static String copyTimeAttributesReturnString(
         Path sourcePath, Path destinationPath)
       /* This method copies the 3 time attributes from the source file

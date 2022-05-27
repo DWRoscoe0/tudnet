@@ -226,6 +226,7 @@ public class VolumeChecker
       }  // goUpdateProgressAndReturn:
         updateProgressReportV();
       }  // goReportErrorOrSuccessAndReturn:
+        java.awt.Toolkit.getDefaultToolkit().beep(); // Get user's attention.
         if (! EpiString.isAbsentB(resultString)) // Report error or success.
           appendWithPromptSlowlyAndWaitForKeyV( // Report error.
               "\n\nThe operation terminated:\n" + resultString);
@@ -282,6 +283,7 @@ public class VolumeChecker
                 +"\nName: "+deletionScanFile ; 
             }
           };
+
 
     protected String maybeDeleteAllVolumeFilesReturnString(File volumeFile)
       /* This method erases File volumeFile,

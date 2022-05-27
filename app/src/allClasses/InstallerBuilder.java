@@ -105,13 +105,19 @@ public class InstallerBuilder
         resultString= writeConfigurationFileReturnString(buildFolderFile);
         if (! EpiString.isAbsentB(resultString)) break goFinish;
       }  // goFinish:
+        java.awt.Toolkit.getDefaultToolkit().beep(); // Get user's attention.
         if (! EpiString.isAbsentB(resultString)) { // Report error.
+          if (FileOps.containsNoSpaceMessageInB(resultString))
+            resultString+= // Add suggestion if out of space. 
+              "\n\nTry deleting some unneeded files, "
+              + "or switch to a different disk-volume, "
+              + "and try again.";
           appendWithPromptSlowlyAndWaitForKeyV(
-              "Abnormal termination:\n" + resultString);
+              "\n\nAbnormal termination:\n" + resultString);
           break goReturn;
           }
         appendWithPromptSlowlyAndWaitForKeyV(
-          "The operation completed without error.");
+          "\n\nThe operation completed without error.");
       }  // goReturn:
         theAppLog.debug("InstallerBuilder.installToVolumeV(.) ends.");
         return;
