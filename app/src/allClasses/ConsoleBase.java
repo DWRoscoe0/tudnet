@@ -2,6 +2,7 @@ package allClasses;
 
 
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.function.Supplier;
 
 import javax.swing.JComponent;
 import javax.swing.event.DocumentListener;
@@ -115,6 +116,96 @@ public class ConsoleBase
           queueOutputV("\nThe character '"+inString+"' was typed.\n");
           } 
         }
+
+
+    // General ProgressReport code.  This might eventually move to ConsoleBase.
+
+    private final long msPerReportMsL= 100; // Trigger limit.
+    private int progressReportHeadOffsetI= -1; /* -1 means report inactive. */
+    private int progressReportMaximumLengthI= -1;
+    private long progressReportNextTimeMsL;
+    private Supplier<String> emptyProgressReportSupplierOfString= 
+      new Supplier<String>() {
+        public String get(){ return "!"; } 
+        };
+    private Supplier<String> progressReportSupplierOfString= 
+      new Supplier<String>() {
+        public String get(){ return "PROGRESS REPORT STUB!"; } 
+        };
+
+    protected void progressReportResetV()
+      /* This method resets the progress report system
+       * in preparation for producing empty progress reports.
+       */
+      {
+        progressReportNextTimeMsL= // Set to do first report immediately.
+            getTimeMsL();
+        progressReportHeadOffsetI= thePlainDocument.getLength();
+        progressReportMaximumLengthI= 0;
+        this.progressReportSupplierOfString= 
+            emptyProgressReportSupplierOfString;
+        }
+
+    protected void progressReportSetV(
+        Supplier<String> newProgressReportSupplierOfString)
+      /* This method sets the progress report system
+       * in preparation for a new progress report.
+       * newProgressReportSupplierOfString is the Supplier of 
+       * the progress report String.
+       */
+      {
+        progressReportResetV(); // Do the common stuff.
+        this.progressReportSupplierOfString= // Override empty report
+            newProgressReportSupplierOfString; // with this.
+        }
+
+    protected void updateProgressReportMaybeV()
+      /* This method updates the progress report, maybe.
+       * It depends on how much time has passed since the previous report.
+       * If enough time has passed then it updates, otherwise it does nothing.
+       */
+      {
+        long presentTimeMsL= getTimeMsL(); // Measure the time.
+        if // Produce progress report if time remaining in period reached 0.
+          (0 <= (presentTimeMsL-progressReportNextTimeMsL))
+          { // Produce progress report and calculate when to do next one.
+            progressReportNextTimeMsL= // Calculate time of next report.
+                presentTimeMsL 
+                + theLockAndSignal.periodCorrectedDelayMsL(
+                    progressReportNextTimeMsL, msPerReportMsL);
+            updateProgressReportV();
+            }
+      }
+
+    protected void updateProgressReportV()
+      /* This method unconditionally updates the progress report 
+       * to the display by writing it to the thePlainDocument.
+       * It gets the content from progressReportSupplierOfString.
+       * It outputs slowly any part of the report 
+       * that extends past the existing document,
+       * thereby extending the document for next time.
+       */
+      { 
+        String newTailString= progressReportSupplierOfString.get();
+        int newTailLengthI= newTailString.length();
+        if  // Document not being extended.
+          (newTailLengthI <= progressReportMaximumLengthI)
+          replaceDocumentTailAt1With2V( // Do simple and complete replacement.
+              progressReportHeadOffsetI,
+              newTailString
+              );
+          else // We will have a new maximum document length.
+          { // Fast replace tail and slow output remainder.
+            replaceDocumentTailAt1With2V( // Replace common part.
+              progressReportHeadOffsetI, 
+              newTailString.substring(0,progressReportMaximumLengthI));
+            appendSlowlyV( // Append remainder slowly.
+                newTailString.substring(progressReportMaximumLengthI));
+            progressReportMaximumLengthI= newTailLengthI; // Update new maximum length.
+          }
+        }
+
+    // Utility code begins.
 
     protected void appendWithPromptSlowlyAndWaitForKeyV(String theString)
       /* This method appends slowly to the document any queued output text
@@ -474,6 +565,13 @@ public class ConsoleBase
             "ConsoleBase.makeTreeStuff(.) " + theBadLocationException);
         }
         return resultTreeStuff; // Return the view that was created.
+        }
+
+
+    protected long getTimeMsL()
+      { 
+        return System.currentTimeMillis();
+        // return System.nanoTime()/1000;
         }
 
     }

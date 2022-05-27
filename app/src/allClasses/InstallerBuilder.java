@@ -108,9 +108,9 @@ public class InstallerBuilder
         java.awt.Toolkit.getDefaultToolkit().beep(); // Get user's attention.
         if (! EpiString.isAbsentB(resultString)) { // Report error.
           if (FileOps.containsNoSpaceMessageInB(resultString))
-            resultString+= // Add suggestion if out of space. 
+            resultString+= // Append suggestion if out of space. 
               "\n\nTry deleting some unneeded files, "
-              + "or switch to a different disk-volume, "
+              + "or switch to a disk-volume with more space, "
               + "and try again.";
           appendWithPromptSlowlyAndWaitForKeyV(
               "\n\nAbnormal termination:\n" + resultString);

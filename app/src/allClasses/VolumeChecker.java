@@ -50,7 +50,6 @@ public class VolumeChecker
 
       final int bytesPerBlockI= 512;
       final long bytesPerFileL= 64 * 1024 * 1024; // 64 MB
-      final long msPerReportMsL= 100; // Trigger limit.
       final long bytesReportPeriodL= 16 * 1024 * 1024; // 16 MB trigger limit.
 
     // static variables.  None.
@@ -82,7 +81,6 @@ public class VolumeChecker
       
       // Time measurement.
       private long passStartTimeMsL;
-      private long presentTimeMsL;
 
       // For measuring speed of operation.
       private long speedIntervalStartTimeMsL;
@@ -178,7 +176,7 @@ public class VolumeChecker
         passStartTimeMsL= getTimeMsL();
         volumeTotalBytesL= volumeFile.getTotalSpace();
         spinnerStepStateI= 0;
-        presentTimeMsL= getTimeMsL();
+        //// presentTimeMsL= getTimeMsL();
         queueAndDisplayOutputSlowV("\n\nChecking " + volumeFile + "\n");
         resultString= maybeDeleteAllVolumeFilesReturnString(volumeFile);
         if (! EpiString.isAbsentB(resultString)) break goUpdateProgressAndReturn;
@@ -757,6 +755,7 @@ public class VolumeChecker
 
     private String timeString()
       {
+        long presentTimeMsL= getTimeMsL(); // [Try to] measure the time.
         long safeToCheckDoneBytesL= // Prevent divide-by-zero ahead. 
             (0 == toCheckDoneBytesL) ? Integer.MAX_VALUE : toCheckDoneBytesL;
         doneTimeMsL= presentTimeMsL - passStartTimeMsL;
@@ -792,6 +791,7 @@ public class VolumeChecker
 
     private String speedString()
       {
+        long presentTimeMsL= getTimeMsL(); // [Try to] measure the time.
         long speedDeltaTimeMsL= presentTimeMsL - speedIntervalStartTimeMsL;
         if (1000 <= speedDeltaTimeMsL) // If enough time has passed
           { // report new speed.
@@ -855,99 +855,6 @@ public class VolumeChecker
           oldVolumeFiles= newVolumeFiles;
           }
         return addedVolumeListOfFiles;
-        }
-
-    private long getTimeMsL()
-      { 
-        return System.currentTimeMillis();
-        // return System.nanoTime()/1000;
-        }
-
-
-    // General ProgressReport code.  This might eventually move to ConsoleBase.
-
-    private int progressReportHeadOffsetI= -1; /* -1 means report inactive. */
-    private int progressReportMaximumLengthI= -1;
-    private long progressReportNextTimeMsL;
-    private Supplier<String> emptyProgressReportSupplierOfString= 
-      new Supplier<String>() {
-        public String get(){ return "!"; } 
-        };
-    private Supplier<String> progressReportSupplierOfString= 
-      new Supplier<String>() {
-        public String get(){ return "PROGRESS REPORT STUB!"; } 
-        };
-
-    private void progressReportResetV()
-      /* This method resets the progress report system
-       * in preparation for producing empty progress reports.
-       */
-      {
-        progressReportNextTimeMsL= // Set to do first report immediately.
-            getTimeMsL();
-        progressReportHeadOffsetI= thePlainDocument.getLength();
-        progressReportMaximumLengthI= 0;
-        this.progressReportSupplierOfString= 
-            emptyProgressReportSupplierOfString;
-        }
-
-    private void progressReportSetV(
-        Supplier<String> newProgressReportSupplierOfString)
-      /* This method sets the progress report system
-       * in preparation for a new progress report.
-       * newProgressReportSupplierOfString is the Supplier of 
-       * the progress report String.
-       */
-      {
-        progressReportResetV(); // Do the common stuff.
-        this.progressReportSupplierOfString= // Override empty report
-            newProgressReportSupplierOfString; // with this.
-        }
-
-    private void updateProgressReportMaybeV()
-      /* This method updates the progress report, maybe.
-       * It depends on how much time has passed since the previous report.
-       * If enough time has passed then it updates, otherwise it does nothing.
-       */
-      {
-        presentTimeMsL= getTimeMsL(); // Measure the time.
-        if // Produce progress report if time remaining in period reached 0.
-          (0 <= (presentTimeMsL-progressReportNextTimeMsL))
-          { // Produce progress report and calculate when to do next one.
-            progressReportNextTimeMsL= // Calculate time of next report.
-                presentTimeMsL 
-                + theLockAndSignal.periodCorrectedDelayMsL(
-                    progressReportNextTimeMsL, msPerReportMsL);
-            updateProgressReportV();
-            }
-      }
-
-    private void updateProgressReportV()
-      /* This method unconditionally updates the progress report 
-       * to the display by writing it to the thePlainDocument.
-       * It gets the content from progressReportSupplierOfString.
-       * It outputs slowly any part of the report 
-       * that extends past the existing document,
-       * thereby extending the document for next time.
-       */
-      { 
-        String newTailString= progressReportSupplierOfString.get();
-        int newTailLengthI= newTailString.length();
-        if  // Document not being extended.
-          (newTailLengthI <= progressReportMaximumLengthI)
-          replaceDocumentTailAt1With2V( // Do simple and complete replacement.
-              progressReportHeadOffsetI,
-              newTailString
-              );
-          else // We will have a new maximum document length.
-          { // Fast replace tail and slow output remainder.
-            replaceDocumentTailAt1With2V( // Replace common part.
-              progressReportHeadOffsetI, 
-              newTailString.substring(0,progressReportMaximumLengthI));
-            appendSlowlyV( // Append remainder slowly.
-                newTailString.substring(progressReportMaximumLengthI));
-            progressReportMaximumLengthI= newTailLengthI; // Update new maximum length.
-          }
         }
 
     }
