@@ -168,8 +168,9 @@ public class VolumeChecker
       {
         theAppLog.debug("VolumeChecker.checkVolumeV(.) begins.");
         String resultString;
-      goReturn: {
-      goFinish: {
+      goReportErrorOrSuccessAndReturn: {
+      goUpdateProgressAndReturn: {
+      goFinishPassAndReturn: {
         operationDequeOfStrings= new ArrayDeque<String>();
         writtenBytesL= 0;
         readCheckedBytesL=0;
@@ -180,37 +181,41 @@ public class VolumeChecker
         presentTimeMsL= getTimeMsL();
         queueAndDisplayOutputSlowV("\n\nChecking " + volumeFile + "\n");
         resultString= maybeDeleteAllVolumeFilesReturnString(volumeFile);
-        if (! EpiString.isAbsentB(resultString)) break goReturn;
-        if (!getConfirmationKeyPressB( // Exit if write-read check not wanted.
-            "\nDo you want to write-read check this volume?")
-            )
-          break goReturn;
-        pushOperationV("Volume-Check");
+        if (! EpiString.isAbsentB(resultString)) break goUpdateProgressAndReturn;
         buildFolderFile= new File(volumeFile,Config.appString + "Temp");
         initialVolumeFreeBytesL= volumeFile.getUsableSpace();
         toCheckTotalBytesL= initialVolumeFreeBytesL;
+        if (!getConfirmationKeyPressB( // Exit if write-read check not wanted.
+            "\nDo you want to write-read check this volume?")
+            )
+          {
+            appendSlowlyV(bytesResultsString());
+            break goReportErrorOrSuccessAndReturn;
+            }
+        progressReportSetV( () -> getVolumeWriteReadReportString() );
+        pushOperationV("Volume-Check");
         resultString= FileOps.makeDirectoryAndAncestorsString(
             buildFolderFile);
         if (! EpiString.isAbsentB(resultString)) {
           resultString= EpiString.combine1And2WithNewlineString(
               "error occurred while creating folder", resultString);
-          break goFinish;
+          break goFinishPassAndReturn;
           }
-        progressReportResetV( () -> getVolumeWriteReadReportString() );
+        progressReportSetV( () -> getVolumeWriteReadReportString() );
         updateProgressReportV(); // First, slow progress report.
         resultString= writeTestReturnString(buildFolderFile);
         if (! EpiString.isAbsentB(resultString)) {
           resultString= EpiString.combine1And2WithNewlineString(
               "error occurred during write-test", resultString);
-          break goFinish;
+          break goFinishPassAndReturn;
           }
         resultString= readTestReturnString(buildFolderFile);
         if (! EpiString.isAbsentB(resultString)) {
           resultString= EpiString.combine1And2WithNewlineString(
               "error occurred during read-test", resultString);
-          break goFinish;
+          break goFinishPassAndReturn;
           }
-      }  // goFinish:
+      }  // goFinishPassAndReturn:
         pushOperationAndRefreshProgressReportV("deleting temporary files");
         theAppLog.debug("VolumeChecker.checkVolumeV(.) deleting.");
         String deleteErrorString= FileOps.deleteParentRecursivelyReturnString(
@@ -218,14 +223,15 @@ public class VolumeChecker
         resultString= EpiString.combine1And2WithNewlineString(
             resultString, deleteErrorString);
         replaceOperationAndRefreshProgressReportV("done");
-      }  // goReturn:
+      }  // goUpdateProgressAndReturn:
         updateProgressReportV();
+      }  // goReportErrorOrSuccessAndReturn:
         if (! EpiString.isAbsentB(resultString)) // Report error or success.
           appendWithPromptSlowlyAndWaitForKeyV( // Report error.
-              "\nThe operation terminated:\n" + resultString);
+              "\n\nThe operation terminated:\n" + resultString);
           else 
           appendWithPromptSlowlyAndWaitForKeyV( // Report success.
-            "\nThe operation completed without error.");
+            "\n\nThe operation completed without error.");
         theAppLog.debug("VolumeChecker.checkVolumeV(.) ends.");
         return;
       } // checkVolumeV(.)
@@ -289,7 +295,7 @@ public class VolumeChecker
         deletionScanByteCountL= 0;
         deletionScanFileCountI= 0;
         deletionScanDirectoryCountI= 0;
-        progressReportResetV( deletionScanProgressReportSupplierOfString );
+        progressReportSetV( deletionScanProgressReportSupplierOfString );
         resultString= FileOps.parentPostorderTraversalReturningString(
           volumeFile, deletionScanFunctionOfFileToString);
         if (null != resultString) {
@@ -654,6 +660,9 @@ public class VolumeChecker
     private String getVolumeWriteReadReportString()
       /* This method builds and returns a complete volume write-read pass
        * progress report string.
+       * 
+       * ///opt Move this code into a functional interface instance
+       * to eliminate redundant lambda expressions referencing this.
        */
       {
         String outputString= ""
@@ -858,23 +867,39 @@ public class VolumeChecker
     private int progressReportHeadOffsetI= -1; /* -1 means report inactive. */
     private int progressReportMaximumLengthI= -1;
     private long progressReportNextTimeMsL;
+    private Supplier<String> emptyProgressReportSupplierOfString= 
+      new Supplier<String>() {
+        public String get(){ return "!"; } 
+        };
     private Supplier<String> progressReportSupplierOfString= 
       new Supplier<String>() {
-        public String get(){ return "PROGRESS REPORT STUB"; } 
+        public String get(){ return "PROGRESS REPORT STUB!"; } 
         };
 
-    private void progressReportResetV(
-        Supplier<String> newProgressReportSupplierOfString)
-      /* This method reset the progress report system
-       * in preparation for a new progress report.
+    private void progressReportResetV()
+      /* This method resets the progress report system
+       * in preparation for producing empty progress reports.
        */
       {
-        this.progressReportSupplierOfString= 
-            newProgressReportSupplierOfString;
         progressReportNextTimeMsL= // Set to do first report immediately.
             getTimeMsL();
         progressReportHeadOffsetI= thePlainDocument.getLength();
         progressReportMaximumLengthI= 0;
+        this.progressReportSupplierOfString= 
+            emptyProgressReportSupplierOfString;
+        }
+
+    private void progressReportSetV(
+        Supplier<String> newProgressReportSupplierOfString)
+      /* This method sets the progress report system
+       * in preparation for a new progress report.
+       * newProgressReportSupplierOfString is the Supplier of 
+       * the progress report String.
+       */
+      {
+        progressReportResetV(); // Do the common stuff.
+        this.progressReportSupplierOfString= // Override empty report
+            newProgressReportSupplierOfString; // with this.
         }
 
     private void updateProgressReportMaybeV()
