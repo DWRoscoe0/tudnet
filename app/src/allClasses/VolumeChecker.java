@@ -478,7 +478,7 @@ public class VolumeChecker
             pushOperationAndRefreshProgressReportV("opening");
             theFileInputStream= new FileInputStream(checkFile);
             remainingFileBytesL= Math.min(bytesPerFileL,toCheckRemainingBytesL);
-            replaceOperationAndRefreshProgressReportV("reading");
+            replaceOperationAndRefreshProgressReportV("reading-and-comparing");
           blockLoop: while (true) {
             updateProgressReportMaybeV();
             errorString= testInterruptionGetConfirmation1ReturnResultString(
