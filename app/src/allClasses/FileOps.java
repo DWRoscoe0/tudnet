@@ -27,6 +27,11 @@ public class FileOps
   
     /* This class contains code useful for operating on files.
      * 
+     * ///enh Some code could be simplified and improved by 
+     * making more use of the java.nio.file.Files and Path classes,
+     *  and less of the File class.  See:
+     *    https://docs.oracle.com/javase/tutorial/essential/io/legacy.html
+     * 
      * ///org It should probably be organized by grouping related methods.
      *
      * ///org To better reuse code that creates and later closes
@@ -34,9 +39,6 @@ public class FileOps
      * that takes a function parameter 
      * that itself takes an OutputStream parameter.
      * This could be called easily with a lambda expression.
-     * 
-     * ///opt Some code could be simplified by making more use of
-     * the java.nio.file.Files class.
      * 
      * ///opt As methods are restructured, some public methods
      * might become permanently unused and should be removed.
