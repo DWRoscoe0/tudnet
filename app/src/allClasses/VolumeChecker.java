@@ -184,7 +184,7 @@ public class VolumeChecker
         initialVolumeFreeBytesL= volumeFile.getUsableSpace();
         toCheckTotalBytesL= initialVolumeFreeBytesL;
         if (!getConfirmationKeyPressB( // Exit if write-read check not wanted.
-            "\nDo you want to write-read check this volume?")
+            "\nDo you want to write-read-compare check this volume?")
             )
           {
             appendSlowlyV(bytesResultsString());
@@ -260,16 +260,23 @@ public class VolumeChecker
     private Function<File,String> deletionScanFunctionOfFileToString=
       new Function<File,String>() {
         public String apply(File subtreeFile){
+          String errorString= null;
           deletionScanFile= subtreeFile;
           if (subtreeFile.isDirectory())
-            deletionScanDirectoryCountI++;
+            {
+              deletionScanDirectoryCountI++;
+              errorString= testInterruptionGetConfirmation1ReturnResultString(
+                "Do you want to terminate this file scan?",
+                "file scan terminated by user");
+              
+          }
             else
             {
               deletionScanFileCountI++;
               deletionScanByteCountL+= subtreeFile.length();
+              updateProgressReportMaybeV();
               }
-          updateProgressReportMaybeV();
-          return (String)null;
+          return errorString;
           } 
         };
     Supplier<String> deletionScanProgressReportSupplierOfString= 
@@ -295,15 +302,24 @@ public class VolumeChecker
         deletionScanByteCountL= 0;
         deletionScanFileCountI= 0;
         deletionScanDirectoryCountI= 0;
+        queueAndDisplayOutputSlowV(
+            "\nPress any key to terminate the following file scan.\n");
         progressReportSetV( deletionScanProgressReportSupplierOfString );
         resultString= FileOps.parentPostorderTraversalReturningString(
           volumeFile, deletionScanFunctionOfFileToString);
-        if (null != resultString) {
-          resultString= EpiString.combine1And2WithNewlineString(
-              "directory tree traversal returned error",resultString
-              );
-          break goReturn;
-          }
+        if (null != resultString) // Handle possible traversal termination.
+          { // Handle traversal termination.
+            progressReportResetV(); // Make last report permanent. 
+            if ("file scan terminated by user" == resultString)
+              resultString= null; // Consider this not an error.
+              else // This is a real error.
+              { // Construct larger error String.
+                resultString= EpiString.combine1And2WithNewlineString(
+                    "directory tree traversal returned error",resultString
+                    );
+                break goReturn;
+                }
+            }
         updateProgressReportV();
         if (!getConfirmationKeyPressB( // Exit if file deletion is not wanted.
             "\nDo you want to ERASE ALL files and subdirectories "
