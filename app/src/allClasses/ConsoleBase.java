@@ -1,7 +1,9 @@
 package allClasses;
 
 
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import javax.swing.JComponent;
@@ -124,6 +126,7 @@ public class ConsoleBase
     private int progressReportHeadOffsetI= -1; /* -1 means report inactive. */
     private int progressReportMaximumLengthI= -1;
     private long progressReportNextTimeMsL;
+    private ScheduledFuture<?> outputFuture;
     private Supplier<String> emptyProgressReportSupplierOfString= 
       new Supplier<String>() {
         public String get(){ return "!"; } 
@@ -133,11 +136,16 @@ public class ConsoleBase
         public String get(){ return "PROGRESS REPORT STUB!"; } 
         };
 
-    protected void progressReportResetV()
+
+    protected synchronized void progressReportResetV()
       /* This method resets the progress report system
        * in preparation for producing empty progress reports.
        */
       {
+        if (null != outputFuture) {
+          outputFuture.cancel(true);
+          outputFuture= null;
+          }
         progressReportNextTimeMsL= // Set to do first report immediately.
             getTimeMsL();
         progressReportHeadOffsetI= thePlainDocument.getLength();
@@ -146,7 +154,7 @@ public class ConsoleBase
             emptyProgressReportSupplierOfString;
         }
 
-    protected void progressReportSetV(
+    protected synchronized void progressReportSetV(
         Supplier<String> newProgressReportSupplierOfString)
       /* This method sets the progress report system
        * in preparation for a new progress report.
@@ -157,9 +165,20 @@ public class ConsoleBase
         progressReportResetV(); // Do the common stuff.
         this.progressReportSupplierOfString= // Override empty report
             newProgressReportSupplierOfString; // with this.
+        outputFuture= theScheduledThreadPoolExecutor.scheduleAtFixedRate(
+          new Runnable() { 
+              public void run() {
+                progressReportUpdateV();
+                } 
+              },
+          1000, /// 1 second delay, test.
+          1000, /// 1 second period, test.
+          TimeUnit.MILLISECONDS
+          );
+        ////// provide a way to cancel.
         }
 
-    protected void updateProgressReportMaybeV()
+    protected synchronized void progressReportUpdateMaybeV()
       /* This method updates the progress report, maybe.
        * It depends on how much time has passed since the previous report.
        * If enough time has passed then it updates, otherwise it does nothing.
@@ -173,11 +192,11 @@ public class ConsoleBase
                 presentTimeMsL 
                 + theLockAndSignal.periodCorrectedDelayMsL(
                     progressReportNextTimeMsL, msPerReportMsL);
-            updateProgressReportV();
+            progressReportUpdateV();
             }
       }
 
-    protected void updateProgressReportV()
+    protected synchronized void progressReportUpdateV()
       /* This method unconditionally updates the progress report 
        * to the display by writing it to the thePlainDocument.
        * It gets the content from progressReportSupplierOfString.
@@ -205,7 +224,40 @@ public class ConsoleBase
           }
         }
 
+    
     // Utility code begins.
+
+    protected String testInterruptionGetConfirmation1ReturnResultString(
+        String confirmationQuestionString,String resultDescriptionString)
+      {
+        String returnString= null; // Assume no interruption.
+      toReturn: {
+        if  // Exit if no interruption key pressed.
+          (null == tryToGetFromQueueKeyString())
+          break toReturn;
+        if // Exit if the interruption is not confirmed.
+          (! getConfirmationKeyPressB("\n"+confirmationQuestionString))
+          break toReturn;
+        returnString= resultDescriptionString; // Override return value.
+      } // toReturn:
+        return returnString;
+      }
+
+    protected boolean getConfirmationKeyPressB(
+        String confirmationQuestionString)
+      {
+        boolean confirmedB= false;
+        String responseString= promptSlowlyAndGetKeyString(
+          "\n"
+          + confirmationQuestionString
+          + " [y/n] "
+          );
+        queueAndDisplayOutputSlowV(responseString); // Echo response.
+        responseString= responseString.toLowerCase();
+        if ("y".equals(responseString))
+          confirmedB= true;
+        return confirmedB;
+        }
 
     protected void appendWithPromptSlowlyAndWaitForKeyV(String theString)
       /* This method appends slowly to the document any queued output text

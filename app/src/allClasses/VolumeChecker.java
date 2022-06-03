@@ -63,6 +63,7 @@ public class VolumeChecker
       private File volumeFile;
 
       // Volume scope.
+      private long volumeFreeSpaceL;
       private long volumeTotalBytesL; // Partition size.
       private long initialVolumeFreeBytesL;
         // Note, free-space/usable-space can change wildly during file IO.
@@ -174,14 +175,15 @@ public class VolumeChecker
         readCheckedBytesL=0;
         doneTimeMsL= 0;
         passStartTimeMsL= getTimeMsL();
-        volumeTotalBytesL= volumeFile.getTotalSpace();
+        volumeTotalBytesL= volumeFreeSpaceL= volumeFile.getTotalSpace();
         spinnerStepStateI= 0;
         //// presentTimeMsL= getTimeMsL();
         queueAndDisplayOutputSlowV("\n\nChecking " + volumeFile + "\n");
         resultString= maybeDeleteAllVolumeFilesReturnString(volumeFile);
-        if (! EpiString.isAbsentB(resultString)) break goUpdateProgressAndReturn;
+        if (! EpiString.isAbsentB(resultString)) 
+          break goUpdateProgressAndReturn;
         buildFolderFile= new File(volumeFile,Config.appString + "Temp");
-        initialVolumeFreeBytesL= volumeFile.getUsableSpace();
+        initialVolumeFreeBytesL= volumeTotalBytesL; //// volumeFile.getUsableSpace();
         toCheckTotalBytesL= initialVolumeFreeBytesL;
         if (!getConfirmationKeyPressB( // Exit if write-read check not wanted.
             "\nDo you want to write-read-compare check this volume?")
@@ -200,7 +202,7 @@ public class VolumeChecker
           break goFinishPassAndReturn;
           }
         progressReportSetV( () -> getVolumeWriteReadReportString() );
-        updateProgressReportV(); // First, slow progress report.
+        progressReportUpdateV(); // First, slow progress report.
         resultString= writeTestReturnString(buildFolderFile);
         if (! EpiString.isAbsentB(resultString)) {
           resultString= EpiString.combine1And2WithNewlineString(
@@ -220,10 +222,12 @@ public class VolumeChecker
             buildFolderFile,FileOps.requiredConfirmationString);
         resultString= EpiString.combine1And2WithNewlineString(
             resultString, deleteErrorString);
+        synchronizeFreeSpaceDependenciesV();
         replaceOperationAndRefreshProgressReportV("done");
       }  // goUpdateProgressAndReturn:
-        updateProgressReportV();
+        progressReportUpdateV();
       }  // goReportErrorOrSuccessAndReturn:
+        progressReportResetV(); // End progress reports.
         java.awt.Toolkit.getDefaultToolkit().beep(); // Get user's attention.
         if (! EpiString.isAbsentB(resultString)) // Report error or success.
           appendWithPromptSlowlyAndWaitForKeyV( // Report error.
@@ -239,7 +243,7 @@ public class VolumeChecker
       {
         return "\n"
           + bytesResultString( "in volume", volumeTotalBytesL)
-          + bytesResultString( "free", volumeFile.getUsableSpace())
+          + bytesResultString( "free", volumeFreeSpaceL)
           + bytesResultString( "written", writtenBytesL)
           + bytesResultString( "read okay", readCheckedBytesL)
           ;
@@ -274,7 +278,7 @@ public class VolumeChecker
             {
               deletionScanFileCountI++;
               deletionScanByteCountL+= subtreeFile.length();
-              updateProgressReportMaybeV();
+              progressReportUpdateMaybeV();
               }
           return errorString;
           } 
@@ -307,6 +311,8 @@ public class VolumeChecker
         progressReportSetV( deletionScanProgressReportSupplierOfString );
         resultString= FileOps.parentPostorderTraversalReturningString(
           volumeFile, deletionScanFunctionOfFileToString);
+        progressReportUpdateV();
+        progressReportResetV(); // End progress reports.
         if (null != resultString) // Handle possible traversal termination.
           { // Handle traversal termination.
             progressReportResetV(); // Make last report permanent. 
@@ -320,7 +326,6 @@ public class VolumeChecker
                 break goReturn;
                 }
             }
-        updateProgressReportV();
         if (!getConfirmationKeyPressB( // Exit if file deletion is not wanted.
             "\nDo you want to ERASE ALL files and subdirectories "
             + "on this volume first?")
@@ -360,12 +365,11 @@ public class VolumeChecker
         remainingFileBytesL= bytesPerFileL;
         volumeDoneFilesL= 0; // Index of next file to write.
         passStartTimeMsL= getTimeMsL();
-        updateProgressReportV(); // Initial progress report.
+        progressReportUpdateV(); // Initial progress report of write test.
         toCheckRemainingBytesL= testFolderFile.getUsableSpace();
         pushOperationV("FILE-NAME");
         try {
           fileLoop: while (true) {
-            accountForFreeSpaceChangesV();
             checkFile= new File(testFolderFile,"tmp"+volumeDoneFilesL+".txt");
             replaceOperationV("file "+checkFile);
             pushOperationAndRefreshProgressReportV("opening............");
@@ -375,7 +379,7 @@ public class VolumeChecker
               remainingFileBytesL= bytesPerFileL;
               replaceOperationAndRefreshProgressReportV("writing-file-blocks");
               blockLoop: while (true) { // Write all blocks in file.
-                updateProgressReportMaybeV();
+                progressReportUpdateMaybeV();
                 errorString= testInterruptionGetConfirmation1ReturnResultString(
                     "Do you want to terminate this operation?",
                     "write operation terminated by user");
@@ -393,6 +397,7 @@ public class VolumeChecker
                   }
                 toCheckDoneBytesL+= bytesPerBlockI;
                 toCheckRemainingBytesL-= bytesPerBlockI;
+                volumeFreeSpaceL-= bytesPerBlockI;
                 remainingFileBytesL-= bytesPerBlockI;
                 writtenBytesL= toCheckDoneBytesL;
                 } // blockLoop:
@@ -415,6 +420,7 @@ public class VolumeChecker
               if (! EpiString.isAbsentB(errorString)) break fileLoop;
               }
             /// ? Move following into above try block?
+          synchronizeFreeSpaceDependenciesV();
           } // fileLoop:
         } catch (Exception theException) {
           errorString= EpiString.combine1And2WithNewlineString(errorString, 
@@ -445,13 +451,15 @@ public class VolumeChecker
             "There is not enough space on the disk");
         }
 
-    private void accountForFreeSpaceChangesV()
-      /* This method makes adjustments in variables 
-       * used to track the state of write passes.
-       * Adjustments are needed because the amount of free space on the volume
-       * can change unexpectedly because of 
-       * * filesystem overhead associated with 
-       *   the files created by this feature, and
+    private void synchronizeFreeSpaceDependenciesV()
+      /* This method makes adjustments in 
+       * variables that depend on disk free space. 
+       * The adjustments are needed because 
+       * the amount of free space on the volume
+       * depends on more than dpace occupied by file data.
+       * It is also affected by
+       * * rounding-up for partially filled blocks,
+       * * filesystem overhead associated such as allocation maps
        * * changes in the space being used by other processes
        * This method is needed by the write pass, not the read-compare pass.
        * 
@@ -459,11 +467,9 @@ public class VolumeChecker
        * approaches zero.
        */
       {
-        boolean enabledB= true; // For debugging experiments.
-        if (enabledB) {
-          toCheckRemainingBytesL= buildFolderFile.getUsableSpace();
-          toCheckTotalBytesL= toCheckRemainingBytesL + toCheckDoneBytesL;
-          }
+        volumeFreeSpaceL= volumeFile.getUsableSpace();
+        toCheckRemainingBytesL= volumeFreeSpaceL;
+        toCheckTotalBytesL= toCheckRemainingBytesL + toCheckDoneBytesL;
         }
 
     private String readTestReturnString(File testFolderFile)
@@ -491,12 +497,12 @@ public class VolumeChecker
               break fileLoop;
             checkFile= new File(testFolderFile,"tmp"+volumeDoneFilesL+".txt");
             replaceOperationV("file "+checkFile);
-            pushOperationAndRefreshProgressReportV("opening");
+            pushOperationAndRefreshProgressReportV("opening\n");
             theFileInputStream= new FileInputStream(checkFile);
             remainingFileBytesL= Math.min(bytesPerFileL,toCheckRemainingBytesL);
             replaceOperationAndRefreshProgressReportV("reading-and-comparing");
           blockLoop: while (true) {
-            updateProgressReportMaybeV();
+            progressReportUpdateMaybeV();
             errorString= testInterruptionGetConfirmation1ReturnResultString(
                 "Do you want to terminate this operation?",
                 "read operation terminated by user");
@@ -510,7 +516,7 @@ public class VolumeChecker
             toCheckDoneBytesL+= bytesPerBlockI;
             readCheckedBytesL= toCheckDoneBytesL;
           } // blockLoop:
-            replaceOperationAndRefreshProgressReportV("closing");
+            replaceOperationAndRefreshProgressReportV("closing\n");
             theFileInputStream.close();
             popOperationV(); // "opening"
             if (! EpiString.isAbsentB(errorString)) break fileLoop;
@@ -596,44 +602,12 @@ public class VolumeChecker
         return blockBytes;
         }
 
-    protected String testInterruptionGetConfirmation1ReturnResultString(
-        String confirmationQuestionString,String resultDescriptionString)
-      {
-        String returnString= null; // Assume no interruption.
-      toReturn: {
-        if  // Exit if no interruption key pressed.
-          (null == tryToGetFromQueueKeyString())
-          break toReturn;
-        if // Exit if the interruption is not confirmed.
-          (! getConfirmationKeyPressB("\n"+confirmationQuestionString))
-          break toReturn;
-        returnString= resultDescriptionString; // Override return value.
-      } // toReturn:
-        return returnString;
-      }
-
-    protected boolean getConfirmationKeyPressB(
-        String confirmationQuestionString)
-      {
-        boolean confirmedB= false;
-        String responseString= promptSlowlyAndGetKeyString(
-          "\n"
-          + confirmationQuestionString
-          + " [y/n] "
-          );
-        queueAndDisplayOutputSlowV(responseString); // Echo response.
-        responseString= responseString.toLowerCase();
-        if ("y".equals(responseString))
-          confirmedB= true;
-        return confirmedB;
-        }
-
     private void replaceOperationAndRefreshProgressReportV(
         String operationString)
       /* Replaces top element of operation stack and refreshes the display. */
       {
         replaceOperationV(operationString);
-        updateProgressReportV();
+        progressReportUpdateV();
         }
 
     private void replaceOperationV(String operationString)
@@ -662,7 +636,7 @@ public class VolumeChecker
     private void pushOperationAndRefreshProgressReportV(String operationString)
       {
         pushOperationV(operationString);
-        updateProgressReportV();
+        progressReportUpdateV();
         }
     
     private void pushOperationV(String operationString)
