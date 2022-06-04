@@ -122,6 +122,7 @@ public class ConsoleBase
 
     // General ProgressReport code.  This might eventually move to ConsoleBase.
 
+    private boolean progressReportsEnabledB= true;
     private final long msPerReportMsL= 100; // Trigger limit.
     private int progressReportHeadOffsetI= -1; /* -1 means report inactive. */
     private int progressReportMaximumLengthI= -1;
@@ -168,14 +169,14 @@ public class ConsoleBase
         outputFuture= theScheduledThreadPoolExecutor.scheduleAtFixedRate(
           new Runnable() { 
               public void run() {
-                progressReportUpdateV();
+                if (progressReportsEnabledB)
+                  progressReportUpdateV();
                 } 
               },
-          1000, /// 1 second delay, test.
-          1000, /// 1 second period, test.
+          1000, /// 1 second delay.
+          1000, /// 1 second period.
           TimeUnit.MILLISECONDS
           );
-        ////// provide a way to cancel.
         }
 
     protected synchronized void progressReportUpdateMaybeV()
@@ -230,6 +231,7 @@ public class ConsoleBase
     protected String testInterruptionGetConfirmation1ReturnResultString(
         String confirmationQuestionString,String resultDescriptionString)
       {
+        progressReportsEnabledB= false;
         String returnString= null; // Assume no interruption.
       toReturn: {
         if  // Exit if no interruption key pressed.
@@ -240,6 +242,7 @@ public class ConsoleBase
           break toReturn;
         returnString= resultDescriptionString; // Override return value.
       } // toReturn:
+        progressReportsEnabledB= true;
         return returnString;
       }
 
