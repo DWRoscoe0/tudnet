@@ -87,6 +87,9 @@ public class VolumeChecker
       private long speedIntervalStartTimeMsL;
       private long speedStartVolumeDoneBytesL;
       private long speedL;
+      
+      // For measuring OS time.
+      private boolean writingBlockB= false;
 
       // File scope (file blocks to write or compare).
       private long volumeDoneFilesL; // Also # of next file to process.
@@ -177,13 +180,12 @@ public class VolumeChecker
         passStartTimeMsL= getTimeMsL();
         volumeTotalBytesL= volumeFreeSpaceL= volumeFile.getTotalSpace();
         spinnerStepStateI= 0;
-        //// presentTimeMsL= getTimeMsL();
         queueAndDisplayOutputSlowV("\n\nChecking " + volumeFile + "\n");
         resultString= maybeDeleteAllVolumeFilesReturnString(volumeFile);
         if (! EpiString.isAbsentB(resultString)) 
           break goUpdateProgressAndReturn;
         buildFolderFile= new File(volumeFile,Config.appString + "Temp");
-        initialVolumeFreeBytesL= volumeTotalBytesL; //// volumeFile.getUsableSpace();
+        initialVolumeFreeBytesL= volumeTotalBytesL;
         toCheckTotalBytesL= initialVolumeFreeBytesL;
         if (!getConfirmationKeyPressB( // Exit if write-read check not wanted.
             "\nDo you want to write-read-compare check this volume?")
@@ -222,7 +224,7 @@ public class VolumeChecker
             buildFolderFile,FileOps.requiredConfirmationString);
         resultString= EpiString.combine1And2WithNewlineString(
             resultString, deleteErrorString);
-        synchronizeFreeSpaceDependenciesV();
+        synchronizeWithFreeSpaceV();
         replaceOperationAndRefreshProgressReportV("done");
       }  // goUpdateProgressAndReturn:
         progressReportUpdateV();
@@ -385,8 +387,9 @@ public class VolumeChecker
                     "write operation terminated by user");
                 if (! EpiString.isAbsentB(errorString)) break blockLoop;
                 if (0 >= remainingFileBytesL) break blockLoop;
-                try { writeBlockV(
-                  theFileOutputStream,toCheckDoneBytesL / bytesPerBlockI); }
+                try { 
+                  writeBlockV(
+                    theFileOutputStream,toCheckDoneBytesL / bytesPerBlockI); }
                 catch (IOException theIOException) {
                   if (deviceFullB(theIOException)) // Convert device-full
                     { theAppLog.debug("writeTestReturnString(.): "
@@ -420,7 +423,9 @@ public class VolumeChecker
               if (! EpiString.isAbsentB(errorString)) break fileLoop;
               }
             /// ? Move following into above try block?
-          synchronizeFreeSpaceDependenciesV();
+          synchronizeWithFreeSpaceV();
+          toCheckRemainingBytesL= volumeFreeSpaceL;
+          toCheckTotalBytesL= toCheckRemainingBytesL + toCheckDoneBytesL;
           } // fileLoop:
         } catch (Exception theException) {
           errorString= EpiString.combine1And2WithNewlineString(errorString, 
@@ -451,25 +456,19 @@ public class VolumeChecker
             "There is not enough space on the disk");
         }
 
-    private void synchronizeFreeSpaceDependenciesV()
-      /* This method makes adjustments in 
-       * variables that depend on disk free space. 
-       * The adjustments are needed because 
-       * the amount of free space on the volume
-       * depends on more than dpace occupied by file data.
+    private void synchronizeWithFreeSpaceV()
+      /* This method refreshes the variable 
+       * that tracks totol volume disk free space. 
+       * This is needed because * the amount of free space on the volume
+       * depends on more than space occupied by file data.
        * It is also affected by
        * * rounding-up for partially filled blocks,
        * * filesystem overhead associated such as allocation maps
        * * changes in the space being used by other processes
-       * This method is needed by the write pass, not the read-compare pass.
-       * 
-       * ///opt It might adjust more frequently as toCheckRemainingBytesL 
-       * approaches zero.
+       * This method is called during the write pass and after deleting files.
        */
       {
         volumeFreeSpaceL= volumeFile.getUsableSpace();
-        toCheckRemainingBytesL= volumeFreeSpaceL;
-        toCheckTotalBytesL= toCheckRemainingBytesL + toCheckDoneBytesL;
         }
 
     private String readTestReturnString(File testFolderFile)
@@ -554,7 +553,9 @@ public class VolumeChecker
        */
       {
         byte[] bytes= getPatternedBlockOfBytes(blockL);
+        writingBlockB= true;
         theFileOutputStream.write(bytes);
+        writingBlockB= false;
         // theAppLog.debugClockOutV("wb");
         }
 
@@ -664,6 +665,7 @@ public class VolumeChecker
             + filesString()
             + timeString()
             + speedString()
+            + waitsString()
             + bytesResultsString()
             + "\n\nOperation: " + operationDequeOfStrings
             + " " + advanceAndGetSpinnerString()
@@ -795,6 +797,14 @@ public class VolumeChecker
             }
         return String.format(
             "\nspeed  : %8d bytes/second", speedL);
+        }
+
+    private String waitsString()
+      /* This method returns a string containing
+       * an indication of how much time the app is waiting of OS IO. 
+       */
+      { 
+        return "\nWaits: writingBlockB= "+writingBlockB; 
         }
 
     private String advanceAndGetSpinnerString()
