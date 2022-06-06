@@ -87,9 +87,6 @@ public class VolumeChecker
       private long speedIntervalStartTimeMsL;
       private long speedStartVolumeDoneBytesL;
       private long speedL;
-      
-      // For measuring OS time.
-      private boolean writingBlockB= false;
 
       // File scope (file blocks to write or compare).
       private long volumeDoneFilesL; // Also # of next file to process.
@@ -253,10 +250,98 @@ public class VolumeChecker
 
     private String bytesResultString(String typeString, long countL)
       {
-        return String.format("\nbytes %-9s :%12d", typeString, countL);
+        return String.format("\n%-15s :%,15d", "bytes "+typeString, countL);
         }
 
+
+    // For measuring OS time, starting first with writing time.
+
+    private static class DutyCycle {
+  
+      private boolean isActiveB= false;
+      private long lastActivityChangeTimeNsL;
+      private long activeNsL;
+      private long inactiveNsL;
+
+      public void updateStatusV(long timeNowNsL) 
+        { updateStatusV(isActiveB,timeNowNsL); }
+
+      public void updateStatusV(boolean isActiveB)
+        {
+          updateStatusV(isActiveB,System.nanoTime());
+          }
+
+      public void updateStatusV(boolean isActiveB,long timeNowNsL)
+        {
+          long timeSinceLastChangeNsL= lastActivityChangeTimeNsL - timeNowNsL;
+          if (this.isActiveB)
+            activeNsL+= timeSinceLastChangeNsL;
+            else
+            inactiveNsL+= timeSinceLastChangeNsL;
+          this.isActiveB= isActiveB;
+          lastActivityChangeTimeNsL= timeNowNsL;
+          }
+
+      private String resetAndGetOSString(long timeNowNsL)
+        {
+          updateStatusV(isActiveB,timeNowNsL);
+          long totalSinceReportNsL= activeNsL + inactiveNsL;
+          String resultString= String.format(
+              "%s",
+              quotientAsPerCentString(activeNsL, totalSinceReportNsL)
+              );
     
+          // Reset accumulators for next time.
+          activeNsL= 0;
+          inactiveNsL= 0;
+    
+          return resultString;
+          }
+  
+      } // DutyCycle
+
+    private DutyCycle writingDutyCycle= new DutyCycle();
+    private DutyCycle syncingDutyCycle= new DutyCycle();
+    private DutyCycle closingDutyCycle= new DutyCycle();
+    private DutyCycle readingDutyCycle= new DutyCycle();
+    private long osLastTimeNsL;
+    private String osReportString;
+
+    private String getOSReportString()
+      {
+        ///// String resultString= "";
+
+        long nowTimeNsL= System.nanoTime();
+        if (500000 <= (nowTimeNsL - osLastTimeNsL) ) {
+          writingDutyCycle.updateStatusV(nowTimeNsL);
+          osReportString= "";
+          osReportString+=
+              " wrt:"+writingDutyCycle.resetAndGetOSString(nowTimeNsL);
+          osReportString+=
+              " rea:"+readingDutyCycle.resetAndGetOSString(nowTimeNsL);
+          osReportString+=
+              " syn:"+syncingDutyCycle.resetAndGetOSString(nowTimeNsL);
+          osReportString+=
+              " clo:"+closingDutyCycle.resetAndGetOSString(nowTimeNsL);
+          osLastTimeNsL= nowTimeNsL; // Reset for next time.
+          }
+  
+        return osReportString;
+        }
+
+    private static String quotientAsPerCentString(long dividentL,long divisorL)
+      {
+        String resultString;
+        double perCentD= (100. * dividentL) / divisorL;
+        if (0.5 > perCentD) 
+          resultString= " 0%";
+        else if (99.5 <= perCentD)
+          resultString= "99+";
+        else
+          resultString= Math.round(perCentD)+"%";
+        return resultString;
+        }
+
     // Deletion code.
     
     private File deletionScanFile;
@@ -294,7 +379,6 @@ public class VolumeChecker
                 +"\nName: "+deletionScanFile ; 
             }
           };
-
 
     protected String maybeDeleteAllVolumeFilesReturnString(File volumeFile)
       /* This method erases File volumeFile,
@@ -416,8 +500,12 @@ public class VolumeChecker
             finally {
               replaceOperationAndRefreshProgressReportV("syncing-and-closing");
               volumeDoneFilesL++;
+              syncingDutyCycle.updateStatusV(true);
               theFileDescriptor.sync();
+              syncingDutyCycle.updateStatusV(false);
+              closingDutyCycle.updateStatusV(true);
               theFileOutputStream.close();
+              closingDutyCycle.updateStatusV(false);
               theFileOutputStream= null; // Prevent another close.
               popOperationV(); // File operation. 
               if (! EpiString.isAbsentB(errorString)) break fileLoop;
@@ -458,7 +546,7 @@ public class VolumeChecker
 
     private void synchronizeWithFreeSpaceV()
       /* This method refreshes the variable 
-       * that tracks totol volume disk free space. 
+       * that tracks total volume disk free space. 
        * This is needed because * the amount of free space on the volume
        * depends on more than space occupied by file data.
        * It is also affected by
@@ -553,10 +641,12 @@ public class VolumeChecker
        */
       {
         byte[] bytes= getPatternedBlockOfBytes(blockL);
-        writingBlockB= true;
-        theFileOutputStream.write(bytes);
-        writingBlockB= false;
-        // theAppLog.debugClockOutV("wb");
+        try {
+            writingDutyCycle.updateStatusV(true);
+            theFileOutputStream.write(bytes);
+          } finally {
+            writingDutyCycle.updateStatusV(false);
+          }
         }
 
     private String readBlockReturnString(
@@ -572,7 +662,9 @@ public class VolumeChecker
         String resultString= null;
         byte[] expectedBytes= getPatternedBlockOfBytes(blockL);
         byte[] readBytes= new byte[bytesPerBlockI];
+        readingDutyCycle.updateStatusV(true);
         theFileInputStream.read(readBytes);
+        readingDutyCycle.updateStatusV(false);
         boolean equalB= Arrays.equals(expectedBytes,readBytes);
         if (! equalB)
           resultString= "read-back compare error";
@@ -665,7 +757,7 @@ public class VolumeChecker
             + filesString()
             + timeString()
             + speedString()
-            + waitsString()
+            + osIoString()
             + bytesResultsString()
             + "\n\nOperation: " + operationDequeOfStrings
             + " " + advanceAndGetSpinnerString()
@@ -796,15 +888,15 @@ public class VolumeChecker
             speedIntervalStartTimeMsL= presentTimeMsL;
             }
         return String.format(
-            "\nspeed  : %8d bytes/second", speedL);
+            "\nspeed  : %,11d bytes/second", speedL);
         }
 
-    private String waitsString()
+    private String osIoString()
       /* This method returns a string containing
-       * an indication of how much time the app is waiting of OS IO. 
+       * an indication of how much time the app is waiting for OS IO. 
        */
       { 
-        return "\nWaits: writingBlockB= "+writingBlockB; 
+        return "\nOS%    : " + getOSReportString(); 
         }
 
     private String advanceAndGetSpinnerString()
