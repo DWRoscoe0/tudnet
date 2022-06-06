@@ -312,19 +312,21 @@ public class VolumeChecker
         ///// String resultString= "";
 
         long nowTimeNsL= System.nanoTime();
-        if (500000 <= (nowTimeNsL - osLastTimeNsL) ) {
-          writingDutyCycle.updateStatusV(nowTimeNsL);
-          osReportString= "";
-          osReportString+=
-              " wrt:"+writingDutyCycle.resetAndGetOSString(nowTimeNsL);
-          osReportString+=
-              " rea:"+readingDutyCycle.resetAndGetOSString(nowTimeNsL);
-          osReportString+=
-              " syn:"+syncingDutyCycle.resetAndGetOSString(nowTimeNsL);
-          osReportString+=
-              " clo:"+closingDutyCycle.resetAndGetOSString(nowTimeNsL);
-          osLastTimeNsL= nowTimeNsL; // Reset for next time.
-          }
+        if  // If 1/2 second has passed
+          ( 500000 <= (nowTimeNsL - osLastTimeNsL) ) 
+          { // update report String.
+            //// writingDutyCycle.updateStatusV(nowTimeNsL);
+            osReportString= "";
+            osReportString+=
+                " wrt:"+writingDutyCycle.resetAndGetOSString(nowTimeNsL);
+            osReportString+=
+                " syn:"+syncingDutyCycle.resetAndGetOSString(nowTimeNsL);
+            osReportString+=
+                " rea:"+readingDutyCycle.resetAndGetOSString(nowTimeNsL);
+            osReportString+=
+                " clo:"+closingDutyCycle.resetAndGetOSString(nowTimeNsL);
+            osLastTimeNsL= nowTimeNsL; // Reset for next time.
+            }
   
         return osReportString;
         }
@@ -334,13 +336,14 @@ public class VolumeChecker
         String resultString;
         double perCentD= (100. * dividentL) / divisorL;
         if (0.5 > perCentD) 
-          resultString= " 0%";
+          resultString= "00%";
         else if (99.5 <= perCentD)
           resultString= "99+";
         else
-          resultString= Math.round(perCentD)+"%";
+          resultString= String.format("%02d%%",Math.round(perCentD));
         return resultString;
         }
+
 
     // Deletion code.
     
@@ -898,6 +901,7 @@ public class VolumeChecker
       { 
         return "\nOS%    : " + getOSReportString(); 
         }
+
 
     private String advanceAndGetSpinnerString()
       /* This method steps the spinner if it's time, not too fast,
