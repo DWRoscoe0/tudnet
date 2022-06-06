@@ -137,7 +137,6 @@ public class ConsoleBase
         public String get(){ return "PROGRESS REPORT STUB!"; } 
         };
 
-
     protected synchronized void progressReportResetV()
       /* This method resets the progress report system
        * in preparation for producing empty progress reports.
@@ -173,8 +172,8 @@ public class ConsoleBase
                   progressReportUpdateV();
                 } 
               },
-          1000, /// 1 second delay.
-          1000, /// 1 second period.
+          250, /// 1/4 second delay.
+          250, /// 1/4 second period.
           TimeUnit.MILLISECONDS
           );
         }
