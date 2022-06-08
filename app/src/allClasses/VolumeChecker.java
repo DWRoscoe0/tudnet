@@ -867,8 +867,10 @@ public class VolumeChecker
        *   This was sometimes caused by undeleted test-pattern/ files.
        * 
        * ///enh RemainingTimeEstimation
-       *   Critically Damp remaining time to smooth it.
-       *   Adjust time-constants up or down to prevent back-tracking.
+       *   Critically Damp the estimate of remaining time to smooth it.
+       *   See https://en.wikipedia.org/wiki/Damping
+       *   The difficult part is choosing formula time-constants.
+       *   They depend on the characteristics of the curve to be smoothed.
        */
       {
         long totalGroupsL= 
