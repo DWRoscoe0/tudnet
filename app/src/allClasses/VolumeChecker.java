@@ -294,11 +294,9 @@ public class VolumeChecker
         {
           updateStatusV(isActiveB,timeNowNsL);
           long totalSinceReportNsL= activeNsL + inactiveNsL;
-          String resultString= String.format(
-              "%s",
-              quotientAsPerCentString(activeNsL, totalSinceReportNsL)
-              );
-    
+          String resultString= 
+              quotientAsPerCentString(activeNsL, totalSinceReportNsL);
+
           // Reset accumulators for next time.
           activeNsL= 0;
           inactiveNsL= 0;
@@ -323,17 +321,27 @@ public class VolumeChecker
           { // update report String.
             osReportString= "";
             osReportString+=
-                " wrt:"+writingDutyCycle.resetAndGetOSString(nowTimeNsL);
+                resetAndGetOSString(closingDutyCycle, " clo:", nowTimeNsL);
             osReportString+=
-                " syn:"+syncingDutyCycle.resetAndGetOSString(nowTimeNsL);
+                resetAndGetOSString(writingDutyCycle, " wrt:", nowTimeNsL);
             osReportString+=
-                " rea:"+readingDutyCycle.resetAndGetOSString(nowTimeNsL);
+                resetAndGetOSString(readingDutyCycle, " rea:", nowTimeNsL);
             osReportString+=
-                " clo:"+closingDutyCycle.resetAndGetOSString(nowTimeNsL);
+                resetAndGetOSString(syncingDutyCycle, " syn:", nowTimeNsL);
             osLastTimeNsL= nowTimeNsL; // Reset for next time.
             }
   
         return osReportString;
+        }
+
+    private static String resetAndGetOSString(
+        DutyCycle theDutyCycle, String labelString, long timeNowNsL)
+      // Returns string representing OS%, or "" if % is 0.
+      {
+        String resultString= theDutyCycle.resetAndGetOSString(timeNowNsL);
+        if ("" != resultString) // % not 0
+          resultString= labelString + resultString; // so append to label.
+        return resultString;
         }
 
     private static String quotientAsPerCentString(long dividentL,long divisorL)
@@ -341,7 +349,7 @@ public class VolumeChecker
         String resultString;
         double perCentD= (100. * dividentL) / divisorL;
         if (0.5 > perCentD) 
-          resultString= "00%";
+          resultString= ""; // Was "00%";
         else if (99.5 <= perCentD)
           resultString= "99+";
         else
@@ -669,7 +677,6 @@ public class VolumeChecker
       {
         String resultString= null;
         byte[] expectedBytes= getPatternedBlockOfBytes(blockL);
-        //// readBytes= new byte[bytesPerBlockI];
         readingDutyCycle.updateStatusV(true);
         theFileInputStream.read(readBytes);
         readingDutyCycle.updateStatusV(false);
