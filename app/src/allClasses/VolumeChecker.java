@@ -193,6 +193,8 @@ public class VolumeChecker
             }
         progressReportSetV( () -> getVolumeWriteReadReportString() );
         pushOperationV("Volume-Check");
+        resultString= deleteTemporaryFilesReturnString();
+        // Ignore error, which probably means no deletion needed.
         resultString= FileOps.makeDirectoryAndAncestorsString(
             buildFolderFile);
         if (! EpiString.isAbsentB(resultString)) {
@@ -216,10 +218,7 @@ public class VolumeChecker
           }
       }  // goFinishPassAndReturn:
         pushOperationAndRefreshProgressReportV("deleting temporary files");
-        theAppLog.debug("VolumeChecker.checkVolumeV(.) deleting.");
-        String deleteErrorString= null;
-        FileOps.deleteParentRecursivelyReturnString(
-        buildFolderFile,FileOps.requiredConfirmationString);
+        String deleteErrorString= deleteTemporaryFilesReturnString();
         resultString= EpiString.combine1And2WithNewlineString(
             resultString, deleteErrorString);
         synchronizeWithFreeSpaceV();
@@ -238,6 +237,13 @@ public class VolumeChecker
         theAppLog.debug("VolumeChecker.checkVolumeV(.) ends.");
         return;
       } // checkVolumeV(.)
+
+    private String deleteTemporaryFilesReturnString()
+      {
+        String deleteErrorString= FileOps.deleteParentRecursivelyReturnString(
+            buildFolderFile,FileOps.requiredConfirmationString);
+        return deleteErrorString;
+        }
 
     private String bytesResultsString()
       {
@@ -310,13 +316,10 @@ public class VolumeChecker
 
     private String getOSReportString()
       {
-        ///// String resultString= "";
-
         long nowTimeNsL= System.nanoTime();
         if  // If 1/2 second has passed
           ( 500000 <= (nowTimeNsL - osLastTimeNsL) ) 
           { // update report String.
-            //// writingDutyCycle.updateStatusV(nowTimeNsL);
             osReportString= "";
             osReportString+=
                 " wrt:"+writingDutyCycle.resetAndGetOSString(nowTimeNsL);
@@ -708,7 +711,6 @@ public class VolumeChecker
     
     private void pushOperationAndRefreshProgressReportV(String operationString)
       {
-        pushOperationV(operationString);
         progressReportUpdateV();
         }
     
@@ -726,8 +728,6 @@ public class VolumeChecker
     private byte[] getPatternedBlockOfBytes(long blockNumberL) 
       /* This method returns a block buffer 
        * filled with lines containing the block number.
-       * 
-       * ///opt Use fewer character operations and more byte moves for speed.
        * 
        * ///opt Switch from NonDirect ByteBuffer to Direct one for speed.
        * 
@@ -862,9 +862,6 @@ public class VolumeChecker
        * The method produces a line containing the group name,
        * the number of groups that remain to be processed,
        * and the number of groups that have been completely processed.
-       * 
-       * ///mys ///fix Sometimes displays negative remaining groups.  Fix.
-       *   This was sometimes caused by undeleted test-pattern/ files.
        * 
        * ///enh RemainingTimeEstimation
        *   Critically Damp the estimate of remaining time to smooth it.
