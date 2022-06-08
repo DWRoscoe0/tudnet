@@ -79,6 +79,8 @@ public class VolumeChecker
 
       // Volume read-and-compare pass only scope.
       private long readCheckedBytesL; // Counts bytes read AND compared.
+      private byte[] readBytes= // Buffer to be used for all reads. 
+          new byte[bytesPerBlockI];
       
       // Time measurement.
       private long passStartTimeMsL;
@@ -95,7 +97,6 @@ public class VolumeChecker
 
       private int spinnerStepStateI;
       private long timeOfLastSpinnerStepMsL;
-      private Deque<String> operationDequeOfStrings; // Describes operation.
 
 
     // Constructors and constructor-related methods.
@@ -668,7 +669,7 @@ public class VolumeChecker
       {
         String resultString= null;
         byte[] expectedBytes= getPatternedBlockOfBytes(blockL);
-        byte[] readBytes= new byte[bytesPerBlockI];
+        //// readBytes= new byte[bytesPerBlockI];
         readingDutyCycle.updateStatusV(true);
         theFileInputStream.read(readBytes);
         readingDutyCycle.updateStatusV(false);
@@ -677,6 +678,11 @@ public class VolumeChecker
           resultString= "read-back compare error";
         return resultString;
         }
+
+
+    // Code for Operation part of progress report.
+    
+    private Deque<String> operationDequeOfStrings; // Describes operation.
 
     private void replaceOperationAndRefreshProgressReportV(
         String operationString)
@@ -711,6 +717,7 @@ public class VolumeChecker
     
     private void pushOperationAndRefreshProgressReportV(String operationString)
       {
+        pushOperationV(operationString);
         progressReportUpdateV();
         }
     
