@@ -217,8 +217,9 @@ public class VolumeChecker
       }  // goFinishPassAndReturn:
         pushOperationAndRefreshProgressReportV("deleting temporary files");
         theAppLog.debug("VolumeChecker.checkVolumeV(.) deleting.");
-        String deleteErrorString= FileOps.deleteParentRecursivelyReturnString(
-            buildFolderFile,FileOps.requiredConfirmationString);
+        String deleteErrorString= null;
+        FileOps.deleteParentRecursivelyReturnString(
+        buildFolderFile,FileOps.requiredConfirmationString);
         resultString= EpiString.combine1And2WithNewlineString(
             resultString, deleteErrorString);
         synchronizeWithFreeSpaceV();
@@ -263,8 +264,8 @@ public class VolumeChecker
       private long activeNsL;
       private long inactiveNsL;
 
-      public void updateStatusV(long timeNowNsL) 
-        { updateStatusV(isActiveB,timeNowNsL); }
+      /// public void updateStatusV(long timeNowNsL) 
+      ///   { updateStatusV(isActiveB,timeNowNsL); }
 
       public void updateStatusV(boolean isActiveB)
         {
@@ -674,30 +675,6 @@ public class VolumeChecker
         return resultString;
         }
 
-    private byte[] getPatternedBlockOfBytes(long blockNumberL) 
-      /* This method returns a block buffer 
-       * filled with lines containing the block number.
-       * 
-       * ///opt Use fewer character operations and more byte moves for speed.
-       * 
-       * ///opt Switch from NonDirect ByteBuffer to Direct one for speed.
-       * 
-       * ///opt Double-buffer with 2 preallocated buffers for speed.
-       */
-      {
-        ByteArrayOutputStream blockByteArrayOutputStream= 
-            new ByteArrayOutputStream(bytesPerBlockI);
-        PrintStream blockPrintStream=
-          new PrintStream(blockByteArrayOutputStream);
-        for (int i= 0; i < (bytesPerBlockI / 32); i++) { // Repeat to fill block
-          blockPrintStream.printf( // with lines of text showing block number.
-            "unique block # %15d\r\n", blockNumberL); // Each line is 32 bytes.
-          }
-        byte[] blockBytes= 
-            blockByteArrayOutputStream.toByteArray();
-        return blockBytes;
-        }
-
     private void replaceOperationAndRefreshProgressReportV(
         String operationString)
       /* Replaces top element of operation stack and refreshes the display. */
@@ -738,6 +715,69 @@ public class VolumeChecker
     private void pushOperationV(String operationString)
       {
         operationDequeOfStrings.addLast(operationString); // Add new operation.
+        }
+
+
+    // Pattern volume block code.
+
+    private byte[] patternedBlockOfBytes= new byte[512]; // Initially all zeros.
+    private long lastBlockNumberL= Integer.MAX_VALUE;
+
+    private byte[] getPatternedBlockOfBytes(long blockNumberL) 
+      /* This method returns a block buffer 
+       * filled with lines containing the block number.
+       * 
+       * ///opt Use fewer character operations and more byte moves for speed.
+       * 
+       * ///opt Switch from NonDirect ByteBuffer to Direct one for speed.
+       * 
+       * ///opt Double-buffer with 2 preallocated buffers for speed.
+       */
+      {
+        if // Calculate new block if block number might have become shorter.
+          (blockNumberL < lastBlockNumberL)
+          initializePatternedBlockV(blockNumberL);
+
+        // Patch the existing block with desired block number.
+        String blockNumberAsString= Long.toString(blockNumberL);
+        byte[] blockNumberAsBytes= blockNumberAsString.getBytes();
+        int blockNumberAsBytesLengthI= blockNumberAsBytes.length;
+        int patchOffsetInBytesI= // Offset to first block # patch is
+          32 // the length of one line in bytes
+          -2 // minus bytes in line terminator
+          -blockNumberAsBytesLengthI; // minus length of block number in bytes.
+        for (int i= 0; i < (bytesPerBlockI / 32); i++) {
+          System.arraycopy(
+              blockNumberAsBytes, 
+              0, // Beginning of block number as bytes 
+              patternedBlockOfBytes, 
+              patchOffsetInBytesI, 
+              blockNumberAsBytesLengthI);
+          patchOffsetInBytesI+= 32; // Adjust patch offset to next line. 
+          }
+        lastBlockNumberL= blockNumberL;
+        
+        return patternedBlockOfBytes;
+        }
+
+    private void initializePatternedBlockV(long blockNumberL) 
+      /* This method returns a new block buffer.
+       * The format for the line that is repeated to the end of the block is:
+       *   unique block # nnnnnnnnnnnnnnn
+       * These bytes plus 2 bytes for newline make a total of 32 bytes.
+       * This is repeated 16 times to fill an entire 512-byte disk block.
+       * The "n"s are the character representation of blockNumberL.
+       */
+      {
+        ByteArrayOutputStream blockByteArrayOutputStream= 
+            new ByteArrayOutputStream(bytesPerBlockI);
+        PrintStream blockPrintStream=
+          new PrintStream(blockByteArrayOutputStream);
+        for (int i= 0; i < (bytesPerBlockI / 32); i++) { // Repeat to fill block
+          blockPrintStream.printf( // with lines of text showing block number.
+            "unique block # %15d\r\n", blockNumberL); // Each line is 32 bytes.
+          }
+        patternedBlockOfBytes= blockByteArrayOutputStream.toByteArray();
         }
 
 
@@ -824,6 +864,11 @@ public class VolumeChecker
        * and the number of groups that have been completely processed.
        * 
        * ///mys ///fix Sometimes displays negative remaining groups.  Fix.
+       *   This was sometimes caused by undeleted test-pattern/ files.
+       * 
+       * ///enh RemainingTimeEstimation
+       *   Critically Damp remaining time to smooth it.
+       *   Adjust time-constants up or down to prevent back-tracking.
        */
       {
         long totalGroupsL= 
@@ -880,7 +925,7 @@ public class VolumeChecker
       {
         long presentTimeMsL= getTimeMsL(); // [Try to] measure the time.
         long speedDeltaTimeMsL= presentTimeMsL - speedIntervalStartTimeMsL;
-        if (1000 <= speedDeltaTimeMsL) // If enough time has passed
+        if (250 <= speedDeltaTimeMsL) // If enough time has passed
           { // report new speed.
             speedL= // Recalculate speed.
               1000 *
