@@ -123,10 +123,11 @@ public class ConsoleBase
     // General ProgressReport code.  This might eventually move to ConsoleBase.
 
     private boolean progressReportsEnabledB= true;
-    private final long msPerReportMsL= 100; // Trigger limit.
+    private final long progressReportDefaultPollPeriodMsL= 100;
+    private final long progressReportBackgroundPeriodMsL= 1000;
     private int progressReportHeadOffsetI= -1; /* -1 means report inactive. */
     private int progressReportMaximumLengthI= -1;
-    private long progressReportNextTimeMsL;
+    private long timeOfPreviousUpdateMsL;
     private ScheduledFuture<?> outputFuture;
     private Supplier<String> emptyProgressReportSupplierOfString= 
       new Supplier<String>() {
@@ -146,8 +147,6 @@ public class ConsoleBase
           outputFuture.cancel(true);
           outputFuture= null;
           }
-        progressReportNextTimeMsL= // Set to do first report immediately.
-            getTimeMsL();
         progressReportHeadOffsetI= thePlainDocument.getLength();
         progressReportMaximumLengthI= 0;
         this.progressReportSupplierOfString= 
@@ -160,6 +159,8 @@ public class ConsoleBase
        * in preparation for a new progress report.
        * newProgressReportSupplierOfString is the Supplier of 
        * the progress report String.
+       * It also sets up a timer to keep progress reports updating slowly
+       * if the regular program code stops polling an updater.
        */
       {
         progressReportResetV(); // Do the common stuff.
@@ -169,31 +170,49 @@ public class ConsoleBase
           new Runnable() { 
               public void run() {
                 if (progressReportsEnabledB)
-                  progressReportUpdateV();
+                  //// progressReportUpdateV();
+                  //// progressReportUpdatePollV(
+                  ////     progressReportBackgroundPeriodMsL/2);
+                  progressReportUpdatePollV();
                 } 
               },
-          250, /// 1/4 second delay.
-          250, /// 1/4 second period.
+          progressReportBackgroundPeriodMsL, // delay.
+          progressReportBackgroundPeriodMsL, // period.
           TimeUnit.MILLISECONDS
           );
         }
 
-    protected synchronized void progressReportUpdateMaybeV()
+    protected synchronized void progressReportUpdatePollV()
       /* This method updates the progress report, maybe.
        * It depends on how much time has passed since the previous report.
        * If enough time has passed then it updates, otherwise it does nothing.
        */
       {
-        long presentTimeMsL= getTimeMsL(); // Measure the time.
-        if // Produce progress report if time remaining in period reached 0.
-          (0 <= (presentTimeMsL-progressReportNextTimeMsL))
-          { // Produce progress report and calculate when to do next one.
-            progressReportNextTimeMsL= // Calculate time of next report.
-                presentTimeMsL 
-                + theLockAndSignal.periodCorrectedDelayMsL(
-                    progressReportNextTimeMsL, msPerReportMsL);
-            progressReportUpdateV();
+        progressReportUpdatePollV(progressReportDefaultPollPeriodMsL);
+        }
+
+    protected synchronized void progressReportUpdatePollV(
+        long intervalLengthTimeMsL)
+      /* This method updates the progress report, maybe.
+       * It depends on how much time has passed since the previous report.
+       * If enough time has passed then it updates, otherwise it does nothing.
+       */
+      {
+      goReturn: {
+        long timeNowMsL= getTimeMsL(); // Measure the present time.
+        long timeSincePreviousUpdateMsL= 
+            timeNowMsL - timeOfPreviousUpdateMsL;
+        if // Exit if time now is within do-nothing wait interval.
+          ( (0 <= timeSincePreviousUpdateMsL)
+            && (timeSincePreviousUpdateMsL < intervalLengthTimeMsL) )
+          { 
+            //// theAppLog.appendToFileV(NL+"[npr!!!]"); 
+            break goReturn; 
             }
+        //// theAppLog.appendToFileV(NL+"[upr]");
+        progressReportUpdateV(); // This also records update time.
+      } // goReturn:
+        return;
       }
 
     protected synchronized void progressReportUpdateV()
@@ -205,6 +224,7 @@ public class ConsoleBase
        * thereby extending the document for next time.
        */
       { 
+        timeOfPreviousUpdateMsL= getTimeMsL(); // Record update time.
         String newTailString= progressReportSupplierOfString.get();
         int newTailLengthI= newTailString.length();
         if  // Document not being extended.

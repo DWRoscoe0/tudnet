@@ -381,7 +381,7 @@ public class VolumeChecker
             {
               deletionScanFileCountI++;
               deletionScanByteCountL+= subtreeFile.length();
-              progressReportUpdateMaybeV();
+              /// progressReportUpdateMaybeV();
               }
           return errorString;
           } 
@@ -481,7 +481,7 @@ public class VolumeChecker
               remainingFileBytesL= bytesPerFileL;
               replaceOperationAndRefreshProgressReportV("writing-file-blocks");
               blockLoop: while (true) { // Write all blocks in file.
-                progressReportUpdateMaybeV();
+                progressReportUpdatePollV();
                 errorString= testInterruptionGetConfirmation1ReturnResultString(
                     "Do you want to terminate this operation?",
                     "write operation terminated by user");
@@ -605,7 +605,7 @@ public class VolumeChecker
             remainingFileBytesL= Math.min(bytesPerFileL,toCheckRemainingBytesL);
             replaceOperationAndRefreshProgressReportV("reading-and-comparing");
           blockLoop: while (true) {
-            progressReportUpdateMaybeV();
+            progressReportUpdatePollV();
             errorString= testInterruptionGetConfirmation1ReturnResultString(
                 "Do you want to terminate this operation?",
                 "read operation terminated by user");
