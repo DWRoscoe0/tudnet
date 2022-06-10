@@ -123,7 +123,7 @@ public class ConsoleBase
     // General ProgressReport code.  This might eventually move to ConsoleBase.
 
     private boolean progressReportsEnabledB= true;
-    private final long progressReportDefaultPollPeriodMsL= 100;
+    private final long progressReportDefaultPollPeriodMsL= 200;
     private final long progressReportBackgroundPeriodMsL= 1000;
     private int progressReportHeadOffsetI= -1; /* -1 means report inactive. */
     private int progressReportMaximumLengthI= -1;

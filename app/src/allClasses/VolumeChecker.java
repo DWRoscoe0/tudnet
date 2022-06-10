@@ -231,7 +231,7 @@ public class VolumeChecker
         java.awt.Toolkit.getDefaultToolkit().beep(); // Get user's attention.
         if (! EpiString.isAbsentB(resultString)) // Report error or success.
           appendWithPromptSlowlyAndWaitForKeyV( // Report error.
-              "\n\nThe operation terminated:\n" + resultString);
+              "\n\nThe operation terminated,\n" + resultString + ".");
           else 
           appendWithPromptSlowlyAndWaitForKeyV( // Report success.
             "\n\nThe operation completed without error.");
@@ -381,7 +381,7 @@ public class VolumeChecker
             {
               deletionScanFileCountI++;
               deletionScanByteCountL+= subtreeFile.length();
-              /// progressReportUpdateMaybeV();
+              progressReportUpdatePollV(500);
               }
           return errorString;
           } 
@@ -413,11 +413,11 @@ public class VolumeChecker
         progressReportSetV( deletionScanProgressReportSupplierOfString );
         resultString= FileOps.parentPostorderTraversalReturningString(
           volumeFile, deletionScanFunctionOfFileToString);
-        progressReportUpdateV();
-        progressReportResetV(); // End progress reports.
+        //// progressReportUpdateV();
+        progressReportResetV(); // Make last progress report permanent. 
         if (null != resultString) // Handle possible traversal termination.
           { // Handle traversal termination.
-            progressReportResetV(); // Make last report permanent. 
+            //// progressReportResetV(); // Make last progress report permanent. 
             if ("file scan terminated by user" == resultString)
               resultString= null; // Consider this not an error.
               else // This is a real error.
