@@ -514,11 +514,12 @@ public class VolumeChecker
               throw theIOException; // Re-throw other exception subclasses.
               }
             finally {
-              replaceOperationAndRefreshProgressReportV("syncing-and-closing");
+              replaceOperationAndRefreshProgressReportV("syncing-file");
               volumeDoneFilesL++;
               syncingDutyCycle.updateStatusV(true);
               theFileDescriptor.sync();
               syncingDutyCycle.updateStatusV(false);
+              replaceOperationAndRefreshProgressReportV("closing-file");
               closingDutyCycle.updateStatusV(true);
               theFileOutputStream.close();
               closingDutyCycle.updateStatusV(false);
