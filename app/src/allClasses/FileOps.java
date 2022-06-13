@@ -553,7 +553,7 @@ public class FileOps
            */
           {
             String resultString= null;
-            if (!theFile.delete())
+            if (!FileOps.deleteFileB(theFile))
               resultString= "File:delete() failed on: " + theFile;
             return resultString;
             } 
@@ -621,7 +621,7 @@ public class FileOps
        * otherwise it does nothing.  */
       {
         if (tmpFile != null) 
-          tmpFile.delete();
+          deleteFileB(tmpFile);
         }
 
 
@@ -892,6 +892,18 @@ public class FileOps
           }
       }
 
+    public static boolean deleteFileB(File theFile)
+      /* This method tries to delete theFile.
+       * It also monitors time in the OS. 
+       * It returns true if the delete was successful, false otherwise.
+       */
+      {
+        FileOps.deletingDutyCycle.updateActivityV(true);
+        boolean resultB= theFile.delete();
+        FileOps.deletingDutyCycle.updateActivityV(false);
+        return resultB;
+        }
+
     static String getOSReportString()
     {
       long nowTimeNsL= System.nanoTime();
@@ -926,10 +938,11 @@ public class FileOps
       return resultString;
       }
 
-    static DutyCycle writingDutyCycle= new DutyCycle();
-    static DutyCycle syncingDutyCycle= new DutyCycle();
-    static DutyCycle closingDutyCycle= new DutyCycle();
-    static DutyCycle readingDutyCycle= new DutyCycle();
+    static DutyCycle writingDutyCycle  = new DutyCycle();
+    static DutyCycle syncingDutyCycle  = new DutyCycle();
+    static DutyCycle closingDutyCycle  = new DutyCycle();
+    static DutyCycle readingDutyCycle  = new DutyCycle();
+    static DutyCycle deletingDutyCycle = new DutyCycle();
     static String osReportString;
     static long osLastTimeNsL;
     
