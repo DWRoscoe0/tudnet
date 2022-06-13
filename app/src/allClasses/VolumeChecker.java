@@ -262,102 +262,6 @@ public class VolumeChecker
         }
 
 
-    // For measuring OS time, starting first with writing time.
-
-    private static class DutyCycle {
-  
-      private boolean isActiveB= false;
-      private long lastActivityChangeTimeNsL;
-      private long activeNsL;
-      private long inactiveNsL;
-
-      /// public void updateStatusV(long timeNowNsL) 
-      ///   { updateStatusV(isActiveB,timeNowNsL); }
-
-      public void updateStatusV(boolean isActiveB)
-        {
-          updateStatusV(isActiveB,System.nanoTime());
-          }
-
-      public void updateStatusV(boolean isActiveB,long timeNowNsL)
-        {
-          long timeSinceLastChangeNsL= lastActivityChangeTimeNsL - timeNowNsL;
-          if (this.isActiveB)
-            activeNsL+= timeSinceLastChangeNsL;
-            else
-            inactiveNsL+= timeSinceLastChangeNsL;
-          this.isActiveB= isActiveB;
-          lastActivityChangeTimeNsL= timeNowNsL;
-          }
-
-      private String resetAndGetOSString(long timeNowNsL)
-        {
-          updateStatusV(isActiveB,timeNowNsL);
-          long totalSinceReportNsL= activeNsL + inactiveNsL;
-          String resultString= 
-              quotientAsPerCentString(activeNsL, totalSinceReportNsL);
-
-          // Reset accumulators for next time.
-          activeNsL= 0;
-          inactiveNsL= 0;
-    
-          return resultString;
-          }
-  
-      } // DutyCycle
-
-    private DutyCycle writingDutyCycle= new DutyCycle();
-    private DutyCycle syncingDutyCycle= new DutyCycle();
-    private DutyCycle closingDutyCycle= new DutyCycle();
-    private DutyCycle readingDutyCycle= new DutyCycle();
-    private long osLastTimeNsL;
-    private String osReportString;
-
-    private String getOSReportString()
-      {
-        long nowTimeNsL= System.nanoTime();
-        if  // If 1/2 second has passed
-          ( 500000 <= (nowTimeNsL - osLastTimeNsL) ) 
-          { // update report String.
-            osReportString= "";
-            osReportString+=
-                resetAndGetOSString(closingDutyCycle, " clo:", nowTimeNsL);
-            osReportString+=
-                resetAndGetOSString(writingDutyCycle, " wrt:", nowTimeNsL);
-            osReportString+=
-                resetAndGetOSString(readingDutyCycle, " rea:", nowTimeNsL);
-            osReportString+=
-                resetAndGetOSString(syncingDutyCycle, " syn:", nowTimeNsL);
-            osLastTimeNsL= nowTimeNsL; // Reset for next time.
-            }
-  
-        return osReportString;
-        }
-
-    private static String resetAndGetOSString(
-        DutyCycle theDutyCycle, String labelString, long timeNowNsL)
-      // Returns string representing OS%, or "" if % is 0.
-      {
-        String resultString= theDutyCycle.resetAndGetOSString(timeNowNsL);
-        if ("" != resultString) // % not 0
-          resultString= labelString + resultString; // so append to label.
-        return resultString;
-        }
-
-    private static String quotientAsPerCentString(long dividentL,long divisorL)
-      {
-        String resultString;
-        double perCentD= (100. * dividentL) / divisorL;
-        if (0.5 > perCentD) 
-          resultString= ""; // Was "00%";
-        else if (99.5 <= perCentD)
-          resultString= "99+";
-        else
-          resultString= String.format("%02d%%",Math.round(perCentD));
-        return resultString;
-        }
-
-
     // Deletion code.
     
     private File deletionScanFile;
@@ -413,11 +317,9 @@ public class VolumeChecker
         progressReportSetV( deletionScanProgressReportSupplierOfString );
         resultString= FileOps.parentPostorderTraversalReturningString(
           volumeFile, deletionScanFunctionOfFileToString);
-        //// progressReportUpdateV();
         progressReportResetV(); // Make last progress report permanent. 
         if (null != resultString) // Handle possible traversal termination.
           { // Handle traversal termination.
-            //// progressReportResetV(); // Make last progress report permanent. 
             if ("file scan terminated by user" == resultString)
               resultString= null; // Consider this not an error.
               else // This is a real error.
@@ -516,13 +418,9 @@ public class VolumeChecker
             finally {
               replaceOperationAndRefreshProgressReportV("syncing-file");
               volumeDoneFilesL++;
-              syncingDutyCycle.updateStatusV(true);
-              theFileDescriptor.sync();
-              syncingDutyCycle.updateStatusV(false);
+              FileOps.syncV(theFileDescriptor);
               replaceOperationAndRefreshProgressReportV("closing-file");
-              closingDutyCycle.updateStatusV(true);
-              theFileOutputStream.close();
-              closingDutyCycle.updateStatusV(false);
+              FileOps.closeOutputStreamV(theFileOutputStream);
               theFileOutputStream= null; // Prevent another close.
               popOperationV(); // File operation. 
               if (! EpiString.isAbsentB(errorString)) break fileLoop;
@@ -658,12 +556,7 @@ public class VolumeChecker
        */
       {
         byte[] bytes= getPatternedBlockOfBytes(blockL);
-        try {
-            writingDutyCycle.updateStatusV(true);
-            theFileOutputStream.write(bytes);
-          } finally {
-            writingDutyCycle.updateStatusV(false);
-          }
+        FileOps.writeBytesToOutputStreamV(bytes, theFileOutputStream);
         }
 
     private String readBlockReturnString(
@@ -678,9 +571,7 @@ public class VolumeChecker
       {
         String resultString= null;
         byte[] expectedBytes= getPatternedBlockOfBytes(blockL);
-        readingDutyCycle.updateStatusV(true);
-        theFileInputStream.read(readBytes);
-        readingDutyCycle.updateStatusV(false);
+        FileOps.readBytesFromInputStreamV(readBytes, theFileInputStream);
         boolean equalB= Arrays.equals(expectedBytes,readBytes);
         if (! equalB)
           resultString= "read-back compare error";
@@ -958,7 +849,7 @@ public class VolumeChecker
        * an indication of how much time the app is waiting for OS IO. 
        */
       { 
-        return "\nOS%    : " + getOSReportString(); 
+        return "\nOS%    : " + FileOps.getOSReportString(); 
         }
 
 

@@ -1,6 +1,7 @@
 package allClasses;
 
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -45,6 +46,9 @@ public class FileOps
      * Good examples of this are the methods which retry operations
      * without limit. 
      */
+
+
+    // Code about updating and copying.
 
     public static void updateWithRetryFromToV(File thisFile, File thatFile)
       /* If thisFile is newer than thatFile, then
@@ -460,6 +464,9 @@ public class FileOps
         return errorString.contains("There is not enough space on the disk");
         }
 
+
+    // Methods that manipulate file attributes.
+    
     public static String copyTimeAttributesReturnString(
         Path sourcePath, Path destinationPath)
       /* This method copies the 3 time attributes from the source file
@@ -618,43 +625,23 @@ public class FileOps
         }
 
 
-    // String methods.
-
-    public static String twoFilesString(
-        File sourceFile, File destinationFile)
-      {
-        return 
-            NL + "    sourceFile:      " + fileDataString(sourceFile) + 
-            NL + "    destinationFile: " + fileDataString(destinationFile)
-            ;
-        }
-    
-    public static String fileDataString( File theFile )
-      { 
-        return ( theFile == null )
-            ? "null" 
-            : dateString( theFile ) + ", " + theFile.toString()
-            ;
-        }
-    
-    public static String dateString( File theFile )
-      /* This method returns the time-stamp String associated with
-        the file theFile in an easy to read format.
-        */
-      {
-        return Misc.dateString( theFile.lastModified() );
-        }
-
-
-    // Directory tree traversal code.
+    /* Directory tree traversal code.
+     * There are 2 mutually recursive methods for doing traversals.
+     * Each one is an entry point, so that traversals may be don that
+     * either include or don't include the root. 
+     */
 
     public static String childrenPostorderTraversalReturningString(
-        File subtreeFile, Function<File,String> fileFunctionReturningString)
+        File subtreeFile, Function<File,String> functionOfFileReturnsString)
       /* This method tries to perform fileFunctionReturningString 
        * for every child file in subtreeFile.
-       * fileFunctionReturningString does some operation on a File
+       * functionOfFileReturnsString does some operation on a File
        * and returns a result String, null if success, 
        * not-null describing a reason for failure.
+       * Use this method if you do NOT want
+       * to perform the operation on the ROOT of subtreeFile.
+       * 
+       * ///enh Switch to class Files to eliminate directory size limits.
        */
       {
         String resultString= null;
@@ -664,18 +651,19 @@ public class FileOps
           for (File childFile : childrenListOfFiles) { // for each child
             resultString= // recursively process the child.
                 FileOps.parentPostorderTraversalReturningString(
-                    childFile,fileFunctionReturningString);
-            if (null != resultString) break goReturn; // Exit if error.
+                    childFile,functionOfFileReturnsString);
+            if (null != resultString) break goReturn; // Exit loop if error.
             }
       } // goReturn:
         return resultString;
       }
 
     public static String parentPostorderTraversalReturningString(
-        File subtreeFile, Function<File,String> fileFunctionReturningString)
+        File subtreeFile, Function<File,String> functionOfFileReturnsString)
       /* This method tries to perform fileFunctionReturningString 
-       * for every file in the children of subtreeFile.
-       * fileFunctionReturningString does some operation on a File
+       * for every file in the children of subtreeFile,
+       * AND on the root of subtreeFile.
+       * functionOfFileReturnsString does some operation on a File
        * and returns a result String, null if success, 
        * not-null describing a reason for failure.
        */
@@ -684,13 +672,84 @@ public class FileOps
       goReturn: {
         resultString= // Perform operation on child files. 
           childrenPostorderTraversalReturningString(
-            subtreeFile, fileFunctionReturningString);
+            subtreeFile, functionOfFileReturnsString);
         if (null != resultString) break goReturn; // Exit if there was an error.
         resultString= // Finish by performing operation on root of subtree. 
-          fileFunctionReturningString.apply(subtreeFile);
+          functionOfFileReturnsString.apply(subtreeFile);
       } // goReturn:
         return resultString;
       }
+
+
+    // Methods for use with lambda expressions to do writing to OutputStream.
+    
+    public static String writeDataReturnString( 
+        WriterTo1Throws2<OutputStream,IOException> 
+          sourceWriterTo1Throws2, 
+        File destinationFileFile
+        )
+      /* This method writes data from sourceWriterTo1Throws2
+       * using an OutputStream with the possibility of an IOException,
+       * to a new text file with a pathname of destinationFileFile.
+       * If the write is successful then it returns null,
+       * otherwise it returns a String describing the failure.
+       * 
+       * Most of the code here is about initialization, exception handling,
+       * and finalization of the file destinationFileFile.
+       * sourceWriterTo1Throws2 does all the data writing.
+       */
+      {
+        theAppLog.info("FileOps",
+            "FileOps.writeDataReturnString(.) begins/called, file: "
+            + destinationFileFile);
+
+        String errorString= null;
+        FileOutputStream sourceFileOutputStream= null;
+        try {
+            sourceFileOutputStream= new FileOutputStream( // Create OutputStream 
+                destinationFileFile); // to the file with this pathname.
+            theAppLog.debug("FileOps",
+              "FileOps.writeDataReturnString(.) write begins.");
+            sourceWriterTo1Throws2.writeToV( // Write all source data 
+                sourceFileOutputStream); // to OutputStream.
+            theAppLog.debug("FileOps",
+              "FileOps.writeDataReturnString(.) write ends.");
+            }
+          catch (Exception theException) {
+            errorString= "write error: "+theException;
+            }
+          finally {
+            try {
+              if ( sourceFileOutputStream != null ) 
+                sourceFileOutputStream.close(); 
+              }
+            catch ( Exception theException ) { 
+              errorString= EpiString.combine1And2WithNewlineString(
+                  errorString, "close error: "+theException);
+              }
+            }
+        if (null != errorString) { // If error occurred, add prefix.
+          errorString= EpiString.combine1And2WithNewlineString(
+              "FileOps.writeDataReturnString(.), "
+                  + "destinationFileFile= " + destinationFileFile,
+              errorString
+              );
+          theAppLog.error(errorString);
+          }
+        theAppLog.debug("FileOps",
+            "FileOps.writeDataReturnString(.) ends, file: "
+            + destinationFileFile);
+
+        theAppLog.debug("FileOps",
+            "FileOps.writeDataReturnString(.) ends");
+        return errorString;
+        }
+
+    @FunctionalInterface
+    public interface WriterTo1Throws2<D, E extends Exception> 
+      {
+        void writeToV(D destinationD) throws E;
+        }
 
 
     // File path and directory maker methods.
@@ -769,75 +828,195 @@ public class FileOps
           }
         }
 
-  
-    // Methods for use with lambda expressions to do writing to OutputStream.
 
-    @FunctionalInterface
-    public interface WriterTo1Throws2<D, E extends Exception> 
-      {
-        void writeToV(D destinationD) throws E;
-        }
-    
-    public static String writeDataReturnString( 
-        WriterTo1Throws2<OutputStream,IOException> 
-          sourceWriterTo1Throws2, 
-        File destinationFileFile
-        )
-      /* This method writes data from sourceWriterTo1Throws2
-       * using an OutputStream with the possibility of an IOException,
-       * to a new text file with a pathname of destinationFileFile.
-       * If the write is successful then it returns null,
-       * otherwise it returns a String describing the failure.
-       * 
-       * Most of the code here is about initialization, exception handling,
-       * and finalization of the file destinationFileFile.
-       * sourceWriterTo1Throws2 does all the data writing.
+    // For measuring various OS operation times.
+
+    public static void readBytesFromInputStreamV(
+        byte[] readBytes, FileInputStream theFileInputStream) throws IOException
+      /* This method reads an array of bytes from theFileInputStream
+       * to the array readBytes.
+       * It also monitors time in the OS. 
+       * It throws an IOException if there is an error.
        */
       {
-        theAppLog.info("FileOps",
-            "FileOps.writeDataReturnString(.) begins/called, file: "
-            + destinationFileFile);
-
-        String errorString= null;
-        FileOutputStream sourceFileOutputStream= null;
         try {
-            sourceFileOutputStream= new FileOutputStream( // Create OutputStream 
-                destinationFileFile); // to the file with this pathname.
-            theAppLog.debug("FileOps",
-              "FileOps.writeDataReturnString(.) write begins.");
-            sourceWriterTo1Throws2.writeToV( // Write all source data 
-                sourceFileOutputStream); // to OutputStream.
-            theAppLog.debug("FileOps",
-              "FileOps.writeDataReturnString(.) write ends.");
-            }
-          catch (Exception theException) {
-            errorString= "write error: "+theException;
-            }
-          finally {
-            try {
-              if ( sourceFileOutputStream != null ) 
-                sourceFileOutputStream.close(); 
-              }
-            catch ( Exception theException ) { 
-              EpiString.combine1And2WithNewlineString(
-                  errorString, "close error: "+theException);
-              }
-            }
-        if (null != errorString) { // If error occurred, add prefix.
-          errorString= EpiString.combine1And2WithNewlineString(
-              "FileOps.writeDataReturnString(.), "
-                  + "destinationFileFile= " + destinationFileFile,
-              errorString
-              );
-          theAppLog.error(errorString);
+            FileOps.readingDutyCycle.updateActivityV(true);
+            theFileInputStream.read(readBytes);
+          } finally { // Do this regardless of exceptions.
+            FileOps.readingDutyCycle.updateActivityV(false);
           }
-        theAppLog.debug("FileOps",
-            "FileOps.writeDataReturnString(.) ends, file: "
-            + destinationFileFile);
+        }
 
-        theAppLog.debug("FileOps",
-            "FileOps.writeDataReturnString(.) ends");
-        return errorString;
+    public static void writeBytesToOutputStreamV(
+        byte[] bytes, FileOutputStream theFileOutputStream) throws IOException
+      /* This method writes an array of bytes to theFileOutputStream.
+       * It also monitors time in the OS. 
+       * It throws an IOException if there is an error.
+       */
+      {
+        try {
+            FileOps.writingDutyCycle.updateActivityV(true);
+            theFileOutputStream.write(bytes);
+          } finally { // Do this regardless of exceptions.
+            FileOps.writingDutyCycle.updateActivityV(false);
+          }
+        }
+
+    public static void syncV(FileDescriptor theFileDescriptor)
+        throws IOException
+      /* This method syncs the file whose FileDescriptor is theFileDescriptor.
+       * It also monitors time in the OS.
+       * It throws an IOException if there is an error.
+       */
+      {
+        try {
+            FileOps.syncingDutyCycle.updateActivityV(true);
+            theFileDescriptor.sync();
+          } finally { // Do this regardless of exceptions.
+            FileOps.syncingDutyCycle.updateActivityV(false);
+          }
+      }
+
+    public static void closeOutputStreamV(FileOutputStream theFileOutputStream)
+        throws IOException
+      /* This method closes theFileOutputStream.
+       * It also monitors time in the OS. 
+       * It throws an IOException if there is an error.
+       */
+      {
+        try {
+            FileOps.closingDutyCycle.updateActivityV(true);
+            theFileOutputStream.close();
+          } finally { // Do this regardless of exceptions.
+            FileOps.closingDutyCycle.updateActivityV(false);
+          }
+      }
+
+    static String getOSReportString()
+    {
+      long nowTimeNsL= System.nanoTime();
+      if  // If 1/2 second has passed
+        ( 500000 <= (nowTimeNsL - osLastTimeNsL) ) 
+        { // update report String.
+          osReportString= "";
+          osReportString+= DutyCycle.resetAndGetOSString(
+              closingDutyCycle, " clo:", nowTimeNsL);
+          osReportString+= DutyCycle.resetAndGetOSString(
+              writingDutyCycle, " wrt:", nowTimeNsL);
+          osReportString+= DutyCycle.resetAndGetOSString(
+              readingDutyCycle, " rea:", nowTimeNsL);
+          osReportString+= DutyCycle.resetAndGetOSString(
+              syncingDutyCycle, " syn:", nowTimeNsL);
+          osLastTimeNsL= nowTimeNsL; // Reset for next time.
+          }
+    
+      return osReportString;
+      }
+
+    static String quotientAsPerCentString(long dividentL,long divisorL)
+    {
+      String resultString;
+      double perCentD= (100. * dividentL) / divisorL;
+      if (0.5 > perCentD) 
+        resultString= ""; // Was "00%";
+      else if (99.5 <= perCentD)
+        resultString= "99+";
+      else
+        resultString= String.format("%02d%%",Math.round(perCentD));
+      return resultString;
+      }
+
+    static DutyCycle writingDutyCycle= new DutyCycle();
+    static DutyCycle syncingDutyCycle= new DutyCycle();
+    static DutyCycle closingDutyCycle= new DutyCycle();
+    static DutyCycle readingDutyCycle= new DutyCycle();
+    static String osReportString;
+    static long osLastTimeNsL;
+    
+    static class DutyCycle
+      /* This class is used to calculate the duty-cycle of operations.
+       * It was created to do this for IO operations,
+       * but it could be used for anything.
+       * The code is based on the assumption of a single thread.
+       */
+      {
+        private boolean operationIsActiveB= false;
+        private long timeOfLastActivityChangeNsL;
+        private long timeActiveNsL;
+        private long timeInactiveNsL;
+      
+        public void updateActivityV(boolean isActiveB)
+          {
+            updateActivityV(isActiveB,System.nanoTime());
+            }
+      
+        public void updateActivityV(boolean newActivityB,long timeNowNsL)
+          {
+            long timeSinceLastActivityChangeNsL= 
+              timeOfLastActivityChangeNsL - timeNowNsL;
+            if (operationIsActiveB)
+              timeActiveNsL+= timeSinceLastActivityChangeNsL;
+              else
+              timeInactiveNsL+= timeSinceLastActivityChangeNsL;
+            operationIsActiveB= newActivityB;
+            timeOfLastActivityChangeNsL= timeNowNsL;
+            }
+      
+        public String resetAndGetOSString(long timeNowNsL)
+          {
+            updateActivityV( // Adjust the proper total for present time.
+                operationIsActiveB,timeNowNsL);
+            long totalTimeSincePreviousReportNsL= timeActiveNsL + timeInactiveNsL;
+            String resultString= FileOps.quotientAsPerCentString(
+                timeActiveNsL, totalTimeSincePreviousReportNsL);
+      
+            // Reset accumulators for next time period.
+            timeActiveNsL= 0;
+            timeInactiveNsL= 0;
+      
+            return resultString;
+            }
+  
+        static String resetAndGetOSString(
+          FileOps.DutyCycle theDutyCycle, String labelString, long timeNowNsL)
+        /* Returns string representing OS%, or "" if % is 0.
+         * It also resets for the next measurement.
+         */
+        {
+          String resultString= theDutyCycle.resetAndGetOSString(timeNowNsL);
+          if ("" != resultString) // % not 0
+            resultString= labelString + resultString; // so append to label.
+          return resultString;
+          }
+      
+        } // DutyCycle
+
+
+    // String methods.
+
+    public static String twoFilesString(
+        File sourceFile, File destinationFile)
+      {
+        return 
+            NL + "    sourceFile:      " + fileDataString(sourceFile) + 
+            NL + "    destinationFile: " + fileDataString(destinationFile)
+            ;
         }
     
+    public static String fileDataString( File theFile )
+      { 
+        return ( theFile == null )
+            ? "null" 
+            : dateString( theFile ) + ", " + theFile.toString()
+            ;
+        }
+    
+    public static String dateString( File theFile )
+      /* This method returns the time-stamp String associated with
+        the file theFile in an easy to read format.
+        */
+      {
+        return Misc.dateString( theFile.lastModified() );
+        }
+
     }
