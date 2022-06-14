@@ -176,7 +176,8 @@ public class VolumeChecker
         readCheckedBytesL=0;
         doneTimeMsL= 0;
         passStartTimeMsL= getTimeMsL();
-        volumeTotalBytesL= volumeFreeSpaceL= volumeFile.getTotalSpace();
+        volumeTotalBytesL= volumeFile.getTotalSpace();
+        volumeFreeSpaceL= volumeFile.getUsableSpace(); 
         spinnerStepStateI= 0;
         queueAndDisplayOutputSlowV("\n\nChecking " + volumeFile + "\n");
         resultString= maybeDeleteAllVolumeFilesReturnString(volumeFile);
