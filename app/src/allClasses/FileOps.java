@@ -646,7 +646,9 @@ public class FileOps
       {
         String resultString= null;
       goReturn: {
+        FileOps.directoryDutyCycle.updateActivityV(true);
         File[] childrenListOfFiles= subtreeFile.listFiles();
+        FileOps.directoryDutyCycle.updateActivityV(false);
         if (null  != childrenListOfFiles) // Process children if a directory.
           for (File childFile : childrenListOfFiles) { // for each child
             resultString= // recursively process the child.
@@ -911,6 +913,11 @@ public class FileOps
         ( 500000 <= (nowTimeNsL - osLastTimeNsL) ) 
         { // update report String.
           osReportString= "";
+          
+          osReportString+= DutyCycle.resetAndGetOSString(
+              directoryDutyCycle, " dir:", nowTimeNsL);
+          osReportString+= DutyCycle.resetAndGetOSString(
+              deletingDutyCycle, " del:", nowTimeNsL);
           osReportString+= DutyCycle.resetAndGetOSString(
               closingDutyCycle, " clo:", nowTimeNsL);
           osReportString+= DutyCycle.resetAndGetOSString(
@@ -938,11 +945,12 @@ public class FileOps
       return resultString;
       }
 
-    static DutyCycle writingDutyCycle  = new DutyCycle();
-    static DutyCycle syncingDutyCycle  = new DutyCycle();
-    static DutyCycle closingDutyCycle  = new DutyCycle();
-    static DutyCycle readingDutyCycle  = new DutyCycle();
-    static DutyCycle deletingDutyCycle = new DutyCycle();
+    static DutyCycle directoryDutyCycle= new DutyCycle();
+    static DutyCycle writingDutyCycle= new DutyCycle();
+    static DutyCycle syncingDutyCycle= new DutyCycle();
+    static DutyCycle closingDutyCycle= new DutyCycle();
+    static DutyCycle readingDutyCycle= new DutyCycle();
+    static DutyCycle deletingDutyCycle= new DutyCycle();
     static String osReportString;
     static long osLastTimeNsL;
     

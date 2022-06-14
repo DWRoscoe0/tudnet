@@ -293,7 +293,8 @@ public class VolumeChecker
     Supplier<String> deletionScanProgressReportSupplierOfString= 
         new Supplier<String>() {
           public String get() { 
-            return "\nBytes: "+deletionScanByteCountL
+            return osIoString()
+                + "\nBytes: "+deletionScanByteCountL
                 +"\nFiles: "+deletionScanFileCountI
                 +"\nDirectories: "+deletionScanDirectoryCountI
                 +"\nName: "+deletionScanFile ; 
