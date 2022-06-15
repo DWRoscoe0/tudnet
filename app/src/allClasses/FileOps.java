@@ -646,9 +646,9 @@ public class FileOps
       {
         String resultString= null;
       goReturn: {
-        FileOps.directoryDutyCycle.updateActivityV(true);
+        FileOps.directoryDutyCycle.updateActivityWithTrueV();
         File[] childrenListOfFiles= subtreeFile.listFiles();
-        FileOps.directoryDutyCycle.updateActivityV(false);
+        FileOps.directoryDutyCycle.updateActivityWithFalseV();
         if (null  != childrenListOfFiles) // Process children if a directory.
           for (File childFile : childrenListOfFiles) { // for each child
             resultString= // recursively process the child.
@@ -842,10 +842,10 @@ public class FileOps
        */
       {
         try {
-            FileOps.readingDutyCycle.updateActivityV(true);
+            FileOps.readingDutyCycle.updateActivityWithTrueV();
             theFileInputStream.read(readBytes);
           } finally { // Do this regardless of exceptions.
-            FileOps.readingDutyCycle.updateActivityV(false);
+            FileOps.readingDutyCycle.updateActivityWithFalseV();
           }
         }
 
@@ -857,10 +857,10 @@ public class FileOps
        */
       {
         try {
-            FileOps.writingDutyCycle.updateActivityV(true);
+            FileOps.writingDutyCycle.updateActivityWithTrueV();
             theFileOutputStream.write(bytes);
           } finally { // Do this regardless of exceptions.
-            FileOps.writingDutyCycle.updateActivityV(false);
+            FileOps.writingDutyCycle.updateActivityWithFalseV();
           }
         }
 
@@ -872,10 +872,10 @@ public class FileOps
        */
       {
         try {
-            FileOps.syncingDutyCycle.updateActivityV(true);
+            FileOps.syncingDutyCycle.updateActivityWithTrueV();
             theFileDescriptor.sync();
           } finally { // Do this regardless of exceptions.
-            FileOps.syncingDutyCycle.updateActivityV(false);
+            FileOps.syncingDutyCycle.updateActivityWithFalseV();
           }
       }
 
@@ -887,10 +887,10 @@ public class FileOps
        */
       {
         try {
-            FileOps.closingDutyCycle.updateActivityV(true);
+            FileOps.closingDutyCycle.updateActivityWithTrueV();
             theFileOutputStream.close();
           } finally { // Do this regardless of exceptions.
-            FileOps.closingDutyCycle.updateActivityV(false);
+            FileOps.closingDutyCycle.updateActivityWithFalseV();
           }
       }
 
@@ -900,9 +900,9 @@ public class FileOps
        * It returns true if the delete was successful, false otherwise.
        */
       {
-        FileOps.deletingDutyCycle.updateActivityV(true);
+        FileOps.deletingDutyCycle.updateActivityWithTrueV();
         boolean resultB= theFile.delete();
-        FileOps.deletingDutyCycle.updateActivityV(false);
+        FileOps.deletingDutyCycle.updateActivityWithFalseV();
         return resultB;
         }
 
@@ -965,7 +965,17 @@ public class FileOps
         private long timeOfLastActivityChangeNsL;
         private long timeActiveNsL;
         private long timeInactiveNsL;
-      
+
+        public void updateActivityWithTrueV()
+          {
+            updateActivityV(true);
+            }
+
+        public void updateActivityWithFalseV()
+          {
+            updateActivityV(false);
+            }
+
         public void updateActivityV(boolean isActiveB)
           {
             updateActivityV(isActiveB,System.nanoTime());
