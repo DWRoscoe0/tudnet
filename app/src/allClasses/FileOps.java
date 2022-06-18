@@ -673,8 +673,13 @@ public class FileOps
                 childFile,functionOfFileReturnsString);
         if (null != resultString) break childLoop; // Exit loop if error.
       } // childLoop:
-      } catch (IOException e) {
-        resultString= "error opening directory\n " + subtreePath+"\n " + e;
+      } catch (AccessDeniedException theAccessDeniedException) {
+        theAppLog.info("childrenPostorderTraversalReturningString(.)\n  "
+          + theAccessDeniedException);
+        break toReturn;
+      } catch (IOException theIOException) {
+        resultString= 
+            "error opening directory\n " + subtreePath+"\n " + theIOException;
         break toReturn;
       } finally {
         FileOps.directoryDutyCycle.updateActivityWithFalseV();
