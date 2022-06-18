@@ -14,7 +14,9 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.util.Iterator;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import allClasses.bundles.BundleOf2;
 
@@ -573,12 +575,12 @@ public class FileOps
        */
       {
         String errorString;
-      goReturn: {
+      toReturn: {
         errorString= checkConfirmationString(confirmationString);
-        if (null != errorString) break goReturn; // Exit if error.
+        if (null != errorString) break toReturn; // Exit if error.
         errorString= parentPostorderTraversalReturningString(
             subtreeFile, deletionFunctionOfFileToString);
-      } // goReturn:
+      } // toReturn:
         return errorString;
       }
 
@@ -596,12 +598,12 @@ public class FileOps
        */
       {
         String errorString;
-      goReturn: {
+      toReturn: {
         errorString= checkConfirmationString(confirmationString);
-        if (null != errorString) break goReturn; // Exit if error.
+        if (null != errorString) break toReturn; // Exit if error.
         errorString= childrenPostorderTraversalReturningString(
             subtreeFile, deletionFunctionOfFileToString);
-      } // goReturn:
+      } // toReturn:
         return errorString;
       }
 
@@ -641,22 +643,47 @@ public class FileOps
        * Use this method if you do NOT want
        * to perform the operation on the ROOT of subtreeFile.
        * 
-       * ///enh Switch to class Files to eliminate directory size limits.
+       * ///enh This method uses Stream<Path> for reading directories,
+       *   but otherwise uses the class Files to maintain legacy compatibility.
+       *   Eventually everything should use Files and Path instead of File.
        */
       {
         String resultString= null;
-      goReturn: {
+      toReturn: {
+        Path subtreePath= subtreeFile.toPath();
         FileOps.directoryDutyCycle.updateActivityWithTrueV();
-        File[] childrenListOfFiles= subtreeFile.listFiles();
+        if (! Files.isDirectory(subtreePath)) break toReturn; // Not directory.
+        Stream<Path> subtreeStreamOfPaths= null;
+      try {
+        subtreeStreamOfPaths= Files.list(subtreePath);
+        Iterator<Path> childrenIteratorOfPaths= 
+            subtreeStreamOfPaths.iterator();
         FileOps.directoryDutyCycle.updateActivityWithFalseV();
-        if (null  != childrenListOfFiles) // Process children if a directory.
-          for (File childFile : childrenListOfFiles) { // for each child
-            resultString= // recursively process the child.
-                FileOps.parentPostorderTraversalReturningString(
-                    childFile,functionOfFileReturnsString);
-            if (null != resultString) break goReturn; // Exit loop if error.
+      childLoop: while (true) {
+        FileOps.directoryDutyCycle.updateActivityWithTrueV();
+        if (! childrenIteratorOfPaths.hasNext()) // Exit if no more children.
+          { FileOps.directoryDutyCycle.updateActivityWithFalseV(); 
+            break childLoop; 
             }
-      } // goReturn:
+        Path childPath= childrenIteratorOfPaths.next();
+        FileOps.directoryDutyCycle.updateActivityWithFalseV();
+        File childFile= childPath.toFile();
+        resultString= // recursively process the child.
+            FileOps.parentPostorderTraversalReturningString(
+                childFile,functionOfFileReturnsString);
+        if (null != resultString) break childLoop; // Exit loop if error.
+      } // childLoop:
+      } catch (IOException e) {
+        resultString= "error opening directory\n " + subtreePath+"\n " + e;
+        break toReturn;
+      } finally {
+        FileOps.directoryDutyCycle.updateActivityWithFalseV();
+        FileOps.closingDutyCycle.updateActivityWithTrueV();
+        Closeables.closeWithoutErrorLoggingB(subtreeStreamOfPaths);
+        FileOps.closingDutyCycle.updateActivityWithFalseV();
+      }
+      } // toReturn:
+        FileOps.directoryDutyCycle.updateActivityWithFalseV();
         return resultString;
       }
 
@@ -671,14 +698,14 @@ public class FileOps
        */
       {
         String resultString= null;
-      goReturn: {
+      toReturn: {
         resultString= // Perform operation on child files. 
           childrenPostorderTraversalReturningString(
             subtreeFile, functionOfFileReturnsString);
-        if (null != resultString) break goReturn; // Exit if there was an error.
+        if (null != resultString) break toReturn; // Exit if there was an error.
         resultString= // Finish by performing operation on root of subtree. 
           functionOfFileReturnsString.apply(subtreeFile);
-      } // goReturn:
+      } // toReturn:
         return resultString;
       }
 

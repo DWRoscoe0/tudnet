@@ -146,7 +146,7 @@ class TUDNet
         theAppLog= new AppLog( // Prepare logger.
           new File(new File(System.getProperty("user.home")),Config.appString));
         DefaultExceptionHandler.setDefaultExceptionHandlerV();
-          // ((String)null).charAt(0); // Test above with NullPointerException.
+          // ((Object)null).notify(); ///ano Uncomment this to test handler.
         Persistent thePersistent= (new Persistent()).initializePersistent();
         theAppLog.setPersistentV( // Setter inject for conditional logging.
             thePersistent.getRootMapEpiNode().getMapEpiNode("Settings"));
@@ -160,6 +160,8 @@ class TUDNet
         if (null != javaFXStartAnomalyString) ///ano Report any problem with
           theAppLog.error( ///ano runtime startup.
               "JavaFX startup anomaly",javaFXStartAnomalyString);
+
+        // ((Object)null).notify(); ///ano Uncomment for more complete test.
 
         CommandArgs theCommandArgs= new CommandArgs(argStrings);
         AppSettings.initializeV(TUDNet.class, theCommandArgs);
@@ -175,7 +177,7 @@ class TUDNet
           + NL + "    by closing log file and exiting the main(.) method.");
         theAppLog.closeFileIfOpenB(); // Close log file for exit.
         theBackupTerminator.setTerminationUnderwayV(); ///ano Start exit timer.
-          // while(true) {} ///ano Use this infinite loop to test above line.
+          // while(true) {} ///ano Uncomment this line to test BackupTerminator.
 
         } // End of the body of main(.).
 

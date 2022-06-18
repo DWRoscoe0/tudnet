@@ -113,7 +113,7 @@ public class Dialogger extends Object
             } );
           }
         catch (IllegalStateException theIllegalStateException) {
-          resultString= "Dialog-Failed" + theIllegalStateException;
+          resultString= "Dialog-Failed: " + theIllegalStateException;
             ///ano See notes above.
           }
         theAppLog.debug("Dialogger.showModelessJavaFXDialogReturnString(.): " 
