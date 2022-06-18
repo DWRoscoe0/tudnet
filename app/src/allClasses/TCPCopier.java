@@ -178,8 +178,8 @@ public class TCPCopier extends EpiThread
           }
         
         // Also close the Sockets of
-        Closeables.closeIfNotNullWithLoggingB(clientSocket); // the client
-        Closeables.closeIfNotNullWithLoggingB(serverSocket); // and server.
+        Closeables.closeWithLoggingIfNotNullB(clientSocket); // the client
+        Closeables.closeWithLoggingIfNotNullB(serverSocket); // and server.
 
         theAppLog.debug("TCPCopier","TCPCopier.stopV(): interrupt and socket closes done.");
         }
@@ -454,8 +454,8 @@ public class TCPCopier extends EpiThread
               else
               theAppLog.exception("serviceOneRequestFromAnyClientV()",ex);
           } finally { // Be certain resources are closed.
-            Closeables.closeIfNotNullWithLoggingB(serverSocket);
-            Closeables.closeIfNotNullWithLoggingB(serverServerSocket);
+            Closeables.closeWithLoggingIfNotNullB(serverSocket);
+            Closeables.closeWithLoggingIfNotNullB(serverServerSocket);
             } // toReturn: 
         return successB;
         }
