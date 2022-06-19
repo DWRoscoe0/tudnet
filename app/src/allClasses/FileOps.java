@@ -651,22 +651,22 @@ public class FileOps
         String resultString= null;
       toReturn: {
         Path subtreePath= subtreeFile.toPath();
-        FileOps.directoryDutyCycle.updateActivityWithTrueV();
+        OSTime.directoryDutyCycle.updateActivityWithTrueV();
         if (! Files.isDirectory(subtreePath)) break toReturn; // Not directory.
         Stream<Path> subtreeStreamOfPaths= null;
       try {
         subtreeStreamOfPaths= Files.list(subtreePath);
         Iterator<Path> childrenIteratorOfPaths= 
             subtreeStreamOfPaths.iterator();
-        FileOps.directoryDutyCycle.updateActivityWithFalseV();
+        OSTime.directoryDutyCycle.updateActivityWithFalseV();
       childLoop: while (true) {
-        FileOps.directoryDutyCycle.updateActivityWithTrueV();
+        OSTime.directoryDutyCycle.updateActivityWithTrueV();
         if (! childrenIteratorOfPaths.hasNext()) // Exit if no more children.
-          { FileOps.directoryDutyCycle.updateActivityWithFalseV(); 
+          { OSTime.directoryDutyCycle.updateActivityWithFalseV(); 
             break childLoop; 
             }
         Path childPath= childrenIteratorOfPaths.next();
-        FileOps.directoryDutyCycle.updateActivityWithFalseV();
+        OSTime.directoryDutyCycle.updateActivityWithFalseV();
         File childFile= childPath.toFile();
         resultString= // recursively process the child.
             FileOps.parentPostorderTraversalReturningString(
@@ -682,13 +682,13 @@ public class FileOps
             "error opening directory\n " + subtreePath+"\n " + theIOException;
         break toReturn;
       } finally {
-        FileOps.directoryDutyCycle.updateActivityWithFalseV();
-        FileOps.closingDutyCycle.updateActivityWithTrueV();
+        OSTime.directoryDutyCycle.updateActivityWithFalseV();
+        OSTime.closingDutyCycle.updateActivityWithTrueV();
         Closeables.closeWithoutErrorLoggingB(subtreeStreamOfPaths);
-        FileOps.closingDutyCycle.updateActivityWithFalseV();
+        OSTime.closingDutyCycle.updateActivityWithFalseV();
       }
       } // toReturn:
-        FileOps.directoryDutyCycle.updateActivityWithFalseV();
+        OSTime.directoryDutyCycle.updateActivityWithFalseV();
         return resultString;
       }
 
@@ -874,10 +874,10 @@ public class FileOps
        */
       {
         try {
-            FileOps.readingDutyCycle.updateActivityWithTrueV();
+            OSTime.readingDutyCycle.updateActivityWithTrueV();
             theFileInputStream.read(readBytes);
           } finally { // Do this regardless of exceptions.
-            FileOps.readingDutyCycle.updateActivityWithFalseV();
+            OSTime.readingDutyCycle.updateActivityWithFalseV();
           }
         }
 
@@ -889,10 +889,10 @@ public class FileOps
        */
       {
         try {
-            FileOps.writingDutyCycle.updateActivityWithTrueV();
+            OSTime.writingDutyCycle.updateActivityWithTrueV();
             theFileOutputStream.write(bytes);
           } finally { // Do this regardless of exceptions.
-            FileOps.writingDutyCycle.updateActivityWithFalseV();
+            OSTime.writingDutyCycle.updateActivityWithFalseV();
           }
         }
 
@@ -904,10 +904,10 @@ public class FileOps
        */
       {
         try {
-            FileOps.syncingDutyCycle.updateActivityWithTrueV();
+            OSTime.syncingDutyCycle.updateActivityWithTrueV();
             theFileDescriptor.sync();
           } finally { // Do this regardless of exceptions.
-            FileOps.syncingDutyCycle.updateActivityWithFalseV();
+            OSTime.syncingDutyCycle.updateActivityWithFalseV();
           }
       }
 
@@ -919,10 +919,10 @@ public class FileOps
        */
       {
         try {
-            FileOps.closingDutyCycle.updateActivityWithTrueV();
+            OSTime.closingDutyCycle.updateActivityWithTrueV();
             theFileOutputStream.close();
           } finally { // Do this regardless of exceptions.
-            FileOps.closingDutyCycle.updateActivityWithFalseV();
+            OSTime.closingDutyCycle.updateActivityWithFalseV();
           }
       }
 
@@ -932,127 +932,11 @@ public class FileOps
        * It returns true if the delete was successful, false otherwise.
        */
       {
-        FileOps.deletingDutyCycle.updateActivityWithTrueV();
+        OSTime.deletingDutyCycle.updateActivityWithTrueV();
         boolean resultB= theFile.delete();
-        FileOps.deletingDutyCycle.updateActivityWithFalseV();
+        OSTime.deletingDutyCycle.updateActivityWithFalseV();
         return resultB;
         }
-
-    static String getOSReportString()
-    {
-      long nowTimeNsL= System.nanoTime();
-      if  // If 1/2 second has passed
-        ( 500000 <= (nowTimeNsL - osLastTimeNsL) ) 
-        { // update report String.
-          osReportString= "";
-          
-          osReportString+= DutyCycle.resetAndGetOSString(
-              directoryDutyCycle, " dir:", nowTimeNsL);
-          osReportString+= DutyCycle.resetAndGetOSString(
-              deletingDutyCycle, " del:", nowTimeNsL);
-          osReportString+= DutyCycle.resetAndGetOSString(
-              closingDutyCycle, " clo:", nowTimeNsL);
-          osReportString+= DutyCycle.resetAndGetOSString(
-              writingDutyCycle, " wrt:", nowTimeNsL);
-          osReportString+= DutyCycle.resetAndGetOSString(
-              readingDutyCycle, " rea:", nowTimeNsL);
-          osReportString+= DutyCycle.resetAndGetOSString(
-              syncingDutyCycle, " syn:", nowTimeNsL);
-          osLastTimeNsL= nowTimeNsL; // Reset for next time.
-          }
-    
-      return osReportString;
-      }
-
-    static String quotientAsPerCentString(long dividentL,long divisorL)
-    {
-      String resultString;
-      double perCentD= (100. * dividentL) / divisorL;
-      if (0.5 > perCentD) 
-        resultString= ""; // Was "00%";
-      else if (99.5 <= perCentD)
-        resultString= "99+";
-      else
-        resultString= String.format("%02d%%",Math.round(perCentD));
-      return resultString;
-      }
-
-    static DutyCycle directoryDutyCycle= new DutyCycle();
-    static DutyCycle writingDutyCycle= new DutyCycle();
-    static DutyCycle syncingDutyCycle= new DutyCycle();
-    static DutyCycle closingDutyCycle= new DutyCycle();
-    static DutyCycle readingDutyCycle= new DutyCycle();
-    static DutyCycle deletingDutyCycle= new DutyCycle();
-    static String osReportString;
-    static long osLastTimeNsL;
-    
-    static class DutyCycle
-      /* This class is used to calculate the duty-cycle of operations.
-       * It was created to do this for IO operations,
-       * but it could be used for anything.
-       * The code is based on the assumption of a single thread.
-       */
-      {
-        private boolean operationIsActiveB= false;
-        private long timeOfLastActivityChangeNsL;
-        private long timeActiveNsL;
-        private long timeInactiveNsL;
-
-        public void updateActivityWithTrueV()
-          {
-            updateActivityV(true);
-            }
-
-        public void updateActivityWithFalseV()
-          {
-            updateActivityV(false);
-            }
-
-        public void updateActivityV(boolean isActiveB)
-          {
-            updateActivityV(isActiveB,System.nanoTime());
-            }
-      
-        public void updateActivityV(boolean newActivityB,long timeNowNsL)
-          {
-            long timeSinceLastActivityChangeNsL= 
-              timeOfLastActivityChangeNsL - timeNowNsL;
-            if (operationIsActiveB)
-              timeActiveNsL+= timeSinceLastActivityChangeNsL;
-              else
-              timeInactiveNsL+= timeSinceLastActivityChangeNsL;
-            operationIsActiveB= newActivityB;
-            timeOfLastActivityChangeNsL= timeNowNsL;
-            }
-      
-        public String resetAndGetOSString(long timeNowNsL)
-          {
-            updateActivityV( // Adjust the proper total for present time.
-                operationIsActiveB,timeNowNsL);
-            long totalTimeSincePreviousReportNsL= timeActiveNsL + timeInactiveNsL;
-            String resultString= FileOps.quotientAsPerCentString(
-                timeActiveNsL, totalTimeSincePreviousReportNsL);
-      
-            // Reset accumulators for next time period.
-            timeActiveNsL= 0;
-            timeInactiveNsL= 0;
-      
-            return resultString;
-            }
-  
-        static String resetAndGetOSString(
-          FileOps.DutyCycle theDutyCycle, String labelString, long timeNowNsL)
-        /* Returns string representing OS%, or "" if % is 0.
-         * It also resets for the next measurement.
-         */
-        {
-          String resultString= theDutyCycle.resetAndGetOSString(timeNowNsL);
-          if ("" != resultString) // % not 0
-            resultString= labelString + resultString; // so append to label.
-          return resultString;
-          }
-      
-        } // DutyCycle
 
 
     // String methods.

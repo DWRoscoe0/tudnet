@@ -851,7 +851,7 @@ public class VolumeChecker
        * an indication of how much time the app is waiting for OS IO. 
        */
       { 
-        return "\nOS%    : " + FileOps.getOSReportString(); 
+        return "\nOS%    : " + OSTime.getOSReportString(); 
         }
 
 
