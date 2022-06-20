@@ -294,7 +294,7 @@ public class VolumeChecker
     Supplier<String> deletionScanProgressReportSupplierOfString= 
         new Supplier<String>() {
           public String get() { 
-            return osIoString()
+            return OSTime.getOsIoString()
                 + "\nBytes: "+deletionScanByteCountL
                 +"\nFiles: "+deletionScanFileCountI
                 +"\nDirectories: "+deletionScanDirectoryCountI
@@ -708,7 +708,7 @@ public class VolumeChecker
             + filesString()
             + timeString()
             + speedString()
-            + osIoString()
+            + OSTime.getOsIoString()
             + bytesResultsString()
             + "\n\nOperation: " + operationDequeOfStrings
             + " " + advanceAndGetSpinnerString()
@@ -845,15 +845,6 @@ public class VolumeChecker
         return String.format(
             "\nspeed  : %,11d bytes/second", speedL);
         }
-
-    private String osIoString()
-      /* This method returns a string containing
-       * an indication of how much time the app is waiting for OS IO. 
-       */
-      { 
-        return "\nOS%    : " + OSTime.getOSReportString(); 
-        }
-
 
     private String advanceAndGetSpinnerString()
       /* This method steps the spinner if it's time, not too fast,
