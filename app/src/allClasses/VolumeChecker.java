@@ -88,7 +88,8 @@ public class VolumeChecker
       // For measuring speed of operation.
       private long speedIntervalStartTimeMsL;
       private long speedStartVolumeDoneBytesL;
-      private long speedL;
+      private long instantaneousSpeedL;
+      private long averageSpeedL;
 
       // File scope (file blocks to write or compare).
       private long volumeDoneFilesL; // Also # of next file to process.
@@ -830,20 +831,25 @@ public class VolumeChecker
 
     private String speedString()
       {
-        long presentTimeMsL= getTimeMsL(); // [Try to] measure the time.
-        long speedDeltaTimeMsL= presentTimeMsL - speedIntervalStartTimeMsL;
-        if (250 <= speedDeltaTimeMsL) // If enough time has passed
-          { // report new speed.
-            speedL= // Recalculate speed.
-              1000 *
-              ( (toCheckDoneBytesL - speedStartVolumeDoneBytesL) / 
-                speedDeltaTimeMsL)
+        long timeNowMsL= getTimeMsL(); // [Try to] measure the time.
+        long speedDeltaTimeMsL= timeNowMsL - speedIntervalStartTimeMsL;
+        if (250 <= speedDeltaTimeMsL) // If enough time has passed, 1/4 second,
+          { // recalculate speeds.
+            instantaneousSpeedL=
+              (1000 * ( (toCheckDoneBytesL - speedStartVolumeDoneBytesL))
+                 / speedDeltaTimeMsL)
               ;
+            averageSpeedL= 
+              (1000 * toCheckDoneBytesL) / 
+                (timeNowMsL - passStartTimeMsL);
             speedStartVolumeDoneBytesL= toCheckDoneBytesL;
-            speedIntervalStartTimeMsL= presentTimeMsL;
+            speedIntervalStartTimeMsL= timeNowMsL;
             }
         return String.format(
-            "\nspeed  : %,11d bytes/second", speedL);
+            "\nspeed  : %,11d bytes/second"+
+            "\n  avg. : %,11d bytes/second",
+            instantaneousSpeedL, averageSpeedL
+            );
         }
 
     private String advanceAndGetSpinnerString()
