@@ -181,7 +181,9 @@ public class Sender // Uunicast and multicast sender thread.
               theScheduledThreadPoolExecutor.schedule( // Send after delay.
                 new Runnable() { 
                     public void run() {
+                      EpiThread.setPoolThreadNameV("DelayedSender");
                       sendingDatagramPacketV( theDatagramPacket );
+                      EpiThread.unsetPoolThreadNameV("DelayedSender");
                       } 
                     },
                   Config.packetSendDelayMsL,
@@ -208,14 +210,14 @@ public class Sender // Uunicast and multicast sender thread.
         droppingB= false;  // Comment this out cause drop packets.
         if ( droppingB )
           {
-            /*  ////
+            /*  ///
              theAppLog.debug( // Logging the drop of the packet.
                "dropping packet "
                 +PacketManager.gettingDirectedPacketString(
                     theDatagramPacket,true
                     )
                 );
-             */  ////
+             */  ///
             theAppLog.appendToFileV("[DROPPING PACKET]");
             }
         return droppingB;

@@ -341,7 +341,6 @@ public class Navigation extends EpiStage
               if (! displayElapsedB) continue; // End loop if ticker not enabled.
               //  tickerB= false; // Disable later ticks.
               theElapsedI++;
-              theAppLog.appendToFileV(NL+"[t]");
               final int finalElapsedI= theElapsedI;
               Platform.runLater(
                 () -> { // Use JavaFX Application Thread.
@@ -360,7 +359,7 @@ public class Navigation extends EpiStage
                   });
               }
             });
-        Thread tickerThread= new Thread(tickerRunnable);
+        Thread tickerThread= new Thread(tickerRunnable,"FXTicker");
         tickerThread.setDaemon( true ); // Make thread this daemon type. 
         tickerThread.start();
         }
@@ -436,7 +435,7 @@ public class Navigation extends EpiStage
                 });
               }
             });
-        Thread updateThread= new Thread(updateRunnable);
+        Thread updateThread= new Thread(updateRunnable,"TestTreeUpdater");
         updateThread.setDaemon( true ); // Make thread \daemon type. 
         updateThread.start();
         }

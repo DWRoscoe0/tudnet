@@ -853,17 +853,21 @@ public class VolumeChecker
         }
 
     private String advanceAndGetSpinnerString()
-      /* This method steps the spinner if it's time, not too fast,
-       * and returns a single character string showing the position.
+      /* This method steps the spinner one step if it's time,
+       * and returns a single character string showing the latest position.
+       * The spin rate is limited to prevent a stroboscopic effect which could 
+       * make it appear that the spinner was not spinning when it was.
        */
       {
-        final long stepPeriodMsL= 125;
+        final long stepPeriodMsL= // Set minimum step period.
+            125; // This means a maximum of 8 steps, 1 revolution, per second.
         long presentTimeMsL= getTimeMsL(); // [Try to] measure the time.
         long timeSinceLastStepMsL= presentTimeMsL - timeOfLastSpinnerStepMsL;
         if // Step spinner if it's time.
           ((timeSinceLastStepMsL < 0) || (timeSinceLastStepMsL > stepPeriodMsL))
           { // Step the spinner.
-            if (4 <= (++spinnerStepStateI)) spinnerStepStateI= 0; // Step spinner.
+            if (4 <= (++spinnerStepStateI)) // Step spinner.
+              spinnerStepStateI= 0; // Wrap around if needed.
             timeOfLastSpinnerStepMsL= presentTimeMsL; // Save time.
             }
         return "-\\|/".substring(spinnerStepStateI, spinnerStepStateI+1);

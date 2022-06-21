@@ -97,8 +97,10 @@ public class ConsoleBase
       // This method makes this class a Runnable to be run by our Thread.
       {
         /// theAppLog.debug(myToString()+"ConsoleBase.run() begins.");
+        EpiThread.setPoolThreadNameV("ConsoleBaseThread");
         mainThreadLogicV();
         /// theAppLog.debug(myToString()+"ConsoleBase.run() ends.");
+        EpiThread.unsetPoolThreadNameV("ConsoleBaseThread");
         }
 
     protected void mainThreadLogicV()
@@ -123,7 +125,7 @@ public class ConsoleBase
     // General ProgressReport code.  This might eventually move to ConsoleBase.
 
     private boolean progressReportsEnabledB= true;
-    private final long progressReportDefaultPollPeriodMsL= 200;
+    private final long progressReportDefaultPollPeriodMsL= 250;
     private final long progressReportBackgroundPeriodMsL= 1000;
     private int progressReportHeadOffsetI= -1; /* -1 means report inactive. */
     private int progressReportMaximumLengthI= -1;
@@ -169,11 +171,11 @@ public class ConsoleBase
         outputFuture= theScheduledThreadPoolExecutor.scheduleAtFixedRate(
           new Runnable() { 
               public void run() {
+                EpiThread.setPoolThreadNameV("BackgroundProgressReport");
+                theAppLog.debug("ConsoleBase.progressReportSetV(() run().");
                 if (progressReportsEnabledB)
-                  //// progressReportUpdateV();
-                  //// progressReportUpdatePollV(
-                  ////     progressReportBackgroundPeriodMsL/2);
                   progressReportUpdatePollV();
+                EpiThread.unsetPoolThreadNameV("BackgroundProgressReport");
                 } 
               },
           progressReportBackgroundPeriodMsL, // delay.
@@ -206,10 +208,10 @@ public class ConsoleBase
           ( (0 <= timeSincePreviousUpdateMsL)
             && (timeSincePreviousUpdateMsL < intervalLengthTimeMsL) )
           { 
-            //// theAppLog.appendToFileV(NL+"[npr!!!]"); 
+            /// theAppLog.appendToFileV(NL+"[npr!!!]"); 
             break goReturn; 
             }
-        //// theAppLog.appendToFileV(NL+"[upr]");
+        /// theAppLog.appendToFileV(NL+"[upr]");
         progressReportUpdateV(); // This also records update time.
       } // goReturn:
         return;
@@ -223,7 +225,8 @@ public class ConsoleBase
        * that extends past the existing document,
        * thereby extending the document for next time.
        */
-      { 
+      {
+        theAppLog.debug("ConsoleBase.progressReportUpdateV() called.");
         timeOfPreviousUpdateMsL= getTimeMsL(); // Record update time.
         String newTailString= progressReportSupplierOfString.get();
         int newTailLengthI= newTailString.length();

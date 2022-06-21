@@ -7,30 +7,31 @@ public class EpiThread
 
   extends Thread
 
-  /* This class adds some useful features to Thread.
-   
-    When dealing with threads, it is important to distinguish between
-    "this thread" and the "current thread".
-    * "This thread", within an instance method or a constructor,
-      refers to the current object, an object in the conventional sense,
-      which happens to be a Thread object.
-      "This thread" is meaningful only within a Thread 
-      instance method or constructor. 
-    * "Current thread" refers to the thread which is currently executing.
-      There is always a current thread. 
-      It might be the same as "this thread", if there is one,
-      but they might be different, for example when executing the
-      start() and join() methods. 
-
-    to manage its inputs regardless of the number of source threads
-    that are providing those inputs.  
-    In fact it makes no sense to have more than one.
-    Therefore, it might make sense to include one LockAndSignal instance
-    and an access method, in every EpiThread for use in these operations??
-    
-    */
-
   {
+
+    /* This class adds some useful features to Thread.
+     
+      When dealing with threads, it is important to distinguish between
+      "this thread" and the "current thread".
+      * "This thread", within an instance method or a constructor,
+        refers to the current object, an object in the conventional sense,
+        which happens to be a Thread object.
+        "This thread" is meaningful only within a Thread 
+        instance method or constructor. 
+      * "Current thread" refers to the thread which is currently executing.
+        There is always a current thread. 
+        It might be the same as "this thread", if there is one,
+        but they might be different, for example when executing the
+        start() and join() methods. 
+  
+      ///enh It might make sense to include one LockAndSignal instance
+        and an access method to it, in every EpiThrea, for use for
+        notifications of the arrival of asynchronous inputs.
+        Only one LockAndSignal instance is needed, 
+        regardless of how many inputs are present.
+      
+      */
+
 
     /* The following constructors vary in the presence or absence of
       * nameString: a String to be used as the name of the thread,
@@ -38,9 +39,9 @@ public class EpiThread
       * aRunnable: an instance of a subclass of Runnable to be
         associated with the EpiThread.  If a Runnable is not specified,
         the EpiThread is probably being subclassed.
-      These constructors correspond with similar constructors for Thread.
+      These constructors correspond to similar constructors for Thread.
       */
-  
+
     public EpiThread( String nameString ) // Constructor.
       {
         super( nameString ); // Name here because setName() not reliable.
@@ -55,6 +56,52 @@ public class EpiThread
       {
         super( aRunnable, nameString );
         }
+
+
+    /* Thread name setting methods.
+     * 
+     * ///ano These methods were added as part of an attempt to diagnose
+     * an anomaly in which threads seemed to be pausing, with no obvious cause,
+     * sometimes for very long, possibly infinite, periods of time.
+     * 
+     * Some threads which came from ScheduledThreadPoolExecutor, 
+     * had names such as ?pool-2-thread-1".
+     * This made it difficult to tell what some threads were doing.  
+     * The following methods may be used to:
+     * * Give meaningful names to pool threads.
+     * * Identify threads that came from 
+     *   ScheduledThreadPoolExecutor thread pools.
+     */
+
+    public static void setPoolThreadNameV(String baseNameString)
+      /* This method is used to set the name of the current thread
+       * which is assumed to be a pool thread to
+       * identify it and to indicate that the thread came from a pool.
+       * This method should be called immediately after the thread starts.
+       */
+      {
+        Thread.currentThread().setName( // Set name of current thread to
+            baseNameString // provided base name
+            +"-pool" // with "-pool" appended.
+            );
+        }
+
+    public static void unsetPoolThreadNameV(String baseNameString)
+      /* This method is used to set the name of the current thread
+       * which is assumed to be a pool thread to indicate that 
+       * the thread came from a pool and its former role.
+       * This method should be called immediately before exiting,
+       * when the thread becomes available for reuse by its pool.
+       */
+      {
+        Thread.currentThread().setName( // Set name of current thread to
+            "pool-" // "pool-" prepended to
+            +baseNameString // the provided base name
+            );
+        }
+
+
+    // Thread start and stop methods.
 
     public void startV()
       /* This method writes to the log and calls start().  */
@@ -163,6 +210,9 @@ public class EpiThread
         /// theAppLog.info("EpiThread(" + getName() + ").joinV() ends.");
         }
 
+
+    // Thread sleep methods.
+
     public static boolean interruptibleSleepB( long msL )
       /* This method works like Thread.sleep( msI ),
         causing the current thread to sleep for msI milliseconds,
@@ -223,6 +273,9 @@ public class EpiThread
         return interruptedB;
         }
 
+
+    // Convenience methods.
+
     public static boolean testInterruptB()
       /* This tests the current thread's interrupt status 
         but it does not clear it or change it in any other way.
@@ -232,5 +285,5 @@ public class EpiThread
       { 
         return Thread.currentThread().isInterrupted(); // Just return status.
         }
-    
+
     }

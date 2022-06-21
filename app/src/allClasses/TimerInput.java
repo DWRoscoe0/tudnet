@@ -177,11 +177,13 @@ public class TimerInput
             outputRunnable= new Runnable() { // Runnable for scheduler.
               public void run() 
                 {
+                  EpiThread.setPoolThreadNameV("TimerInput");
                   if (enabledB) // Unless disabled for debug tracing,...
                     { // Take appropriate triggered action.
                       inputArrivedB= true;  // Record that end time has arrived.
                       inputRunnable.run(); // Run user's Runnable.run().
                       }
+                  EpiThread.unsetPoolThreadNameV("TimerInput");
                   }
               };
             outputFuture= theScheduledThreadPoolExecutor.schedule(
