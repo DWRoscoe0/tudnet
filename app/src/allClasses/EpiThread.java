@@ -63,8 +63,70 @@ public class EpiThread
      * ///ano These methods were added as part of an attempt to diagnose
      * an anomaly in which threads seemed to be pausing, with no obvious cause,
      * sometimes for very long, possibly infinite, periods of time.
+     *
+     * The following are notes collected about these anomalies
+     * after the methods were used to name threads that seemed to be pausing.
+
+      * There are 3 threads in the following list, Suspended for examination.
+        The last one is probably waiting for a task to perform.
+        2 Running threads are included for context.
+
+        Thread [Unicaster-/10.0.0.236:59528] (Running)  
+        Thread [ConsoleBaseThread-pool] (Suspended) 
+          java.io.FileDescriptor.sync() line: not available [native method] 
+          allClasses.FileOps.syncV(java.io.FileDescriptor) line: 908  
+          allClasses.VolumeChecker.writeTestReturnString(java.io.File) line: 424  
+          allClasses.VolumeChecker.checkVolumeV() line: 210 
+          allClasses.VolumeChecker.checkVolumeListV(java.util.List<java.io.File>) line: 158 
+          allClasses.VolumeChecker.mainThreadLogicV() line: 141 
+          allClasses.VolumeChecker(allClasses.ConsoleBase).run() line: 102  
+          java.util.concurrent.Executors$RunnableAdapter<T>.call() line: 511  
+          java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask<V>(java.util.concurrent.FutureTask<V>).run() line: 266 
+          java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask<V>.access$201(java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask) line: 180  
+          java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask<V>.run() line: 293 
+          java.util.concurrent.ScheduledThreadPoolExecutor(java.util.concurrent.ThreadPoolExecutor).runWorker(java.util.concurrent.ThreadPoolExecutor$Worker) line: 1149  
+          java.util.concurrent.ThreadPoolExecutor$Worker.run() line: 624  
+          java.lang.Thread.run() line: 748  
+        Thread [BackgroundProgressReport-pool] (Suspended)  
+          sun.misc.Unsafe.park(boolean, long) line: not available [native method] 
+          java.util.concurrent.locks.LockSupport.parkNanos(java.lang.Object, long) line: 215  
+          java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(long) line: 2078 
+          java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take() line: 1093 
+          java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take() line: 809  
+          java.util.concurrent.ScheduledThreadPoolExecutor(java.util.concurrent.ThreadPoolExecutor).getTask() line: 1074  
+          java.util.concurrent.ScheduledThreadPoolExecutor(java.util.concurrent.ThreadPoolExecutor).runWorker(java.util.concurrent.ThreadPoolExecutor$Worker) line: 1134  
+          java.util.concurrent.ThreadPoolExecutor$Worker.run() line: 624  
+          java.lang.Thread.run() line: 748  
+        Thread [pool-TimerInput] (Suspended)  
+          sun.misc.Unsafe.park(boolean, long) line: not available [native method] 
+          java.util.concurrent.locks.LockSupport.park(java.lang.Object) line: 175 
+          java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await() line: 2039  
+          java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take() line: 1088 
+          java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take() line: 809  
+          java.util.concurrent.ScheduledThreadPoolExecutor(java.util.concurrent.ThreadPoolExecutor).getTask() line: 1074  
+          java.util.concurrent.ScheduledThreadPoolExecutor(java.util.concurrent.ThreadPoolExecutor).runWorker(java.util.concurrent.ThreadPoolExecutor$Worker) line: 1134  
+          java.util.concurrent.ThreadPoolExecutor$Worker.run() line: 624  
+          java.lang.Thread.run() line: 748  
+        Thread [pool-TimerInput] (Running)  
+
+      ! Partial conclusions:
+        ! Thread [ConsoleBaseThread-pool]: According to stack, 
+          it is hung in call to java.io.FileDescriptor.sync().
+        ! Thread [BackgroundProgressReport-pool]:
+          ! Thread name indicates it should be active.
+          ! But stack indicated it is not.
+            Its stack is similar to stack of Thread [pool-TimerInput],
+            one that is waiting for a task to perform.
+            * Bottom 5 frames are identical.
+            * In both threads the top frame is:
+              sun.misc.Unsafe.park(boolean, long) line: not available [native method] 
+          ? Could it have been forcefully terminated?  If it terminated normally 
+            then it's name would have been [pool-BackgroundProgressReport]
+            or something else if the thread had been reused.
+
      * 
-     * Some threads which came from ScheduledThreadPoolExecutor, 
+     * The following methods were added because
+     * some threads which came from ScheduledThreadPoolExecutor, 
      * had names such as ?pool-2-thread-1".
      * This made it difficult to tell what some threads were doing.  
      * The following methods may be used to:
