@@ -13,24 +13,34 @@ import static allClasses.AppLog.theAppLog;
 
 public class TracingEventQueue extends EventQueue {
 
-  /* 
-    The purpose of this class and its associated class TracingEventQueueMonitor, 
-    is to report when Swing's Event Dispatch Thread (EDT) 
-    is using excessive time to process events.  ///ano
-    It tests this both during a dispatch, and after every dispatch completes.
-    The dispatch time does not include the time spent waiting in the queue.
+  /* ///ano The purpose of this class,
+    and its associated class TracingEventQueueMonitor, 
+    is to report the anomaly of when Swing's Event Dispatch Thread (EDT) 
+    uses excessive time to process events.
+    It tests this for every dispatch, in 2 ways:
+    * during the dispatch, by polling, and 
+    * after the dispatch completes.
+    The dispatch time does not include the time in the queue 
+    spent waiting to be dispatched.
 
     This class was based on one gotten from an article at
     https://today.java.net/pub/a/today/2007/08/30/debugging-swing.html
     which is now a bad link.
-    
-    ///enh Make not use polling.
-      ///enh? Integrate with or replace by a general watch-dog timer.
-    
+
+    ///enh Rewrite to not use a polling loop in a thread.
+      It could be rewritten to use ScheduledThreadPoolExecutor.
+      On the other hand, a polling thread is a good alternative for
+      malfunctions by ScheduledThreadPoolExecutor.
+
     ///enh Add event counter and use to identify events processed.
-       
-     ? 
-     */
+
+    Dialog windows are now displayed using JavaFX, not Swing,
+    so Swing/EDT dispatches could be completely blocked,
+    but reports could continue.
+    An earlier version used Swing/EDT dialog windows.
+    In this case, the display of dialog windows depended on
+    EDT dispatching eventually being unblocked.
+    */
 
   private TracingEventQueueMonitor theTracingEventQueueMonitor;
 
@@ -43,24 +53,23 @@ public class TracingEventQueue extends EventQueue {
 
   public void initializeV() // Post-constructor initialization.
     {
-      theTracingEventQueueMonitor.start(); // Start polling monitor thread.
+      theTracingEventQueueMonitor.start(); // Start monitor thread polling.
       }
 
   @Override
   protected void dispatchEvent(AWTEvent event)
-    /* This method wraps its superclass version such that
-     * it is preceded and followed by calls to methods that
+    /* This method wraps its superclass version of the same method
+     * such that it is preceded and followed by calls to methods that
      * together check that the dispatch time is not too long.
      */
     {
-      this.theTracingEventQueueMonitor.eventDispatchBeginningV(event);
-
+      this.theTracingEventQueueMonitor.eventDispatchBeginV(event);
       super.dispatchEvent(event);
-
-      this.theTracingEventQueueMonitor.eventDispatchEndingV(event);
+      this.theTracingEventQueueMonitor.eventDispatchEndV(event);
       }
   
   } // TracingEventQueue
+
 
 class TracingEventQueueMonitor extends Thread {
 
@@ -68,185 +77,190 @@ class TracingEventQueueMonitor extends Thread {
     identify when the EDT is taking too long to process events.
     It helps in two ways:
     * It provides methods callable from TracingEventQueue to
-      measure and display dispatch time if it exceeds a threshold.
+      measure and display the total dispatch time if it exceeded a threshold.
     * It provides a thread which does the same threshold test
-      and displays a stack trace if the threshold is exceeded
-      to help identify the CPU-hogging code.
-    The Thread.sleep(..) time defines the sampling rate.
-    It might need to be adjusted to locate CPU-hogging code.
+      and displays a stack trace if the threshold is exceeded 
+      during the dispatch to help identify the CPU-hogging code.
+      The Thread.sleep(..) time defines the sampling rate.
+      It might need to be adjusted to locate CPU-hogging code.
     
     ///enh Maybe do without polling.  See note elsewhere about Watchdog timer.
      */
 
-  private long thresholdDelay;
-
-  public static final long PERIOD= 100;  // was 100
-  public static final long LIMIT= 500; // was 500
-  private static final boolean displayStackB= false;
+  private static final long pollingPeriodMsL= 100;
+  private static final boolean displayStackB= true; /// false;
+  private final long dispatchTimeMaximumMsL= 500;
   
   class EventValue 
-    /* This class stores information about event being dispatched. */
+    /* This class stores information about events being dispatched. */
     {
-      long startTimeL; // When a dispatch began. 
-      boolean reportedB; // true if limit exceeding happened.
-      
-      EventValue(long startTimeL) { // constructor.
-        this.startTimeL= startTimeL;
+      long dispatchStartTimeMsL; 
+      boolean overLimitReportedB;
+
+      EventValue(long dispatchStartTimeMsL) { // constructor.
+        this.dispatchStartTimeMsL= dispatchStartTimeMsL;
         }
       }
 
-  private Map<AWTEvent, EventValue> eventTimeMap;
-  private boolean eventDispatchingEndingB= false;
+  private Map<AWTEvent, EventValue> eventTimeMap; /* Where event data is stored.
+    If should not contain more than one event, but using a map can't hurt.  */
 
-  public TracingEventQueueMonitor(long thresholdDelay) {
-    super("TracingEventQueueMonitor");
-    this.thresholdDelay = thresholdDelay;
-    this.eventTimeMap = new HashMap<AWTEvent, EventValue>();
-    setDaemon(true);
-    }
+  public TracingEventQueueMonitor() // constructor
+    {
+      super("TracingEventQueueMonitor"); // Set thread name.
+      this.eventTimeMap = new HashMap<AWTEvent, EventValue>();
+      setDaemon(true);
+      }
 
-  public synchronized void eventDispatchBeginningV(AWTEvent event)
-    // Processes the beginning of event dispatch by recording in map.
+  public synchronized void eventDispatchBeginV(AWTEvent theAWTEvent)
+    /* This method processes the beginning of event dispatch by
+     * creating an EventValue in the map associated with theEvent.
+     */
     {
       this.eventTimeMap.put(
-          event, new EventValue(System.currentTimeMillis())
+          theAWTEvent, new EventValue(System.currentTimeMillis())
           );
       }
 
-  public void eventDispatchEndingV(AWTEvent event) 
+  public void eventDispatchEndV(AWTEvent theAWTEvent) 
     /* Processes the end of an event dispatch by
       doing a time check and removing the associated map entry.
-      It does not do a stack trace, which should already have been done
-      by an earlier check.
+      It does not do a stack trace because it's too late.
+      Only the polling thread does stack traces.
       */
     {
-      eventDispatchingEndingB= true;
       synchronized(this) {
         this.checkEventTimeB(
             "completed",
-            event, 
+            theAWTEvent, 
             System.currentTimeMillis(),
-            this.eventTimeMap.get(event).startTimeL);
-        this.eventTimeMap.remove(event);
+            this.eventTimeMap.get(theAWTEvent).dispatchStartTimeMsL
+            );
+        this.eventTimeMap.remove(theAWTEvent);
         }
-      eventDispatchingEndingB= false;
       //appLogger.debug(
       //    "TracingEventQueueMonitor.eventDispatchingEndingV(..)"
       //    );
       }
 
-  private boolean checkEventTimeB(
-      String underwayOrCompletedString, 
-      AWTEvent dispatchedAWTEvent, 
-      long currTime, 
-      long startTime
-      ) 
-    /* Reports whether an event dispatch has been running to long,
-      longer that thresholdDelay. 
-      It returns true if it has, false otherwise. 
-      It is called
-      * by eventDispatchingEndingV(..) after 
-        an an event dispatch completes to check 
-        its total processing time.
-      * by run() to check whether there are 
-        any events have been dispatched but not yet completed,
-        and the time since dispatch exceeds the maximum time.
-      If the limited is exceeded then it reports it 
-      in the log and in a dialog.
-      */
-    {
-      long currProcessingTime = currTime - startTime;
-      boolean thresholdExceededB= 
-          (currProcessingTime > this.thresholdDelay);
-      if (thresholdExceededB) // If excessive time used for dispatch, report it.
-        { ///ano Report excessive time used for event dispatch.
-          String summaryIDLineString= 
-              "Excessive time for EDT dispatch, "+underwayOrCompletedString;
-          String detailsString= "In EDT dispatch of "
-              + dispatchedAWTEvent.getClass().getName()
-              //// + ", now "
-              //// + underwayOrCompletedString
-              + ", processing time of " + currProcessingTime
-              + "ms exceeds limit of " + this.thresholdDelay;
-          //System.out.println(outString);
-          theAppLog.warning(summaryIDLineString, detailsString);
-          }
-      return thresholdExceededB; 
-      }
-
   @Override
   public void run() 
-    /* This method periodically tests whether an EDT dispatch
-      has taken too long and reports it if so.
-      The report includes a stack trace of the AWT-EventQueue thread.
+    /* This method periodically tests whether any EDT dispatches
+      that are stored in the map have taken too long.
+      If any have, then it reports them.
+      The report may include a stack trace of the AWT-EventQueue thread
+      to help to locate CPU-hogging code.
       */
     {
       theAppLog.info( "daemon run() starting." );
-      while (true) { // Repeat periodic tests.
-        long currTime = System.currentTimeMillis();
-        synchronized (this) {
-          for (Map.Entry<AWTEvent, EventValue> entry : this.eventTimeMap
-              .entrySet()) {
-            AWTEvent event = entry.getKey();
-            if (entry.getValue() == null) // Skipping if no entry.
-              continue;
-            if  // Skipping if this entry reported earlier.
-              (entry.getValue().reportedB)
-              continue;
-            long startTime = entry.getValue().startTimeL;
-            boolean thresholdExceededB= // Displaying if too long.
-                this.checkEventTimeB(
-                    "underway",event, currTime, startTime
-                    );
-            if  // Displaying stack also if too long.
-              ( thresholdExceededB )
-              {
-                displayStackTraceV();
-                entry.getValue().reportedB= true; // Recording output.
+      while (true) // Do the checking forever. 
+        { // Check all events in map, then wait for a while.
+          long timeNowMsL = System.currentTimeMillis();
+          synchronized (this) { // Prevent new dispatches while checking.
+            for // Check every map entry.
+              ( Map.Entry<AWTEvent,EventValue> theMapEntry : 
+                this.eventTimeMap.entrySet() )
+              { // Check one map entry.
+                AWTEvent theAWTEvent= theMapEntry.getKey();
+                if (theMapEntry.getValue() == null) // Skipping if no entry.
+                  continue;
+                if  // Skipping if this entry was reported earlier.
+                  (theMapEntry.getValue().overLimitReportedB)
+                  continue;
+                long startTime = theMapEntry.getValue().dispatchStartTimeMsL;
+                boolean delayLimitExceededB= // Report if delay too long.
+                  this.checkEventTimeB(
+                    "underway",theAWTEvent, timeNowMsL, startTime);
+                if  // Skipping if not too long and report was not made.
+                  ( ! delayLimitExceededB )
+                  continue;
+                logStackTraceV(); // Display stack as well.
+                theMapEntry.getValue().overLimitReportedB= true; // Record act of report.
                 }
-
+            }
+          EpiThread.interruptibleSleepB(pollingPeriodMsL); // Waiting a while.   
           }
-        }
-        try { Thread.sleep(PERIOD); // Waiting for the sample time.   
-          } 
-        catch (InterruptedException ie) { }
-      }
     }
 
-  private void displayStackTraceV()
+  private boolean checkEventTimeB(
+      String dispatchStateString, 
+      AWTEvent dispatchedAWTEvent, 
+      long timeNowMsL, 
+      long dispatchStartTimeMsL
+      ) 
+    /* This method checks whether an event dispatch 
+     * has been, or is running, to long.
+     * If true then it reports that fact using a dialog box and logging,
+     * and it returns true.  Otherwise it does nothing and returns false.
+     * 
+     * This method is called
+     * * by eventDispatchingEndingV(..) after an an event dispatch completes
+     *   to check that particular event, and
+     * * by the polling thread run() method to check whether there are 
+     *   any events have been dispatched but not yet completed and
+     *   already exceed their maximum time.
+     *   
+     * If the dispatch time limit is exceeded in either case
+     * then it reports it in the log file and in a dialog.
+     */
+    {
+      long timeSinceDispatchStartMsL = timeNowMsL - dispatchStartTimeMsL;
+      boolean limitExceededB= 
+          (timeSinceDispatchStartMsL > dispatchTimeMaximumMsL);
+      if (limitExceededB) // If excessive time used for dispatch, report it.
+        { ///ano Report excessive time used for event dispatch.
+          String summaryIDLineString= 
+              "Excessive time for EDT dispatch, "+dispatchStateString;
+          String detailsString= "In EDT dispatch of "
+              + dispatchedAWTEvent.getClass().getName()
+              + ", processing time of " + timeSinceDispatchStartMsL
+              + "ms exceeds limit of " + dispatchTimeMaximumMsL;
+          theAppLog.warning(summaryIDLineString, detailsString);
+          }
+      return limitExceededB; 
+      }
+
+  private void logStackTraceV()
+    /* This method logs the stack trace of the AWT-EventQueue thread.
+     * It also does the TracingEventQueueMonitor.
+     * 
+     * The purpose displaying the stack trace is to help to discover
+     * the reason for the slow dispatch time.
+     * Unfortunately, by the time the stack is logged
+     * the dispatch is complete and the cause is lost.
+     * 
+     * There does not appear to be an easy way to get ThreadInfo
+     * from a Thread except to get all the thread IDs,
+     * get the ThreadInfo for each ID, and check for the desired thread name.
+     * 
+     */
     {
       if ( displayStackB ) // Displaying stack if enabled.
         {
           ThreadMXBean threadBean= 
               ManagementFactory.getThreadMXBean();
           long threadIds[] = threadBean.getAllThreadIds();
-          for (long threadId : threadIds) {
-             ThreadInfo threadInfo = threadBean.getThreadInfo(threadId,
-                   Integer.MAX_VALUE);
-             if (threadInfo.getThreadName().startsWith("AWT-EventQueue")) {
-                //System.out.println(
-                theAppLog.warning(
-                     threadInfo.getThreadName() + " / "
-                     + threadInfo.getThreadState()
-                     );
-                if ( eventDispatchingEndingB ) 
-                  theAppLog.warning("Dispatch already ended.");
-                  else
-                  { // Display stack.
-                    theAppLog.warning("Begin Stack Trace.");
-                    // /* ?? Disable stack trace logging.
-                    StackTraceElement[] stack = threadInfo.getStackTrace();
-                    for (StackTraceElement stackEntry : stack) {
-                       //System.out.println(
-                       theAppLog.warning("\t" + stackEntry.getClassName()
-                       + "." + stackEntry.getMethodName() + " ["
-                       + stackEntry.getLineNumber() + "]");
-                    }
-                    theAppLog.warning("End Stack Trace.");
-                    // ?? Disable stack trace logging. */
-                    }
-             }
-          }
+          for (long threadId : threadIds) { // Log more only if desired thread.
+            ThreadInfo threadInfo= 
+              threadBean.getThreadInfo(threadId,Integer.MAX_VALUE);
+            String threadNameString= threadInfo.getThreadName(); 
+            if // Log additional information only if it's the thread we want.
+              (threadNameString.startsWith("AWT-EventQueue")) 
+              /// (threadNameString.startsWith("TracingEventQueueMonitor")) )
+              { // Log additional information.
+                StackTraceElement[] stack= threadInfo.getStackTrace();
+                theAppLog.debug( "Thread " + threadInfo.getThreadName() 
+                  + " state=" + threadInfo.getThreadState() );
+                theAppLog.debug("Begin Stack Trace.");
+                for (StackTraceElement stackEntry : stack) {
+                  theAppLog.debug("\t" + stackEntry.getClassName()
+                    + "." + stackEntry.getMethodName() + " ["
+                    + stackEntry.getLineNumber() + "]");
+                  }
+                theAppLog.debug("End Stack Trace.");
+                // ?? Disable stack trace logging. */
+                }
+            }
         }
       }
 

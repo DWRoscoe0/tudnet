@@ -203,14 +203,9 @@ public class AppFactory {  // For App class lifetimes.
       // GUI code is below this point.
 
       TracingEventQueueMonitor theTracingEventQueueMonitor=
-          new TracingEventQueueMonitor(
-                TracingEventQueueMonitor.LIMIT
-                //  500
-                ); 
+          new TracingEventQueueMonitor(); 
       TracingEventQueue theTracingEventQueue=           
-          new TracingEventQueue(
-              theTracingEventQueueMonitor
-                );
+          new TracingEventQueue(theTracingEventQueueMonitor);
 
       DagBrowserPanel theDagBrowserPanel= new DagBrowserPanel(
           newAppInstanceManager,
