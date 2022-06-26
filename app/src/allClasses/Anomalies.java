@@ -5,13 +5,12 @@ public class Anomalies
 
   {
 
-    /* 
-     * Anomalies Class  ///ano
+    /* Anomalies Class  ///ano Anomalies documentation and code.
      * 
-     * What is the purpose of this class?
+     * What is the purpose of this Java class?
      * 
-     * The purpose of this class is to contain code 
-     * that is useful for dealing with app anomalies.
+     * The purpose of this class is to contain documentation and 
+     * some of the code that is useful for dealing with app anomalies.
      * 
      * What is an app anomaly?
      * 
@@ -33,11 +32,11 @@ public class Anomalies
      * Why is this malfunction-anomaly distinction important?
      * 
      * It's important for 2 reasons:
-     * * It helps to distinguish between 
+     * 1 It helps to distinguish between 
      *   a problem caused by something inside the app,
      *   and a problem caused by something outside the app.
-     * * The number of problems caused by something outside the app
-     *   is likely to be more for this app than the average app.
+     * 2 The number of problems caused by something outside the app
+     *   is likely to be greater for this app than most other apps.
      * 
      * Why would this app have more problems with outside causes?
      * 
@@ -45,23 +44,22 @@ public class Anomalies
      * Powerful interests exist whose business models and fortunes 
      * depend on hiding information that is damaging to them.  
      * Because of this, they would not want this app or similar apps to succeed,
-     * and might try to to slow this app's development,
+     * and might try to slow this app's development,
      * or sabotage its use after release.
      * 
-     * Is this actually happening?  
+     * Is this actually happening?
      * 
-     * It's difficult to be certain, but 
-     * there is evidence that indicates that it is happening. 
+     * There is evidence indicating that it is happening. 
      * 
      * What is the evidence?
      * 
      * Anomalies were encountered during the development of this app 
-     * for which no cause could be found.
-     * Some of the source code that deals with these anomalies 
-     * is marked with the string "///ano".
-     * Search this app's source code for that string to see examples.
-     * A good place to start is the TUDNet.main(.) method, 
-     * which is this app's entry point.
+     * for which no fix-able cause could be found.
+     * Some of these anomalies are marked in this app's source code 
+     * with the string "///ano".  Search this app's source code 
+     * for that string to learn about these anomalies.
+     * A good place to start is the file TUDNet.java.
+     * It contains the main(.) method which is this app's entry point.
      * 
      * Why is so much attention being paid to anomalies?
      * 
@@ -69,26 +67,11 @@ public class Anomalies
      * the user's experience of the app and the app's usefulness.  
      * They can cause the app to fail in its purpose.
      * 
-     * How can one fix a problem if one can't determine the problem's cause?
+     * How can one fix a problem if one can't find a fix-able cause?
      * 
      * One can't.
      * 
-     * So, how does one deal with app anomalies?
-     * 
-     * A reasonable first step is to assume that 
-     * the anomaly is a malfunction with an internal cause, 
-     * and to try to find the cause using normal program debugging techniques.
-     * These techniques include:
-     * * analyzing log files
-     * * program tracing
-     * * breakpoints
-     * * single stepping 
-     * These techniques can be used on both first-party app code,
-     * and third-party libraries if their source code is available.
-     * With luck the cause of the problem will be found and can be fixed with 
-     * a simple change to the app's source code.
-     * 
-     * What if an internal cause can't be found?  What's the next step?
+     * So, how does one deal with that situation?
      * 
      * It depends on the anomaly.
      * 
@@ -96,7 +79,7 @@ public class Anomalies
      * 
      * One example is network performance anomalies.
      * Sometimes, for unknown reasons, the network packets 
-     * that carry information between apps connected to the Internet, 
+     * that carry data  between apps connected to the Internet, 
      * don't get through.
      * Packets might be blocked going out, or blocked coming in, 
      * or lost in some other way, or delayed for long periods.  
@@ -105,10 +88,11 @@ public class Anomalies
      * Aren't these network problems normal.
      * Aren't network apps supposed to be able to deal with them?
      * 
-     * Yes and yes.
-     * Network apps are designed to deal with the occasional lost packet.
-     * An app might do this by detecting that a packet is overdue, 
-     * and causing it to be resent, repeatedly if necessary, 
+     * No and No.
+     * Network apps are designed to deal with occasional lost packets.
+     * For example, if an app determines that 
+     * an incoming data packet is overdue, 
+     * it might request that the packet be sent again, repeatedly if necessary, 
      * until the packet is finally received.
      * 
      * So what's the problem?
@@ -117,7 +101,7 @@ public class Anomalies
      * It will not work well if the anomaly is severe, 
      * when many packets are lost.
      * 
-     * Has a severe version of this anomaly happened to this app?
+     * Has a severe version of this anomaly happened to the TUDNet app?
      * 
      * Yes.
      * 
@@ -128,18 +112,18 @@ public class Anomalies
      * How do you deal with severe anomalies?
      * 
      * Again, it depends on the anomaly.
-     * In this case, one could do the following:
-     * 1 Never give up.  Continue to send data until either 
-     *   the data is received at its destination
-     *   or the user cancels the data transfer request.
+     * In the case of this example, one could do the following:
+     * 1 Never give up.  Continue to request retransmission until either 
+     *   the data packet is received or 
+     *   the user cancels the data transfer.
      *   Unless the blockage is complete and permanent, 
      *   the data will eventually get through.
      * 2 Use protocols that are stateful at a high level,
      *   to enable them to transfer, track, and acknowledge
      *   complex subsets of partially transfered data.
-     * 3 Use protocols that can use multiple networks, if available,   
-     *   to transfer data, including the ultimate backup network sneakernet.
-     *    
+     * 3 Use protocols that can use alternative networks, if available,   
+     *   to transfer data, including the ultimate backup network, sneakernet.
+     *
      * Is there anything that can be done 
      * to deal with severe anomalies in general?
      * 
@@ -155,20 +139,12 @@ public class Anomalies
      * 2 If the anomaly is being caused by a malicious actor,
      *   identifying the anomaly to the user whenever it happens 
      *   might discourage the actor doing it often.
-     *   
+     *
      * Is this whole anomaly situation discouraging?
      * 
      * It is, in some ways.  In other ways it is motivating.  
      * In any case, development of this app will continue.
      *
-     * Doesn't blaming poor app performance on anomalies,
-     * possibly caused by unidentified malicious actors,
-     * make you seem like complainers?
-     * 
-     * To some it might seem that way, but to the people that matter,
-     * such as app users, app developers, 
-     * and COINTELPRO-style operations targets, it won't.
-     * 
      * What do you say to people who have difficulty believing this?
      * 
      * They might have less difficulty believing after they do some research, 
@@ -181,23 +157,110 @@ public class Anomalies
      * 
      * Are there other plans for handling anomalies?
      * 
-     * Yes, but they are beyond the scope of this Q&A document.
+     * Yes.
      * 
      * 
+     * Here are some of those plans.
+     * 
+     * To review, a major purpose of this app is to be an anti-censorship tool.
+     * Powerful interests exist whose business models and fortunes 
+     * depend on hiding information that is damaging to them.  
+     * Because of this, they would not want this app or similar apps to succeed,
+     * and might try to to slow this app's development, 
+     * or sabotage its use after release.
+     * A way for them to do those things
+     * is with the intentional creation of app anomalies 
+     * 
+     * Most unintentional app anomalies are 
+     * malfunctions caused by programming mistakes, in other words, bugs, 
+     * either in the app or in systems with which it interacts, 
+     * for example the operating system.
+     * Though there are exceptions, such as bugs involving race conditions,
+     * most bugs are reproducible, and their causes can eventually be found. 
+     * Most programmers know how to find and fix bugs.
+     *
+     * Intentional anomalies are very different.
+     * They are malfunctions caused by a malicious actor, and not mistakes.
+     * They are generally not reproducible because the malicious actor
+     * can turn an anomaly on and off at will.
+     * 
+     * Another complication is that many anomalies are performance anomalies.
+     * Things work, and work correctly, but they don't go as fast 
+     * as they should.  For example:
+     * * A network reply packet takes longer than it should to be received,
+     *   or isn't received at all.
+     * * Writing a block of data to a file takes longer than it should. 
+     * Some performance anomalies can be converted to pass-fail anomalies
+     * by placing a maximum limit on how long an operation takes,
+     * but it is sometimes difficult to decide what the limit should be.
+     * 
+     * Here are some of the guidelines being used for 
+     * dealing with the anomalies described above.
+     * 
+     * * Don't assume that an anomaly is a bug.
+     *   If normal debugging techniques do not seem to be working,
+     *   assume the anomaly is intentional and act accordingly.
+     * 
+     *   Create and use reusable code to make dealing with anomalies 
+     *   easier and less costly.
+     *
+     * * Don't wait for new anomalies to appear.
+     *   Preemptively add anomaly detection code.  For example:
+     *   * Add code to handle exceptions that normally would not occur.
+     *   * Wrap API calls with code that measures and detects 
+     *     excessive API execution time.
+     *   
+     * * Log operations that could behave anomalously.
+     *   It is acceptable and preferable to log 
+     *   summaries of pass-fail and performance data,
+     *   instead of producing a log entry for each individual operation.
+     *
+     * * Notify the user when an anomaly is happening,
+     *   but don't make the notification more annoying than the anomaly.
+     *   
+     * * Provide a way for the user to adjust the settings which control 
+     *   how anomalies are detected, logged, and reported by notification.
+     *
+     * * Recover from anomalies when possible.  Recovery could mean:
+     *   * Retrying an operation that seems to have failed.
+     *   * Performing an operation that failed by trying a different method. 
+     *   * Restarting a thread that seems to have unexpectedly 
+     *     terminated, blocked, or failed in some other way;
+     *     or starting a new thread to replace the failed one.
+     *   * Restarting the app's process.
+     *   * Restarting the user device.
+     *   
+     * * There should be a color-coded Anomaly-Button that is visible 
+     *   on all UI screens that indicates the overall anomaly state of the app.
+     *   For example:
+     *   * Green indicates that the app is performing normally.
+     *   * Yellow indicates that the app is working 
+     *     but performance is suffering.
+     *   * Red indicates the app is severely disabled.
+     *
+     * * When the Anomaly-Button is activated,
+     *   it should open a screen that displays
+     *   a list of entries, one entry for each known app anomaly.
+     *   Each entry, when activated, should:
+     *   * Display a description of the anomaly, for example:
+     *       "This anomaly happens when OutputStream.write(byte[]) method
+     *        takes too long to execute."
+     *   * Display whether the anomaly is occurring now.
+     *   * Display at least a summary of recent occurrences of the anomaly.
+     *   * Display the limits that was exceeded that triggered the anomaly.
+     *   * Allow the user to view and edit the setting for the anomaly.
      * 
      * 
-     * 
-     * 
-     * Possible future work:
+     * Possible specific future work:
      * 
      * * ///pos Integrate this Anomalies class into AppLog
      *   as an injectable service.
      *   This will mean creating a new AppLog method: anomaly(.),
      *   or simply continue to treat all error(.) calls as anomalies.
      * 
-     * * ///pos When an anomaly is reported, give the user the option to
-     *   suppress or control in other ways the reporting of 
-     *   future instances of the same anomaly.  For example:
+     * * ///pos When the user is notified of the occurrence of an anomaly, 
+     *   give the user the option to suppress or control in other ways 
+     *   the reporting of future instances of the same anomaly.  For example:
      *   * Enable/Disable reporting.
      *   * Time-out threshold for anomalies involving excessive response times.
      *   * Enable/Disable throwing of a DeveloperException which, 
@@ -227,7 +290,6 @@ public class Anomalies
      * which treat warnings, errors, and exceptions as report-able anomalies.
      */
 
-  
     public static String displayDialogReturnString(String messageString)
       /* This method tries to display a mode-less dialog box 
        * that displays messageString as an anomaly.
@@ -243,7 +305,7 @@ public class Anomalies
             Anomalies.displayDialogReturnString(null, messageString);
         return resultString;
         }
-  
+
     public static String displayDialogReturnString(
         String summaryIDLineString, String detailsString)
       /* This method tries to display a mode-less dialog box. 
@@ -270,5 +332,5 @@ public class Anomalies
 
         return resultString;
         }
-  
+
     }
