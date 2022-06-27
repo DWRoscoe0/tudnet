@@ -129,17 +129,6 @@ public class AppLog
       ///fix  Sometimes when the app is terminated from 
         the Windows Task Manager, the log file is truncated,
         though judging from Console output, the app exits normally.
-  
-      ///tst? MakeMultiprocessSafe:  Ready for testing, with TUDNetStarter. 
-        ///fix: When the presently kludgy buffered mode is enabled,
-          interleaving of log entries might not work correctly
-          when there are two running instances on the same computer,
-          as during updates, etc.  Might need to use separate files
-          which are combined and interleaved later.
-        ///fix? It might fail if multiple app instances 
-          try to log simultaneously.
-          Make log file be share-able in case two app instances
-          try to write to it at the same time.  See createOrAppendToFileV(..).
 
       ///enh: Eliminate thread blocking caused by pausing after closing file.
         This presently allows other processes to open the log file
@@ -186,8 +175,8 @@ public class AppLog
     private File appDirectoryFile; // Directory which contains the log file.
       // This is normally the app's directory.
 
-    private String processIDString= ""; // Helpful for IDing app processes.
-      // This isn't used much now.
+    private String processIDString= ""; // For differentiating app processes.
+      // This isn't used much now because a different launcher is being used.
 
     private MapEpiNode persistentLogMapEpiNode= null;
       // For Persistent log conditions.
@@ -199,7 +188,7 @@ public class AppLog
 
     // File variables.
     private File logFile;  // Name of log file.
-    private PrintWriter thePrintWriter = null; // non-null means file open.
+    private PrintWriter thePrintWriter = null; // non-null means log file open.
       // Open means buffered mode enabled.
       // Closed means buffered mode disabled.
     private boolean clearLogFileB= false;  // true;
@@ -255,10 +244,16 @@ public class AppLog
     only very limited conditions.  //? 
      */
     public static boolean testingForPingB= false;
-    private boolean consoleCopyModeB= false; // When true, logging goes to 
-      // console as well as log file.
+    private boolean consoleCopyModeB= false; /* When true, logging goes to 
+      console as well as log file.
       ///enh change to Enum for generality and better self-documentation.
-    private boolean closeLoggingB= false;
+      */
+    private boolean logClosingEnabledB= false; /* Controls logging of log file
+      closing.
+      - true means log file closing will be logged.
+      - false means they will not.
+
+      */
 
 
     // Construction, dependency injection, and initialization.
@@ -270,7 +265,10 @@ public class AppLog
         }
 
     public void setIDProcessV( String processIDString ) // Setter injector.
-      // This is used much now.
+      /* This is not used now.  It was used to identify
+       * another process running the TUDNetStarter class when Tudnet
+       * was launched from a separate process. 
+       */
       { 
         this.processIDString= processIDString; 
         }
@@ -334,9 +332,10 @@ public class AppLog
       /* This method closes the log file at times appropriate for
        * achieving the following goals:
        * 
-       * * keeping the file mostly open while the app is producing log entries,
-       * * closing the file if the app is NOT producing log entries,
-       * * not leaving the log file open too long, so other apps can access it.
+       * * Keeping the file mostly open while the app is producing log entries.
+       * * Closing the file if the app is NOT producing log entries.
+       * * Not leaving the log file open too long, 
+       *   so other app processes can access it.
        * 
        * It does the above with the following approximate delays:
        * 
@@ -346,7 +345,7 @@ public class AppLog
        *   it is closed for any reason.  See closeFileAndDelayV().
        * * 1 ms between file open retries.  See openWithDelayFileWriter().
        *
-         */
+       */
       {
         // Do pre-loop initialization.
         openedAtMsL= appendedAtMsL= System.currentTimeMillis();
@@ -416,15 +415,13 @@ public class AppLog
         consoleCopyModeB= oldConsoleEnabledB; 
         }
 
-    public synchronized void enableCloseLoggingV( boolean enabledB ) 
+    public synchronized void enableCloseLoggingV(boolean logClosingEnabledB)
       /* This method controls whether 
         the closing of the log file will be logged.
-        If enabledB is true, log file closes will be logged.
-        If enabledB is false, they will not.
         */
       {
-        info("enableCloseLoggingV(" + enabledB + ")");
-        closeLoggingB= enabledB;
+        info("enableCloseLoggingV(" + logClosingEnabledB + ")");
+        this.logClosingEnabledB= logClosingEnabledB;
         }
     
     public synchronized void setBufferedModeV( boolean desiredBufferedModeB ) 
@@ -798,7 +795,7 @@ public class AppLog
               WARNING, 
               summaryIDLineString, 
               detailsString, 
-              null, // No associated Exception/Trhowable.
+              null, // No associated Exception/Throwable.
               false // Nothing to console.
               );
           /// doStackTraceV(theThrowable);
@@ -964,15 +961,15 @@ public class AppLog
       initializeIfNeededV();
       logTriggeredPollerV(); 
 
-      long nowMillisL= System.currentTimeMillis(); // Save present time.
+      long timeNowMsL= System.currentTimeMillis(); // Save present time.
 
-      String entryHeadString= ""; // Initialize head String to empty, then append
+      String entryHeadString= ""; // Initialize head to empty, then append
       entryHeadString+= NL; // a line terminator to start a new line,
       entryHeadString+= theSessionI;  // the session number,
       entryHeadString+= processIDString;
       entryHeadString+= ":";  // and a separator,
       entryHeadString+= String.format(  // time since last output,
-          "%1$5d", nowMillisL - lastMillisL);
+          "%1$5d", timeNowMsL - lastMillisL);
       entryHeadString+= " ";  // a space,
       if (toConsoleB || consoleCopyModeB) // a console flag if called for 
         entryHeadString+= "CON ";
@@ -1020,7 +1017,7 @@ public class AppLog
       if (toConsoleB || consoleCopyModeB) // Append to console if called for
         System.out.print(entryHeadString + entryBodyString);
 
-      lastMillisL= nowMillisL; // Save present time as new last time.
+      lastMillisL= timeNowMsL; // Save present time as new last time.
       }
     
     public synchronized PrintWriter getPrintWriter()
@@ -1251,7 +1248,7 @@ public class AppLog
         It should be called only if the log file is open.  
         */
       {
-        if (closeLoggingB)
+        if (logClosingEnabledB)
           info("closeFileV() flushing, unlocking, and closing log file.");
         thePrintWriter.flush();  // Flush buffers to file.
         if (theLogFileLock != null) // Unlock file if locked.
