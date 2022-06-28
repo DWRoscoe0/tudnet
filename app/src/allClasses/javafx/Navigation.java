@@ -127,7 +127,7 @@ public class Navigation extends EpiStage
         
         rebuildSceneContentV();
 
-        setCommonSettingsV("TUDNet JavaFX Navigation UI");
+        setCommonSettingsV("TUDNet JavaFX UI");
         show(); // Make UI show this stage.
         JavaFXGUI.recordOpenWindowV(null,this,null); // Record showing.
 

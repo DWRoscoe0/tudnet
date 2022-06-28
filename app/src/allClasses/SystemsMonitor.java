@@ -362,15 +362,12 @@ public class SystemsMonitor
         
         */
       {
-        theAppLog.debug("SystemsMonitor.measureAndDisplayAndDelayV() begins.");
         measurementCyclesNamedLong.addDeltaL(1);
         freeMemoryNamedLong.setValueL(Runtime.getRuntime().freeMemory());
         totalMemoryNamedLong.setValueL(Runtime.getRuntime().totalMemory());
         garbageCollectionsNamedLong.setValueL(garbageCollectionsL);
         processorsNamedLong.setValueL( // Displaying processor count. 
             Runtime.getRuntime().availableProcessors() ); // This could change.
-        theAppLog.debug("SystemsMonitor.measureAndDisplayAndDelayV() "
-            + "before new Thread(.).start().");
         new Thread( () -> { // Do EDT measurements on separate thread. 
           final AtomicLong inEDTNsAtomicLong= new AtomicLong(); 
           final long beforeEDTNsL= System.nanoTime();
@@ -387,7 +384,6 @@ public class SystemsMonitor
               (waitEndNsL - waitEndOldNsL) - oneSecondOfNsL );
           waitEndOldNsL= waitEndNsL;
           endWaitMsNamedLong.setValueL( endWaitDelayMsL );
-          //// }).run();
           }).start();
 
         waitForNextMeasurementTimeV();

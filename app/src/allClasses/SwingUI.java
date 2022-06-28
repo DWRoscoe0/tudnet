@@ -192,7 +192,7 @@ class SwingUI
         theJFrame=  // Make the main application JFrame.
           theAppFactory.makeJFrame( 
             Config.appString
-            +", version "
+            +" Swing UI, version "
             +theAppInstanceManager.thisAppDateString()
             );
         theJFrame.setContentPane( theDagBrowserPanel );  // Store content.
