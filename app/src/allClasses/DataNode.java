@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
 
 import javafx.application.Platform;
@@ -458,10 +459,12 @@ public abstract class DataNode
             theDataNode );
 
         TreePath theTreePath= parentTreePath.pathByAddingChild(theDataNode);
-        EDTUtilities.runOrInvokeAndWaitV( () -> { // Do on Swing EDT thread. 
-          theDataNode.theDataTreeModel.reportStructuralChangeB( theTreePath );
-            // Display by reporting to the listeners.
-          });
+        //// SwingUtilities.invokeLater(
+        EDTUtilities.runOrInvokeAndWaitV(
+          () -> { // Do on Swing EDT thread. 
+            theDataNode.theDataTreeModel.reportStructuralChangeB( theTreePath );
+              // Display by reporting to the listeners.
+            });
         
         ///fix  Need to add JavaFX display.
         }
@@ -512,10 +515,12 @@ public abstract class DataNode
           }
       
       // Display the subtree root node to UIs.
-      EDTUtilities.runOrInvokeAndWaitV( () -> { // Do on Swing EDT thread. 
-        subtreeDataNode.theDataTreeModel.reportChangeB( // Display with Swing.
-            parentTreePath, subtreeDataNode );
-        });
+      //// SwingUtilities.invokeLater(
+      EDTUtilities.runOrInvokeAndWaitV(
+        () -> { // Do on Swing EDT thread. 
+          subtreeDataNode.theDataTreeModel.reportChangeB( // Display with Swing.
+              parentTreePath, subtreeDataNode );
+          });
       Platform.runLater(() -> { // Display with JavaFX Application Thread.
         /// theAppLog.debug("DataNode.outputChangedSubtreeV() updating TreeView.");
         /// System.out.print("[dnti]");
