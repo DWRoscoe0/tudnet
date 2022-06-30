@@ -87,9 +87,9 @@ class TracingEventQueueMonitor extends Thread {
     ///enh Maybe do without polling.  See note elsewhere about Watchdog timer.
      */
 
-  private static final long pollingPeriodMsL= 100;
+  private static final long pollingPeriodMsL= 250; // 1/4 second.
   private static final boolean displayStackB= true; /// false;
-  private final long dispatchTimeMaximumMsL= 500;
+  private final long dispatchTimeMaximumMsL= 500; // 1/2 second.
   
   class EventValue 
     /* This class stores information about events being dispatched. */
@@ -162,11 +162,11 @@ class TracingEventQueueMonitor extends Thread {
                 this.eventTimeMap.entrySet() )
               { // Check one map entry.
                 AWTEvent theAWTEvent= theMapEntry.getKey();
-                if (theMapEntry.getValue() == null) // Skipping if no entry.
+                if (theMapEntry.getValue() == null) // Skipping if no value.
                   continue;
-                if  // Skipping if this entry was reported earlier.
-                  (theMapEntry.getValue().overLimitReportedB)
-                  continue;
+                //// if  // Skipping if this entry was reported earlier.
+                ////   (theMapEntry.getValue().overLimitReportedB)
+                ////   continue;
                 long startTime = theMapEntry.getValue().dispatchStartTimeMsL;
                 boolean delayLimitExceededB= // Report if delay too long.
                   this.checkEventTimeB(
@@ -210,12 +210,16 @@ class TracingEventQueueMonitor extends Thread {
       if (limitExceededB) // If excessive time used for dispatch, report it.
         { ///ano Report excessive time used for event dispatch.
           String summaryIDLineString= 
-              "Excessive time for EDT dispatch, "+dispatchStateString;
+              //// "Excessive time for EDT dispatch, "+dispatchStateString;
+              "Excessive time for EDT dispatch.";
           String detailsString= "In EDT dispatch of "
               + dispatchedAWTEvent.getClass().getName()
+              + ", " + dispatchStateString
               + ", processing time of " + timeSinceDispatchStartMsL
               + "ms exceeds limit of " + dispatchTimeMaximumMsL;
-          theAppLog.warning(summaryIDLineString, detailsString);
+          //// theAppLog.warning(summaryIDLineString, detailsString);
+          Anomalies.displayDialogReturnString(
+              summaryIDLineString, detailsString);
           }
       return limitExceededB; 
       }

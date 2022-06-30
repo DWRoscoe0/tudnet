@@ -91,24 +91,29 @@ public class Dialogger extends Object
         try {
           Platform.runLater( () -> {
             Alert theAlert= JavaFXGUI.testForAlert(summaryIDLineString);
-            if (null == theAlert) { // If Alert not cached, make new one.
-              theAlert= new Alert(AlertType.INFORMATION);
-              theAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
-              theAlert.getDialogPane().setMinWidth(600); ///ano Fix for below.
-                ///ano getDialogPane().setMinWidth(Region.USE_PREF_SIZE) fails.
-                ///ano Also ended problem of title bar mostly off-screen.
-              JavaFXGUI.setDefaultStyleV(theAlert.getDialogPane());
-              theAlert.initModality(Modality.NONE);
-  
-              theAlert.setTitle(titleString);
-              theAlert.setHeaderText(summaryIDLineString);
-  
-              JavaFXGUI.recordOpenWindowV( // Record showing.
-                  summaryIDLineString, null, theAlert);
-              }
-
+            if (null == theAlert) // If Alert not cached, make new one. 
+              { // Make new Alert.
+                java.awt.Toolkit.getDefaultToolkit().beep(); // Audible Beep.
+                 ///ano The above line causes debug tracing to fail!
+                theAlert= new Alert(AlertType.INFORMATION);
+                theAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+                theAlert.getDialogPane().setMinWidth(600); ///ano Kludge fixes:
+                  // * getDialogPane().setMinWidth(Region.USE_PREF_SIZE) fails.
+                  // * Title bar mostly off-screen.
+                JavaFXGUI.setDefaultStyleV(theAlert.getDialogPane());
+                theAlert.initModality(Modality.NONE);
+    
+                theAlert.setTitle(titleString);
+                theAlert.setHeaderText(summaryIDLineString);
+    
+                JavaFXGUI.recordOpenWindowV( // Record showing of new Alert.
+                    summaryIDLineString, null, theAlert);
+                theAppLog.debug(
+                  "Dialogger.showModelessJavaFXDialogReturnString(.) "
+                  + "new Alert:\n" + summaryIDLineString + "\n" 
+                  + detailsString);
+                } // Make new Alert.
             theAlert.setContentText(detailsString); // Customize with content.
-            /// theAlert.showAndWait();
             theAlert.show();
             } );
           }
@@ -116,8 +121,6 @@ public class Dialogger extends Object
           resultString= "Dialog-Failed: " + theIllegalStateException;
             ///ano See notes above.
           }
-        theAppLog.debug("Dialogger.showModelessJavaFXDialogReturnString(.): " 
-             + summaryIDLineString + ": resultString= " + resultString);
         return resultString;
         }
 

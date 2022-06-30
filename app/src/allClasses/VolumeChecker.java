@@ -123,7 +123,7 @@ public class VolumeChecker
     protected void mainThreadLogicV()
       {
         SwingUtilities.invokeLater( () -> { ///ano Added for time limit tests.
-          EpiThread.uninterruptibleSleepB( 3000 ); // Delay EDT 3 seconds. 
+          EpiThread.uninterruptibleSleepB( 5000 ); // Delay EDT 5 seconds. 
           } ); 
         appendWithPromptSlowlyAndWaitForKeyV(
           "This feature does functional testing and capacity measurement "

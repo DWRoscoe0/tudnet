@@ -299,8 +299,6 @@ public class Anomalies
        * It returns true if the dialog box was displayed, false otherwise.
        */
       {
-        java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
-
         String resultString= // Try reporting via dialog box. 
             Anomalies.displayDialogReturnString(null, messageString);
         return resultString;
@@ -318,8 +316,8 @@ public class Anomalies
        *   then "Anomaly Detected" is prepended to detailsString. 
        */
       {
-        java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
-          ///ano The above line causes debug tracing to fail!
+        /// java.awt.Toolkit.getDefaultToolkit().beep(); // Create audible Beep.
+        ///   ///ano The above line causes debug tracing to fail!
 
         if (null == summaryIDLineString) 
           summaryIDLineString= "Uncategorized Anomaly";

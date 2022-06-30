@@ -921,7 +921,7 @@ public class AppLog
 
     // Non-delegating logging methods.
 
-    public synchronized void logV(
+    public synchronized void logV( // The buck stops here.  
         LogLevel theLogLevel,
         String summaryIDLineString,
         String detailsString,
