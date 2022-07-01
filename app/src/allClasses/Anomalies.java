@@ -290,7 +290,9 @@ public class Anomalies
      * which treat warnings, errors, and exceptions as report-able anomalies.
      */
 
-    public static String displayDialogReturnString(String messageString)
+    public static String displayDialogReturnString(
+        String messageString,
+        boolean alertWithSoundB)
       /* This method tries to display a mode-less dialog box 
        * that displays messageString as an anomaly.
        * It also plays a beep sound to get the user's attention.
@@ -300,17 +302,21 @@ public class Anomalies
        */
       {
         String resultString= // Try reporting via dialog box. 
-            Anomalies.displayDialogReturnString(null, messageString);
+            Anomalies.displayDialogReturnString(
+                null, messageString, alertWithSoundB);
         return resultString;
         }
 
     public static String displayDialogReturnString(
-        String summaryIDLineString, String detailsString)
+        String summaryIDLineString, 
+        String detailsString, 
+        boolean alertWithSoundB)
       /* This method tries to display a mode-less dialog box. 
        * It is similar to
        *   Dialogger.showModelessJavaFXDialogReturnString(
              String summaryIDLineString, String detailsString)
        * but with the following differences to indicate an anomaly:
+       * * There is an audio notification.
        * * If summaryIDLineString is null, "Uncategorized Anomaly" is used. 
        * * If summaryIDLineString is NOT null,
        *   then "Anomaly Detected" is prepended to detailsString. 
@@ -326,7 +332,7 @@ public class Anomalies
 
         String resultString= // Try reporting via dialog box. 
             Dialogger.showModelessJavaFXDialogReturnString(
-                summaryIDLineString, detailsString);
+                summaryIDLineString, detailsString, alertWithSoundB);
 
         return resultString;
         }

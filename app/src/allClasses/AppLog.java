@@ -995,7 +995,8 @@ public class AppLog
             String dialogErrorString= // Display info as a dialog first.
               Anomalies.displayDialogReturnString(
                 summaryIDLineString, 
-                "Severity: " + theLogLevel + "\n" + entryBodyString
+                "Severity: " + theLogLevel + "\n" + entryBodyString,
+                true
                 );
               entryBodyString= EpiString.combine1And2With3String(
                 dialogErrorString, entryBodyString, ": ");

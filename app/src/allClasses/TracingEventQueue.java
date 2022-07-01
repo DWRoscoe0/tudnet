@@ -95,7 +95,7 @@ class TracingEventQueueMonitor extends Thread {
     /* This class stores information about events being dispatched. */
     {
       long dispatchStartTimeMsL; 
-      boolean overLimitReportedB;
+      boolean overLimitReportedB; /// No longer needed.
 
       EventValue(long dispatchStartTimeMsL) { // constructor.
         this.dispatchStartTimeMsL= dispatchStartTimeMsL;
@@ -164,9 +164,9 @@ class TracingEventQueueMonitor extends Thread {
                 AWTEvent theAWTEvent= theMapEntry.getKey();
                 if (theMapEntry.getValue() == null) // Skipping if no value.
                   continue;
-                //// if  // Skipping if this entry was reported earlier.
-                ////   (theMapEntry.getValue().overLimitReportedB)
-                ////   continue;
+                /// if  // Skipping if this entry was reported earlier.
+                ///   (theMapEntry.getValue().overLimitReportedB)
+                ///   continue;
                 long startTime = theMapEntry.getValue().dispatchStartTimeMsL;
                 boolean delayLimitExceededB= // Report if delay too long.
                   this.checkEventTimeB(
@@ -210,16 +210,14 @@ class TracingEventQueueMonitor extends Thread {
       if (limitExceededB) // If excessive time used for dispatch, report it.
         { ///ano Report excessive time used for event dispatch.
           String summaryIDLineString= 
-              //// "Excessive time for EDT dispatch, "+dispatchStateString;
               "Excessive time for EDT dispatch.";
           String detailsString= "In EDT dispatch of "
               + dispatchedAWTEvent.getClass().getName()
               + ", " + dispatchStateString
               + ", processing time of " + timeSinceDispatchStartMsL
               + "ms exceeds limit of " + dispatchTimeMaximumMsL;
-          //// theAppLog.warning(summaryIDLineString, detailsString);
           Anomalies.displayDialogReturnString(
-              summaryIDLineString, detailsString);
+              summaryIDLineString, detailsString, true);
           }
       return limitExceededB; 
       }

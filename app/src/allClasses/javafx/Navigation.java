@@ -492,7 +492,7 @@ public class Navigation extends EpiStage
           ;
 
         Dialogger.showModelessJavaFXDialogReturnString(
-            "JavaFX UI Help", helpString);
+            "JavaFX UI Help", helpString,false);
         } // queueCommandHelpV()
 
     }

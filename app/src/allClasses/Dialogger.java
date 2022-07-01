@@ -51,7 +51,9 @@ public class Dialogger extends Object
   {
 
     public static String showModelessJavaFXDialogReturnString(
-        String summaryIDLineString, String detailsString)
+        String summaryIDLineString, 
+        String detailsString,
+        boolean alertWithSoundB)
       /* This method tries to display a dialog window.
         This method is equivalent to 
           showModelessJavaFXDialogReturnString(
@@ -63,11 +65,14 @@ public class Dialogger extends Object
         String titleString= // Make title out of app name and summary line.
             Config.appString + ": " + summaryIDLineString;
         return showModelessJavaFXDialogReturnString(
-          titleString, summaryIDLineString, detailsString);
+          titleString, summaryIDLineString, detailsString, alertWithSoundB);
         }
 
     private static String showModelessJavaFXDialogReturnString(
-        String titleString, String summaryIDLineString, String detailsString)
+        String titleString, 
+        String summaryIDLineString, 
+        String detailsString,
+        boolean alertWithSoundB)
       /* This method tries to run a job on the JavaFX Application Thread 
        * to do the following:
        * * Display a dialog window. 
@@ -93,8 +98,9 @@ public class Dialogger extends Object
             Alert theAlert= JavaFXGUI.testForAlert(summaryIDLineString);
             if (null == theAlert) // If Alert not cached, make new one. 
               { // Make new Alert.
-                java.awt.Toolkit.getDefaultToolkit().beep(); // Audible Beep.
-                 ///ano The above line causes debug tracing to fail!
+                if (alertWithSoundB) // Signal new message if sound desired.
+                  java.awt.Toolkit.getDefaultToolkit().beep(); // Audible Beep.
+                   ///ano The above line causes debug tracing to fail!
                 theAlert= new Alert(AlertType.INFORMATION);
                 theAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
                 theAlert.getDialogPane().setMinWidth(600); ///ano Kludge fixes:
