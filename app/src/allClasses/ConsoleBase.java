@@ -122,7 +122,23 @@ public class ConsoleBase
         }
 
 
-    // General ProgressReport code.  This might eventually move to ConsoleBase.
+    /* General ProgressReport code.
+     *
+     * ///ano ScheduledThreadPoolExecutor failure anomaly:
+     * 
+     * It appeared that the method
+     *   ScheduledThreadPoolExecutor.scheduleAtFixedRate(.)
+     * which was being used to produce periodic progress reports,
+     * would sometimes fail.  
+     * It appeared that the progress report Runnable would execute once only.
+     * It was as if ScheduledFuture.cancel(.) was being called
+     * before all the progress reports had been produced,
+     * or an exception was thrown in the Runnable, 
+     * which would also causing cancellation.
+     * When debug logging code was added to find a cause, 
+     * the problem disappeared.  
+     * Later the problem returned, and it has since became intermittent. 
+     */
 
     private boolean progressReportsEnabledB= true;
     private final long progressReportDefaultPollPeriodMsL= 250;
@@ -145,7 +161,10 @@ public class ConsoleBase
        * in preparation for producing empty progress reports.
        */
       {
+        theAppLog.debug("ConsoleBase.progressReportResetV(() called.");
         if (null != outputFuture) {
+          theAppLog.debug(
+              "ConsoleBase.progressReportResetV(() outputFuture.cancel(true).");
           outputFuture.cancel(true);
           outputFuture= null;
           }
@@ -165,6 +184,7 @@ public class ConsoleBase
        * if the regular program code stops polling an updater.
        */
       {
+        theAppLog.debug("ConsoleBase.progressReportSetV(() called.");
         progressReportResetV(); // Do the common stuff.
         this.progressReportSupplierOfString= // Override empty report
             newProgressReportSupplierOfString; // with this.

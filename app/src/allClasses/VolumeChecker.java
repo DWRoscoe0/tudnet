@@ -123,7 +123,7 @@ public class VolumeChecker
     protected void mainThreadLogicV()
       {
         SwingUtilities.invokeLater( () -> { ///ano Added for time limit tests.
-          EpiThread.uninterruptibleSleepB( 5000 ); // Delay EDT 5 seconds. 
+          EpiThread.uninterruptibleSleepB( 2000 ); // Delay EDT 5 seconds. 
           } ); 
         appendWithPromptSlowlyAndWaitForKeyV(
           "This feature does functional testing and capacity measurement "
@@ -199,6 +199,7 @@ public class VolumeChecker
             appendSlowlyV(bytesResultsString());
             break goReportErrorOrSuccessAndReturn;
             }
+        theAppLog.debug("starting Volume-Check...");
         progressReportSetV( () -> getVolumeWriteReadReportString() );
         pushOperationV("Volume-Check");
         resultString= deleteTemporaryFilesReturnString();
@@ -210,6 +211,7 @@ public class VolumeChecker
               "error occurred while creating folder", resultString);
           break goFinishPassAndReturn;
           }
+        theAppLog.debug("starting writeTest...");
         progressReportSetV( () -> getVolumeWriteReadReportString() );
         progressReportUpdateV(); // First, slow progress report.
         resultString= writeTestReturnString(buildFolderFile);
@@ -234,6 +236,7 @@ public class VolumeChecker
       }  // goUpdateProgressAndReturn:
         progressReportUpdateV();
       }  // goReportErrorOrSuccessAndReturn:
+        theAppLog.debug("after goReportErrorOrSuccessAndReturn:...");
         progressReportResetV(); // End progress reports.
         java.awt.Toolkit.getDefaultToolkit().beep(); // Get user's attention.
         if (! EpiString.isAbsentB(resultString)) // Report error or success.
@@ -322,9 +325,11 @@ public class VolumeChecker
         deletionScanDirectoryCountI= 0;
         queueAndDisplayOutputSlowV(
             "\nPress any key to terminate the following file scan.\n");
+        theAppLog.debug("starting deletionScan...");
         progressReportSetV( deletionScanProgressReportSupplierOfString );
         resultString= FileOps.parentPostorderTraversalReturningString(
           volumeFile, deletionScanFunctionOfFileToString);
+        theAppLog.debug("in maybeDeleteAllVolumeFilesReturnString(.)...");
         progressReportResetV(); // Make last progress report permanent. 
         if (null != resultString) // Handle possible traversal termination.
           { // Handle traversal termination.
