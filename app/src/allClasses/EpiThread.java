@@ -61,13 +61,15 @@ public class EpiThread
     /* Thread name setting methods.
      * 
      * ///ano These methods were added as part of an attempt to diagnose
-     * an anomaly in which threads seemed to be pausing, with no obvious cause,
+     * a ScheduledThreadPoolExecutor failure anomaly
+     * in which threads seemed to be pausing, with no obvious cause,
      * sometimes for very long, possibly infinite, periods of time.
      *
-     * The following are notes collected about these anomalies
-     * after the methods were used to name threads that seemed to be pausing.
+     * The following are some notes collected about these anomalies after 
+     * the methods were used to name some threads that seemed to be pausing.
 
-      * There are 3 threads in the following list, Suspended for examination.
+      * There are 5 threads in the following list.
+        3 are Suspended for examination.
         The last one is probably waiting for a task to perform.
         2 Running threads are included for context.
 
@@ -125,14 +127,20 @@ public class EpiThread
             or something else if the thread had been reused.
 
      * 
-     * The following methods were added because
-     * some threads which came from ScheduledThreadPoolExecutor, 
-     * had names such as ?pool-2-thread-1".
+     * The following methods were added to ease analysis of
+     *   the ScheduledThreadPoolExecutor anomaly 
+     *   that is described in class ConsoleBase.
+     *
+     * Some threads which came from ScheduledThreadPoolExecutor, 
+     * had names such as "pool-2-thread-1".
      * This made it difficult to tell what some threads were doing.  
      * The following methods may be used to:
      * * Give meaningful names to pool threads.
      * * Identify threads that came from 
      *   ScheduledThreadPoolExecutor thread pools.
+     *   
+     * ///enh Maybe replace some of this functionality with
+     *   nested Runnables and a ThreadFactory.
      */
 
     public static void setPoolThreadNameV(String baseNameString)
@@ -144,7 +152,7 @@ public class EpiThread
       {
         Thread.currentThread().setName( // Set name of current thread to
             baseNameString // provided base name
-            +"-pool" // with "-pool" appended.
+            +"-ACTIVE" // with "-ACTIVE" appended.
             );
         }
 
@@ -157,8 +165,8 @@ public class EpiThread
        */
       {
         Thread.currentThread().setName( // Set name of current thread to
-            "pool-" // "pool-" prepended to
-            +baseNameString // the provided base name
+            baseNameString // the provided base name
+            + "-done"
             );
         }
 
@@ -231,7 +239,7 @@ public class EpiThread
         or a safety time-out interval passes.
         It also logs the termination or time-out, whichever happens.
 
-        The time-out was added when it was discovered that some threads,
+        ///ano The time-out was added when it was discovered that some threads,
         ones whose termination was being assisted by closing resources they are using,
         were taking inexplicably long times to terminate.
 

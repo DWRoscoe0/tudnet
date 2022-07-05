@@ -182,7 +182,14 @@ public class Sender // Uunicast and multicast sender thread.
                 new Runnable() { 
                     public void run() {
                       EpiThread.setPoolThreadNameV("DelayedSender");
-                      sendingDatagramPacketV( theDatagramPacket );
+                      try { ///ano Handle ignored ThreadPoolExecutor Exceptions.
+                          sendingDatagramPacketV( theDatagramPacket );
+                        } catch (Exception theException) {
+                          Anomalies.displayDialogReturnString(
+                            "Sender.sendDropOrDelayPacketV() run()", 
+                            theException.toString(),
+                            true);
+                        }
                       EpiThread.unsetPoolThreadNameV("DelayedSender");
                       } 
                     },

@@ -9,7 +9,6 @@ import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
 import java.net.SocketAddress;
 import java.net.SocketException;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import javax.swing.JFrame;
 
@@ -25,16 +24,16 @@ public class AppFactory {  // For App class lifetimes.
     The app has exactly one instance of this factory.
     This class wires together the top level of the application.
 
-    ScheduledThreadPoolExecutor is used in this class.
-    Unfortunately it appears that ScheduledThreadPoolExecutor disables
+    ThreadScheduler is used in this class.
+    Unfortunately it appears that ThreadScheduler disables
     some functionality of the ThreadPoolExecutor for controlling  
-    the thread pool.  In the ScheduledThreadPoolExecutor,
+    the thread pool.  In the ThreadScheduler,
     the pool size, the so-called core size, is fixed.
     It can not expand or contract as needed.
 
     ///enh It might be necessary to create a new class that uses 
     the ThreadPoolExecutor configured for a widely variable number of threads
-    to provide a ScheduledThreadPoolExecutor-like class 
+    to provide a ThreadScheduler-like class 
     that can provide a potentially large number of timer threads.
 
     Some of the following code was moved from the old AppGUIFactory class, 
@@ -65,7 +64,7 @@ public class AppFactory {  // For App class lifetimes.
   private final NetcasterQueue 
     unconnectedReceiverToConnectionManagerNetcasterQueue;
   private final NetcasterPacketManager receiverNetcasterPacketManager;
-  private final ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor;
+  private final ThreadScheduler theThreadScheduler;
   private final NamedLong multicasterFixedTimeOutMsNamedLong;
   private final NotifyingQueue<MapEpiNode> 
     toConnectionManagerNotifyingQueueOfMapEpiNodes;
@@ -123,12 +122,12 @@ public class AppFactory {  // For App class lifetimes.
         new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE, "mccmp");
       NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue=
           new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE, "urcmp");
-      ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor; {
-        // Single ScheduledThreadPoolExecutor for many app threads and timers.
-        theScheduledThreadPoolExecutor= new ScheduledThreadPoolExecutor(
-            5, // Fixed thread pool size.
+      ThreadScheduler theThreadScheduler; {
+        // Single ThreadScheduler for many app threads and timers.
+        theThreadScheduler= new ThreadScheduler(
+            10, /// 5, // Fixed thread pool size.
             (theRunnable,theThreadPoolExecutor) -> { theAppLog.error(
-                "ScheduledThreadPoolExecutor rejected execution."); }
+                "ThreadScheduler rejected execution."); }
             ); // Minimum of 1 thread,
         }
       theTextStreams2= new TextStreams2(
@@ -153,14 +152,14 @@ public class AppFactory {  // For App class lifetimes.
       EpiThread theCPUMonitorEpiThread=
         makeEpiThread( theSystemsMonitor, "SystemsMonitor" );
       InstallerBuilder theInstallerBuilder= new InstallerBuilder( 
-          "Installer-Builder",thePersistent,theScheduledThreadPoolExecutor);
+          "Installer-Builder",thePersistent,theThreadScheduler);
       EpiFileRoots theEpiFileRoots= new EpiFileRoots();
       VolumeChecker theVolumeChecker = new VolumeChecker (
-          "Volume-Checker",thePersistent,theScheduledThreadPoolExecutor);
+          "Volume-Checker",thePersistent,theThreadScheduler);
       VolumeDetector theVolumeDetector= new VolumeDetector(
-          "Volume-Detector",thePersistent,theScheduledThreadPoolExecutor);
+          "Volume-Detector",thePersistent,theThreadScheduler);
       ConsoleBase theConsoleBase= new ConsoleBase(
-          "Console-Base",thePersistent,theScheduledThreadPoolExecutor);
+          "Console-Base",thePersistent,theThreadScheduler);
       DataNode sneakerNetDataNode= new NamedList(
           "Sneakernet-Commands",
           theVolumeChecker,
@@ -240,7 +239,7 @@ public class AppFactory {  // For App class lifetimes.
         theSwingUI,
         theShutdowner,
         theTCPCopier,
-        theScheduledThreadPoolExecutor,
+        theThreadScheduler,
         newAppInstanceManager,
         theConnectionManager,
         theDataRoot,
@@ -268,7 +267,7 @@ public class AppFactory {  // For App class lifetimes.
       this.netcasterToSenderNetcasterQueue= netcasterToSenderNetcasterQueue;
       this.unconnectedReceiverToConnectionManagerNetcasterQueue=
           unconnectedReceiverToConnectionManagerNetcasterQueue;
-      this.theScheduledThreadPoolExecutor= theScheduledThreadPoolExecutor;
+      this.theThreadScheduler= theThreadScheduler;
       this.multicasterFixedTimeOutMsNamedLong= 
           multicasterTimeOutMsNamedLong;
       this.toConnectionManagerNotifyingQueueOfMapEpiNodes=
@@ -481,7 +480,7 @@ public class AppFactory {  // For App class lifetimes.
         theTCPCopier,
         theShutdowner, 
         Config.QUEUE_SIZE,
-        theScheduledThreadPoolExecutor,
+        theThreadScheduler,
         thePersistent,
         toConnectionManagerNotifyingQueueOfMapEpiNodes,
         theConnectionManager

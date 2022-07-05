@@ -178,11 +178,19 @@ public class TimerInput
               public void run() 
                 {
                   EpiThread.setPoolThreadNameV("TimerInput");
-                  if (enabledB) // Unless disabled for debug tracing,...
-                    { // Take appropriate triggered action.
-                      inputArrivedB= true;  // Record that end time has arrived.
-                      inputRunnable.run(); // Run user's Runnable.run().
-                      }
+                  try { ///ano Handle ignored ThreadPoolExecutor Exceptions.
+                      if (enabledB) // Unless disabled for debug tracing,...
+                        { // Take appropriate triggered action.
+                          inputArrivedB= true;  // Record end time arrival.
+                          inputRunnable.run(); // Run user's Runnable.run().
+                          }
+                    } catch (Exception theException) {
+                      Anomalies.displayDialogReturnString(
+                        "TimerInput.scheduleV(.) run()", 
+                        theException.toString(),
+                        true
+                        );
+                    }
                   EpiThread.unsetPoolThreadNameV("TimerInput");
                   }
               };

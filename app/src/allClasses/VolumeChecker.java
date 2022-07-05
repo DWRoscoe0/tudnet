@@ -18,8 +18,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import javax.swing.SwingUtilities;
-
 
 /// import allClasses.LockAndSignal.Input;
 
@@ -122,9 +120,9 @@ public class VolumeChecker
     @Override
     protected void mainThreadLogicV()
       {
-        SwingUtilities.invokeLater( () -> { ///ano Added for time limit tests.
-          EpiThread.uninterruptibleSleepB( 2000 ); // Delay EDT 5 seconds. 
-          } ); 
+        /// SwingUtilities.invokeLater( ///ano Added for time limit tests.
+        ///   () -> {EpiThread.uninterruptibleSleepB( 2000 ); // Delay EDT 2s. 
+        ///   } ); 
         appendWithPromptSlowlyAndWaitForKeyV(
           "This feature does functional testing and capacity measurement "
           + "of storage volumes attached to your device."
@@ -199,9 +197,11 @@ public class VolumeChecker
             appendSlowlyV(bytesResultsString());
             break goReportErrorOrSuccessAndReturn;
             }
-        theAppLog.debug("starting Volume-Check...");
+        theAppLog.debug("VolumeChecker.checkVolumeV(.) checking approved.");
         progressReportSetV( () -> getVolumeWriteReadReportString() );
         pushOperationV("Volume-Check");
+        theAppLog.debug(
+            "VolumeChecker.checkVolumeV(.) deleting old temporary files.");
         resultString= deleteTemporaryFilesReturnString();
         // Ignore error, which probably means no deletion needed.
         resultString= FileOps.makeDirectoryAndAncestorsString(
@@ -211,15 +211,17 @@ public class VolumeChecker
               "error occurred while creating folder", resultString);
           break goFinishPassAndReturn;
           }
-        theAppLog.debug("starting writeTest...");
         progressReportSetV( () -> getVolumeWriteReadReportString() );
         progressReportUpdateV(); // First, slow progress report.
+        theAppLog.debug("VolumeChecker.checkVolumeV(.) starting writeTest...");
         resultString= writeTestReturnString(buildFolderFile);
         if (! EpiString.isAbsentB(resultString)) {
           resultString= EpiString.combine1And2WithNewlineString(
               "error occurred during write-test", resultString);
           break goFinishPassAndReturn;
           }
+        theAppLog.debug(
+            "VolumeChecker.checkVolumeV(.) starting read-and-compare.");
         resultString= readTestReturnString(buildFolderFile);
         if (! EpiString.isAbsentB(resultString)) {
           resultString= EpiString.combine1And2WithNewlineString(
@@ -228,6 +230,8 @@ public class VolumeChecker
           }
       }  // goFinishPassAndReturn:
         pushOperationAndRefreshProgressReportV("deleting temporary files");
+        theAppLog.debug(
+            "VolumeChecker.checkVolumeV(.) deleting new temporary files.");
         String deleteErrorString= deleteTemporaryFilesReturnString();
         resultString= EpiString.combine1And2WithNewlineString(
             resultString, deleteErrorString);
@@ -849,9 +853,10 @@ public class VolumeChecker
               (1000 * ( (toCheckDoneBytesL - speedStartVolumeDoneBytesL))
                  / speedDeltaTimeMsL)
               ;
-            averageSpeedL= 
-              (1000 * toCheckDoneBytesL) / 
-                (timeNowMsL - passStartTimeMsL);
+            long totalPassTimeMsL= (timeNowMsL - passStartTimeMsL);
+            long nonZeroTotalTimeMsL= // To prevent divide-by-zero ahead. 
+                (0 == totalPassTimeMsL) ? 1 : totalPassTimeMsL;
+            averageSpeedL= (1000 * toCheckDoneBytesL) / nonZeroTotalTimeMsL;
             speedStartVolumeDoneBytesL= toCheckDoneBytesL;
             speedIntervalStartTimeMsL= timeNowMsL;
             }

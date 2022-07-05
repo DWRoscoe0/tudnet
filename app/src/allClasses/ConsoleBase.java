@@ -77,6 +77,8 @@ public class ConsoleBase
       /* This method starts our thread if it hasn't started yet.  */
       {
         if (! threadIsRunningB) { // If our thread is not running
+          theAppLog.debug(
+              myToString()+"ConsoleBase.startThreadIfNeededV() starting.");
           theScheduledThreadPoolExecutor.execute(this); // start our thread
           threadIsRunningB|= true; // and record same.
           }
@@ -98,7 +100,12 @@ public class ConsoleBase
       {
         /// theAppLog.debug(myToString()+"ConsoleBase.run() begins.");
         EpiThread.setPoolThreadNameV("ConsoleBaseThread");
-        mainThreadLogicV();
+        try { ///ano Handle ignored ThreadPoolExecutor Exceptions.
+            mainThreadLogicV();
+          } catch (Exception theException) {
+            Anomalies.displayDialogReturnString(
+              myToString()+"ConsoleBase.run()", theException.toString(),true);
+          }
         /// theAppLog.debug(myToString()+"ConsoleBase.run() ends.");
         EpiThread.unsetPoolThreadNameV("ConsoleBaseThread");
         }
@@ -124,20 +131,10 @@ public class ConsoleBase
 
     /* General ProgressReport code.
      *
-     * ///ano ScheduledThreadPoolExecutor failure anomaly:
+     * ///ano ScheduledThreadPoolExecutor thread termination anomaly:
+     * This turned out to be a bug.  
+     * For more information, see class ThreadScheduler.
      * 
-     * It appeared that the method
-     *   ScheduledThreadPoolExecutor.scheduleAtFixedRate(.)
-     * which was being used to produce periodic progress reports,
-     * would sometimes fail.  
-     * It appeared that the progress report Runnable would execute once only.
-     * It was as if ScheduledFuture.cancel(.) was being called
-     * before all the progress reports had been produced,
-     * or an exception was thrown in the Runnable, 
-     * which would also causing cancellation.
-     * When debug logging code was added to find a cause, 
-     * the problem disappeared.  
-     * Later the problem returned, and it has since became intermittent. 
      */
 
     private boolean progressReportsEnabledB= true;
@@ -161,10 +158,10 @@ public class ConsoleBase
        * in preparation for producing empty progress reports.
        */
       {
-        theAppLog.debug("ConsoleBase.progressReportResetV(() called.");
+        /// theAppLog.debug("ConsoleBase.progressReportResetV(() begins.");
         if (null != outputFuture) {
-          theAppLog.debug(
-              "ConsoleBase.progressReportResetV(() outputFuture.cancel(true).");
+          /// theAppLog.debug(
+          ///     "ConsoleBase.progressReportResetV(() outputFuture.cancel(true).");
           outputFuture.cancel(true);
           outputFuture= null;
           }
@@ -172,6 +169,7 @@ public class ConsoleBase
         progressReportMaximumLengthI= 0;
         this.progressReportSupplierOfString= 
             emptyProgressReportSupplierOfString;
+        /// theAppLog.debug("ConsoleBase.progressReportResetV(() ends.");
         }
 
     protected synchronized void progressReportSetV(
@@ -184,24 +182,31 @@ public class ConsoleBase
        * if the regular program code stops polling an updater.
        */
       {
-        theAppLog.debug("ConsoleBase.progressReportSetV(() called.");
+        /// theAppLog.debug("ConsoleBase.progressReportSetV(() begins.");
         progressReportResetV(); // Do the common stuff.
         this.progressReportSupplierOfString= // Override empty report
             newProgressReportSupplierOfString; // with this.
         outputFuture= theScheduledThreadPoolExecutor.scheduleAtFixedRate(
-          new Runnable() { 
-              public void run() {
+          () -> {
+            try { ///ano Handle ignored ThreadPoolExecutor Exceptions.
                 EpiThread.setPoolThreadNameV("BackgroundProgressReport");
-                theAppLog.debug("ConsoleBase.progressReportSetV(() run().");
                 if (progressReportsEnabledB)
                   progressReportUpdatePollV();
                 EpiThread.unsetPoolThreadNameV("BackgroundProgressReport");
-                } 
-              },
+              } catch (Exception theException) {
+                Anomalies.displayDialogReturnString(
+                  myToString()+"ConsoleBase.progressReportSetV(.) background",
+                  theException.toString(),
+                  true
+                  );
+              }
+            },
           progressReportBackgroundPeriodMsL, // delay.
           progressReportBackgroundPeriodMsL, // period.
           TimeUnit.MILLISECONDS
           );
+        /// Nulls.fastFailNullCheckT(null); ///
+        /// theAppLog.debug("ConsoleBase.progressReportSetV(() ends.");
         }
 
     protected synchronized void progressReportUpdatePollV()
@@ -246,7 +251,7 @@ public class ConsoleBase
        * thereby extending the document for next time.
        */
       {
-        theAppLog.debug("ConsoleBase.progressReportUpdateV() called.");
+        /// theAppLog.debug("ConsoleBase.progressReportUpdateV() called.");
         timeOfPreviousUpdateMsL= getTimeMsL(); // Record update time.
         String newTailString= progressReportSupplierOfString.get();
         int newTailLengthI= newTailString.length();

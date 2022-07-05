@@ -111,6 +111,7 @@ public class Navigation extends EpiStage
               });
 
         theBorderPane= new BorderPane(); // Make the one BorderPane.
+        /*  ///
         theBorderPane.addEventFilter(
             KeyEvent.KEY_PRESSED,
             (theKeyEvent) -> theAppLog.appendToFileV(
@@ -121,7 +122,7 @@ public class Navigation extends EpiStage
             (theKeyEvent) -> theAppLog.appendToFileV(
                 "[end-key:"+theKeyEvent.getCode()+"]")
             );
-
+        */ ///
         theEpiScene= new EpiScene(theBorderPane);
         setScene(theEpiScene); // Use tree scene as first one displayed.
         
@@ -449,7 +450,7 @@ public class Navigation extends EpiStage
     private void handleDataNodeKeyPressV(KeyEvent theKeyEvent)
       ///org relative to Selections and TreeStuff.
       {
-        theAppLog.appendToFileV("[dnkp]");
+        /// theAppLog.appendToFileV("[dnkp]");
         KeyCode keyCodeI = theKeyEvent.getCode(); // Get code of key pressed.
         TreeStuff newTreeStuff= null;
         switch (keyCodeI) {
