@@ -40,7 +40,7 @@ public class Misc
     ///elim : code that might not be needed and may be eliminated.
     ///doc : documentation that should be fixed or improved.
     ///rev : to review for correctness. 
-    //// (4 slashes) : old code, commended out, to be deleted soon.
+    //// (4 slashes) : old code, commented out, to be deleted soon.
     ////// (6 or more slashes) : very temporary something to do soon.
     */
 
@@ -187,7 +187,8 @@ public class Misc
                 +" "+Misc.componentInfoString(theComponent)
               );
           }
-      
+
+
       // Exception handling and logging.
 
       public static void logAndRethrowAsRuntimeExceptionV( 
@@ -206,15 +207,18 @@ public class Misc
     
     // Miscellaneous.
     
-    public static String dateString( long theL )
-      /* This method returns the a time-stamp theL converted to a String.
+    public static String dateAndTimeAkaMsString( long theL )
+      /* This method returns the a time-stamp theL converted to a String
+       * in the form of the date and time followed by the # of ms equivalent.
         */
       {
         SimpleDateFormat aSimpleDateFormat= 
           new SimpleDateFormat("yyyyMMdd.HHmmss");
-        String resultDateString= 
-          theL + " aka " +
-          aSimpleDateFormat.format( theL );
+        String resultDateString= ""
+          + aSimpleDateFormat.format( theL )
+          + " aka " 
+          + theL + "ms"
+          ;
         return resultDateString;
         }
 

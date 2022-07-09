@@ -189,7 +189,7 @@ class TracingEventQueueMonitor extends Thread {
       long dispatchStartTimeMsL
       ) 
     /* This method checks whether an event dispatch 
-     * has been, or is running, to long.
+     * has been, or is running, too long.
      * If true then it reports that fact using a dialog box and logging,
      * and it returns true.  Otherwise it does nothing and returns false.
      * 
@@ -205,21 +205,15 @@ class TracingEventQueueMonitor extends Thread {
      */
     {
       long timeSinceDispatchStartMsL = timeNowMsL - dispatchStartTimeMsL;
-      boolean limitExceededB= 
-          (timeSinceDispatchStartMsL > dispatchTimeMaximumMsL);
-      if (limitExceededB) // If excessive time used for dispatch, report it.
-        { ///ano Report excessive time used for event dispatch.
-          String summaryIDLineString= 
-              "Excessive time for EDT dispatch.";
-          String detailsString= "In EDT dispatch of "
-              + dispatchedAWTEvent.getClass().getName()
-              + ", " + dispatchStateString
-              + ", processing time of " + timeSinceDispatchStartMsL
-              + "ms exceeds limit of " + dispatchTimeMaximumMsL;
-          Anomalies.displayDialogReturnString(
-              summaryIDLineString, detailsString, true);
-          }
-      return limitExceededB; 
+
+      String resultString= Anomalies.testAndDisplayDialogReturnString(
+          "EDT-Dispatch",
+          dispatchStateString, 
+          dispatchTimeMaximumMsL,
+          timeSinceDispatchStartMsL
+          );
+
+      return null != resultString;
       }
 
   private void logStackTraceV()

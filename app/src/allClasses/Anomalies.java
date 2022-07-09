@@ -307,6 +307,37 @@ public class Anomalies
         return resultString;
         }
 
+    public static String testAndDisplayDialogReturnString(
+        String nameString,
+        String stateString,
+        long maximumTimeMsL,
+        long timeMsL)
+      /* ///ano This method tests for and reports excessive-time Anomalies.
+       * It tests whether the time timeMsL exceeds maximumTimeMsL 
+       * for the time parameter with name nameString.
+       * If the limit is exceeded then 
+       * it displays or updates a mode-less dialog box 
+       * which reports this as an Anomaly.
+       */
+      {
+        String resultString= null;
+        
+        boolean limitExceededB= timeMsL > maximumTimeMsL;
+        if (limitExceededB) // If excessive time used for dispatch, report it.
+          {
+            String summaryIDLineString= "Excessive time used for " + nameString;
+            
+            String detailsString= 
+                "Operation: " + nameString
+                + "\nTime used: " + timeMsL + "ms"
+                + "\nTime limit: " + maximumTimeMsL + "ms"
+                + "\nStatus: " + stateString;
+            resultString= Anomalies.displayDialogReturnString(
+                summaryIDLineString, detailsString, true);
+            }
+        return resultString; 
+        }
+
     public static String displayDialogReturnString(
         String summaryIDLineString, 
         String detailsString, 
@@ -316,7 +347,6 @@ public class Anomalies
        *   Dialogger.showModelessJavaFXDialogReturnString(
              String summaryIDLineString, String detailsString)
        * but with the following differences to indicate an anomaly:
-       * * There is an audio notification.
        * * If summaryIDLineString is null, "Uncategorized Anomaly" is used. 
        * * If summaryIDLineString is NOT null,
        *   then "Anomaly Detected" is prepended to detailsString. 
@@ -328,7 +358,7 @@ public class Anomalies
         if (null == summaryIDLineString) 
           summaryIDLineString= "Uncategorized Anomaly";
         else
-          detailsString= "Anomaly Detected\n" + detailsString; 
+          detailsString= "Anomaly Detected:\n\n" + detailsString; 
 
         String resultString= // Try reporting via dialog box. 
             Dialogger.showModelessJavaFXDialogReturnString(

@@ -448,8 +448,11 @@ public class SystemsMonitor
           theAppLog.warning(
               theNamedLong.getNameString( ),
               theNamedLong.getNameString( ) + " changed by " + deltaL
-                + NL + "  time-then : " + Misc.dateString(timeNowL - deltaL) 
-                + NL + "  time-now  : " + Misc.dateString(timeNowL) 
+                + NL + NL 
+                + "  time-then : " + Misc.dateAndTimeAkaMsString(
+                                                          timeNowL - deltaL) 
+                + NL + NL 
+                + "  time-now  : " + Misc.dateAndTimeAkaMsString(timeNowL) 
                 );
           }
       return theNamedLong.addDeltaL( deltaL ); // Doing the add.

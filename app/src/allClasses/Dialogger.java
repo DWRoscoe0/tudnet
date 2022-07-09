@@ -73,7 +73,7 @@ public class Dialogger extends Object
         String summaryIDLineString, 
         String detailsString,
         boolean alertWithSoundB)
-      /* This method tries to run a job on the JavaFX Application Thread 
+      /* This method tries to run a Runnable on the JavaFX Application Thread 
        * to do the following:
        * * Display a dialog window. 
        * * Display the titleString in the title bar.
@@ -97,8 +97,8 @@ public class Dialogger extends Object
           Platform.runLater( () -> {
             Alert theAlert= JavaFXGUI.testForAlert(summaryIDLineString);
             if (null == theAlert) // If Alert not cached, make new one. 
-              { // Make new Alert.
-                if (alertWithSoundB) // Signal new message if sound desired.
+              { // Make new Alert dialog.
+                if (alertWithSoundB) // Signal new dialog if sound desired.
                   java.awt.Toolkit.getDefaultToolkit().beep(); // Audible Beep.
                    ///ano The above line causes debug tracing to fail!
                 theAlert= new Alert(AlertType.INFORMATION);
@@ -118,14 +118,17 @@ public class Dialogger extends Object
                   "Dialogger.showModelessJavaFXDialogReturnString(.) "
                   + "new Alert:\n" + summaryIDLineString + "\n" 
                   + detailsString);
-                } // Make new Alert.
+                } // Make new Alert dialog.
             theAlert.setContentText(detailsString); // Customize with content.
             theAlert.show();
             } );
           }
         catch (IllegalStateException theIllegalStateException) {
-          resultString= "Dialog-Failed: " + theIllegalStateException;
-            ///ano See notes above.
+          resultString= "JavaFX-Dialog-Failed with " + theIllegalStateException;
+          theAppLog.debug(
+            "Dialogger.showModelessJavaFXDialogReturnString(.), during"
+            + "\n  " + summaryIDLineString + "\n  " + detailsString + "\n  "
+            + resultString);
           }
         return resultString;
         }

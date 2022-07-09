@@ -18,6 +18,8 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import javax.swing.SwingUtilities;
+
 
 /// import allClasses.LockAndSignal.Input;
 
@@ -120,9 +122,9 @@ public class VolumeChecker
     @Override
     protected void mainThreadLogicV()
       {
-        /// SwingUtilities.invokeLater( ///ano Added for time limit tests.
-        ///   () -> {EpiThread.uninterruptibleSleepB( 2000 ); // Delay EDT 2s. 
-        ///   } ); 
+        SwingUtilities.invokeLater( ///ano Added for time-limit tests.
+          () -> {EpiThread.uninterruptibleSleepB( 2000 ); // Delay EDT 2s. 
+            } ); 
         appendWithPromptSlowlyAndWaitForKeyV(
           "This feature does functional testing and capacity measurement "
           + "of storage volumes attached to your device."

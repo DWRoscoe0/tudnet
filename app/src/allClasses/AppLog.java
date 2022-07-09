@@ -473,7 +473,7 @@ public class AppLog
         logV( 
             "======== LOG FILE SESSION #"
             + theSessionI
-            + " at " + Misc.dateString(lastMillisL)
+            + " at " + Misc.dateAndTimeAkaMsString(lastMillisL)
             + " BEGINS ========"
             );
         logV( "" ); // Blank line.

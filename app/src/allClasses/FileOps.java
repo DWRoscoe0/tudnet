@@ -963,7 +963,7 @@ public class FileOps
         the file theFile in an easy to read format.
         */
       {
-        return Misc.dateString( theFile.lastModified() );
+        return Misc.dateAndTimeAkaMsString( theFile.lastModified() );
         }
 
     }
