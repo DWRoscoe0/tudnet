@@ -720,10 +720,10 @@ public class VolumeChecker
             + "\n\nChecking volume..."
               + " " + advanceAndGetSpinnerString() + "\n"
             + columnHeadingString()
+            + timeString()
             + bytesString()
             + blocksString()
             + filesString()
-            + timeString()
             + speedString()
             + OSTime.getOsIoString()
             + bytesResultsString()
