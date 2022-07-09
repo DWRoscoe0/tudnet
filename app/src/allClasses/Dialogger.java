@@ -120,7 +120,8 @@ public class Dialogger extends Object
                   + detailsString);
                 } // Make new Alert dialog.
             theAlert.setContentText(detailsString); // Customize with content.
-            theAlert.show();
+            if (! theAlert.isShowing()) 
+              theAlert.show();
             } );
           }
         catch (IllegalStateException theIllegalStateException) {
