@@ -34,7 +34,7 @@ public class OSTime
             }
         return reportAccumulatorString;
         }
-  
+
     static String nonZeroQuotientAsPerCentString(long dividendL,long divisorL)
       /* 
        * This method returns a String representing the result of
@@ -52,7 +52,7 @@ public class OSTime
           resultString= quotientAs3CharacterPercentString(dividendL,divisorL);
         return resultString;
         }
-  
+
     static String quotientAs3CharacterPercentString(
         long dividendL,long divisorL)
       /* 
@@ -73,13 +73,15 @@ public class OSTime
           resultString= String.format("%02d%%",Math.round(perCentD));
         return resultString;
         }
-  
-    static DutyCycle directoryDutyCycle= new DutyCycle("Directory-Read");
-    static DutyCycle writingDutyCycle= new DutyCycle("Data-Write");
-    static DutyCycle syncingDutyCycle= new DutyCycle("File-Sync");
-    static DutyCycle closingDutyCycle= new DutyCycle("Close");
-    static DutyCycle readingDutyCycle= new DutyCycle("Data-Read");
-    static DutyCycle deletingDutyCycle= new DutyCycle("File-Delete");
+
+    // The following constructor maximumTimeMsL values are from trial-and-error.
+    static DutyCycle directoryDutyCycle= new DutyCycle("Directory-Read",10);
+    static DutyCycle writingDutyCycle= new DutyCycle("Data-Write",220);
+    static DutyCycle syncingDutyCycle= new DutyCycle("File-Sync",1143);
+    static DutyCycle closingDutyCycle= new DutyCycle("Close",83);
+    static DutyCycle readingDutyCycle= new DutyCycle("Data-Read",193);
+    static DutyCycle deletingDutyCycle= new DutyCycle("File-Delete",401);
+
     static long osTotalTimeActiveMsL;
     static String reportAccumulatorString;
     static long lastReportTimeNsL;
@@ -168,18 +170,20 @@ public class OSTime
             Anomalies.testAndDisplayDialogReturnString(
                 nameString,
                 operationIsActiveB ? "ACTIVE" : "Complete", 
-                1500, // temporary 1.5 second limit on all operations.
+                maximumTimeMsL, // maximum time for operation
                 timeActiveNsL/1000000 // convert ns to ms
                 );
             }
 
-        private DutyCycle(String nameString) // constructor.
+        private DutyCycle(String nameString,long maximumTimeMsL) // constructor.
           {
             super();
             this.nameString= nameString;
+            this.maximumTimeMsL= maximumTimeMsL;
             }
 
         private String nameString;
+        private long maximumTimeMsL= 1500; // Default value, to be overridden.
         private boolean operationIsActiveB= false;
         private long timeOfLastActivityChangeNsL;
         private long timeActiveNsL;
