@@ -1,9 +1,36 @@
 package allClasses;
 
+
 public class OSTime 
   {
-    /* This class is used to measure and report
-     * the amount of time spent on various OS operations. 
+    /* This class does 2 thing related to time spent in operating system APIs:
+     * * It measures and reports the percentage of time in 
+     *   particular API methods.
+     * * It detects and reports excessive time spent in particular API methods.
+     *
+     * ///ano Excessive Operating System API Time Anomaly:
+     *   During testing of the Volume-Checker feature,
+     *   the app seemed to run very slowly sometimes.
+     *   Sometimes the slowing was severe enough to render the app useless.
+     *   So code was added to measure, detect, and report exc\essive time
+     *   spent in operating system API methods.
+     *   
+     *   The following is a snapshot of code from 2022-07-10
+     *   showing limits needed to prevent reports of excessive API times.
+     *   
+      static DutyCycle directoryDutyCycle= new DutyCycle("Directory-Read",4000);
+      static DutyCycle writingDutyCycle= new DutyCycle("Data-Write",4404);
+      static DutyCycle syncingDutyCycle= new DutyCycle("File-Sync",81000);
+      static DutyCycle closingDutyCycle= new DutyCycle("Close",83);
+      static DutyCycle readingDutyCycle= new DutyCycle("Data-Read",193);
+      static DutyCycle deletingDutyCycle= new DutyCycle("File-Delete",50000);
+     * 
+     *   The limits are expressed in milliseconds.
+     *   The limits shown were produced by gradually increasing them
+     *   until no API method times were reported as excessive.
+     *   As you can see, several of these times were multiple seconds,
+     *   though none of them should be.
+     * 
      */
 
     static String getOsIoString()
@@ -18,12 +45,13 @@ public class OSTime
             thisReportTimeNsL= timeNowNsL;
             osTotalTimeActiveMsL= 0;
             reportAccumulatorString= "";
-            DutyCycle.accumulateOSTimeReportV(directoryDutyCycle, " dir:");
-            DutyCycle.accumulateOSTimeReportV(deletingDutyCycle, " del:");
-            DutyCycle.accumulateOSTimeReportV(closingDutyCycle, " clo:");
-            DutyCycle.accumulateOSTimeReportV(writingDutyCycle, " wrt:");
-            DutyCycle.accumulateOSTimeReportV(readingDutyCycle, " rea:");
-            DutyCycle.accumulateOSTimeReportV(syncingDutyCycle, " syn:");
+            DutyCycle.accumulateOSTimeReportV(closingDutyCycle, " close:");
+            DutyCycle.accumulateOSTimeReportV(deletingDutyCycle, " delete:");
+            DutyCycle.accumulateOSTimeReportV(
+                directoryDutyCycle, " files-list:");
+            DutyCycle.accumulateOSTimeReportV(syncingDutyCycle, " sync:");
+            DutyCycle.accumulateOSTimeReportV(readingDutyCycle, " read:");
+            DutyCycle.accumulateOSTimeReportV(writingDutyCycle, " write:");
             reportAccumulatorString= 
                 "\nOS:"
                 + quotientAs3CharacterPercentString(
