@@ -75,12 +75,12 @@ public class OSTime
         }
 
     // The following constructor maximumTimeMsL values are from trial-and-error.
-    static DutyCycle directoryDutyCycle= new DutyCycle("Directory-Read",10);
-    static DutyCycle writingDutyCycle= new DutyCycle("Data-Write",220);
-    static DutyCycle syncingDutyCycle= new DutyCycle("File-Sync",1143);
+    static DutyCycle directoryDutyCycle= new DutyCycle("Directory-Read",4000);
+    static DutyCycle writingDutyCycle= new DutyCycle("Data-Write",4168);
+    static DutyCycle syncingDutyCycle= new DutyCycle("File-Sync",81000);
     static DutyCycle closingDutyCycle= new DutyCycle("Close",83);
     static DutyCycle readingDutyCycle= new DutyCycle("Data-Read",193);
-    static DutyCycle deletingDutyCycle= new DutyCycle("File-Delete",401);
+    static DutyCycle deletingDutyCycle= new DutyCycle("File-Delete",50000);
 
     static long osTotalTimeActiveMsL;
     static String reportAccumulatorString;
@@ -149,30 +149,36 @@ public class OSTime
            * an activity report is being generated.
            */
           {
-            long timeSinceLastActivityChangeNsL= 
-               timeNowNsL - timeOfLastActivityChangeNsL;
+            long timeSinceLastActivityUpdateNsL= 
+               timeNowNsL - timeOfLastActivityUpdateNsL;
             if (operationIsActiveB)
-              timeActiveNsL+= timeSinceLastActivityChangeNsL;
+              timeActiveNsL+= timeSinceLastActivityUpdateNsL;
               else
-              timeInactiveNsL+= timeSinceLastActivityChangeNsL;
+              timeInactiveNsL+= timeSinceLastActivityUpdateNsL;
             operationIsActiveB= newActivityB;
-            timeOfLastActivityChangeNsL= timeNowNsL;
-            doLimitCheckV();
+            timeOfLastActivityUpdateNsL= timeNowNsL;
+            doLimitCheckV(timeNowNsL);
             }
 
-        private void doLimitCheckV()
+        private void doLimitCheckV(long timeNowNsL)
           /* This method tests whether the activity maximum time limit
            * has been exceeded.  If it has then it reports it.
            * This method should be called often enough
            * to give the user timely reports.
            */
           {
-            Anomalies.testAndDisplayDialogReturnString(
-                nameString,
-                operationIsActiveB ? "ACTIVE" : "Complete", 
-                maximumTimeMsL, // maximum time for operation
-                timeActiveNsL/1000000 // convert ns to ms
-                );
+            if (limitedPeriodIsActiveB)
+              Anomalies.testAndDisplayDialogReturnString(
+                  nameString,
+                  operationIsActiveB ? "ACTIVE" : "Done", 
+                  maximumTimeMsL, // maximum time for operation
+                  (timeNowNsL - activePeriodStartTimeNsL) / 1000000
+                  );
+            if (limitedPeriodIsActiveB != operationIsActiveB)
+              {
+                limitedPeriodIsActiveB= operationIsActiveB;
+                activePeriodStartTimeNsL= timeNowNsL;
+                }
             }
 
         private DutyCycle(String nameString,long maximumTimeMsL) // constructor.
@@ -184,8 +190,10 @@ public class OSTime
 
         private String nameString;
         private long maximumTimeMsL= 1500; // Default value, to be overridden.
+        private boolean limitedPeriodIsActiveB= false;
+        private long activePeriodStartTimeNsL;
         private boolean operationIsActiveB= false;
-        private long timeOfLastActivityChangeNsL;
+        private long timeOfLastActivityUpdateNsL;
         private long timeActiveNsL;
         private long timeInactiveNsL;
 
