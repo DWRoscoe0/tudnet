@@ -45,13 +45,13 @@ public class OSTime
             thisReportTimeNsL= timeNowNsL;
             osTotalTimeActiveMsL= 0;
             reportAccumulatorString= "";
-            DutyCycle.accumulateOSTimeReportV(closingDutyCycle, " close:");
-            DutyCycle.accumulateOSTimeReportV(deletingDutyCycle, " delete:");
             DutyCycle.accumulateOSTimeReportV(
                 directoryDutyCycle, " files-list:");
-            DutyCycle.accumulateOSTimeReportV(syncingDutyCycle, " sync:");
             DutyCycle.accumulateOSTimeReportV(readingDutyCycle, " read:");
             DutyCycle.accumulateOSTimeReportV(writingDutyCycle, " write:");
+            DutyCycle.accumulateOSTimeReportV(syncingDutyCycle, " sync:");
+            DutyCycle.accumulateOSTimeReportV(closingDutyCycle, " close:");
+            DutyCycle.accumulateOSTimeReportV(deletingDutyCycle, " delete:");
             reportAccumulatorString= 
                 "\nOS:"
                 + quotientAs3CharacterPercentString(
@@ -102,11 +102,13 @@ public class OSTime
         return resultString;
         }
 
-    // The following constructor maximumTimeMsL values are from trial-and-error.
+    /* ///ano Each limit should be only a few milliseconds without anomalies.
+     * The following constructor maximumTimeMsL values are from trial-and-error.
+     */
     static DutyCycle directoryDutyCycle= new DutyCycle("Directory-Read",4000);
-    static DutyCycle writingDutyCycle= new DutyCycle("Data-Write",4168);
-    static DutyCycle syncingDutyCycle= new DutyCycle("File-Sync",81000);
-    static DutyCycle closingDutyCycle= new DutyCycle("Close",83);
+    static DutyCycle writingDutyCycle= new DutyCycle("Data-Write",16300);
+    static DutyCycle syncingDutyCycle= new DutyCycle("File-Sync",114000);
+    static DutyCycle closingDutyCycle= new DutyCycle("Close",86);
     static DutyCycle readingDutyCycle= new DutyCycle("Data-Read",193);
     static DutyCycle deletingDutyCycle= new DutyCycle("File-Delete",50000);
 

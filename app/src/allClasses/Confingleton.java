@@ -8,14 +8,15 @@ import java.io.IOException;
 import static allClasses.AppLog.theAppLog;
 
 
-public class Confingleton 
-  /* This class manages a text file containing 
-    a single configuration value as a string.
-    The name is the name of the file minus the ".txt" extension.
-    It is assumed to be in the app's standard directory
-    which is known to the Config class.
-    */
-  {
+public class Confingleton
+
+{
+    /* This class manages a text file containing 
+      a single configuration value as a string.
+      The name is the name of the file minus the ".txt" extension.
+      It is assumed to be in the app's standard directory
+      which is known to the Config class.
+      */
 
     private static File makeFile( String keyString )
       {
@@ -32,15 +33,14 @@ public class Confingleton
         String valueString= null;
         File theFile= makeFile(keyString);
         try {
-          FileReader sessionFileReader = 
-            new FileReader(theFile);
-          char[] chars = new char[(int) theFile.length()];
-          sessionFileReader.read(chars);
-          sessionFileReader.close();
-          valueString = new String(chars);
-        } catch (IOException e) {
-            // Ignore errors.  These are treated as no file or bad data.
-            // null will be returned.
+          FileReader theFileReader= new FileReader(theFile);
+          char[] chars= new char[(int) theFile.length()];
+          theFileReader.read(chars);
+          Closeables.closeV(theFileReader);
+          valueString= new String(chars);
+        } catch (Exception theException) {
+            // Ignore exception caused by no file or bad data.
+            // In this cases, null will be returned.
             }
         theAppLog.info("Confingleton.getValueString(..) keyString="
             +keyString+" valueString="+valueString);

@@ -348,7 +348,7 @@ public class FileOps
           } finally { // Close things, error or not.
             theAppLog.debug("FileOps","FileOps.tryRawCopyFileB(.) "
                 + "closing InputStream.");
-            Closeables.closeWithErrorLoggingB(theInputStream);
+            Closeables.closeAndReportErrorsV(theInputStream);
           }
         theAppLog.debug("FileOps","FileOps.tryRawCopyFileB(.) ends, "
             +"closes done, errorString="+errorString);
@@ -393,7 +393,7 @@ public class FileOps
             theAppLog.debug("FileOps","FileOps."
               + "tryCopyingInputStreamToFileReturnString(.) "
               + "closing OutputStream.");
-            Closeables.closeWithErrorLoggingB(theOutputStream);
+            Closeables.closeAndReportErrorsV(theOutputStream);
               // Closing the OutputStream can block temporarily.
           }
         theAppLog.debug("FileOps","FileOps."
@@ -684,7 +684,7 @@ public class FileOps
       } finally {
         OSTime.directoryDutyCycle.updateActivityWithFalseV();
         OSTime.closingDutyCycle.updateActivityWithTrueV();
-        Closeables.closeWithoutErrorLoggingB(subtreeStreamOfPaths);
+        Closeables.closeAndReportNothingV(subtreeStreamOfPaths);
         OSTime.closingDutyCycle.updateActivityWithFalseV();
       }
       } // toReturn:
@@ -755,7 +755,7 @@ public class FileOps
           finally {
             try {
               if ( sourceFileOutputStream != null ) 
-                sourceFileOutputStream.close(); 
+                closeOutputStreamV(sourceFileOutputStream);
               }
             catch ( Exception theException ) { 
               errorString= EpiString.combine1And2WithNewlineString(
@@ -918,13 +918,8 @@ public class FileOps
        * It throws an IOException if there is an error.
        */
       {
-        try {
-            OSTime.closingDutyCycle.updateActivityWithTrueV();
-            theFileOutputStream.close();
-          } finally { // Do this regardless of exceptions.
-            OSTime.closingDutyCycle.updateActivityWithFalseV();
-          }
-      }
+        Closeables.closeAndReportErrorsV(theFileOutputStream);
+        }
 
     public static boolean deleteFileB(File theFile)
       /* This method tries to delete theFile.

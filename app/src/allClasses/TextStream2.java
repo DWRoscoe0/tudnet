@@ -172,9 +172,10 @@ public class TextStream2
               }
             finally {
               try {
-                if ( theBufferedReader != null ) theBufferedReader.close();
+                if ( theBufferedReader != null ) 
+                  Closeables.closeV(theBufferedReader);
                 }
-              catch ( IOException theIOException ) { 
+              catch ( Exception theIOException ) { 
                 theAppLog.exception("TextStream2.loadStreamV(..)", theIOException);
                 }
               }
@@ -260,9 +261,10 @@ public class TextStream2
               }
             finally {
               try {
-                if ( theFileWriter != null ) theFileWriter.close();
+                if ( theFileWriter != null ) 
+                  Closeables.closeV(theFileWriter);
                 }
-              catch ( IOException theIOException ) { 
+              catch ( Exception theIOException ) { 
                 theAppLog.exception("TextStream2.storeDocumentV(..)", theIOException);
                 }
               thePlainDocument.readUnlock();

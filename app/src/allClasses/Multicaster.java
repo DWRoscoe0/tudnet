@@ -357,11 +357,11 @@ public class Multicaster
 
     private void stoppingMulticastReceiverThreadV()
       {
-        theMulticastReceiverEpiThread.stopV();  // Requesting termination of
+        theMulticastReceiverEpiThread.stopV();  // Request termination of
           // theMulticastReceiver thread.
-        theMulticastSocket.close(); // Causing immediate unblock of
+        Closeables.closeAndReportNothingV(theMulticastSocket); // This unblocks
           // theMulticastSocket.receive() in that thread.
-        theMulticastReceiverEpiThread.joinV();  // Waiting for termination of
+        theMulticastReceiverEpiThread.joinV();  // Wait for termination of
           // theMulticastReceiver thread.
         }
 

@@ -94,11 +94,11 @@ public class Outline
                 catch ( IOException e ) {
                   try {
                     theAppLog.info( "Outline.readLineV() re-openning file." );
-                    theRandomAccessFile.close(); // Closing bad file.
+                    Closeables.closeV(theRandomAccessFile); // Closing bad file.
                     theRandomAccessFile=  // Re-opening it.
                         new RandomAccessFile( "Outline.tmp", "r" );
                     }
-                  catch ( IOException e1 ) {
+                  catch ( Exception e1 ) {
                     theAppLog.error( "Outline.readLineV() re-open failed." );
                     }
                   };
@@ -341,7 +341,6 @@ public class Outline
             case CONSTRUCTED: ;
               { // Doing partial loading.
                 Aid theAid= prepareAndGetAid();
-                //// doSetNameV(  // Redefining name from 
                 setNameV(  // Redefining name from
                     theAid.lineString  // first line read from node text.
                     );
@@ -408,7 +407,6 @@ public class Outline
           */
         { // createTheRandomAccessFileV(..)
           URL resourceURL= getClass().getResource("Outline.txt");
-                //// getClass().getResourceAsStream("Outline.txt");
           theAppLog.info("Outline.createTheRandomAccessFileV() URL="
                 +resourceURL.toString());
           InputStream resourceInputStream= null;
@@ -419,7 +417,6 @@ public class Outline
               theRandomAccessFile=  // For open random access Outline file.
                 new RandomAccessFile( "Outline.tmp", "rw" );
               } // Try creating file.
-            //// catch (FileNotFoundException e) { // Handle any errors.
             catch (IOException e) { // Handle any errors.
               theAppLog.error("Outline.createTheRandomAccessFileV(), new "+e);
               } // Handle any errors.

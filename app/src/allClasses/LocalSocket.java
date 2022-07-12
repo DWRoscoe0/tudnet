@@ -132,7 +132,7 @@ public class LocalSocket
          theCommandArgs= // Parse string into separate string arguments using
            new CommandArgs(readString.split("\\s")); // white-space delimiters.
          theAppLog.debug("inputFromConnectionV(): theCommandArgs created.");
-         inBufferedReader.close();
+         Closeables.closeAndReportErrorsV(inBufferedReader);
          theAppLog.debug("inputFromConnectionV(): inBufferedReader.closed.");
          }
     
@@ -150,8 +150,8 @@ public class LocalSocket
       { 
         try { 
           if (theServerSocket != null)
-            theServerSocket.close(); 
-          } catch (IOException e) {
+            Closeables.closeV(theServerSocket);
+          } catch (Exception e) {
             theAppLog.exception("closeConnectionV()",e);
           } 
         theServerSocket= null;
@@ -178,8 +178,8 @@ public class LocalSocket
         closeConnectionV(); // Close any single associated socket connection.
         try { // Close the server socket.
             if (theServerServerSocket != null) 
-              theServerServerSocket.close();
-          } catch (IOException e) {
+              Closeables.closeV(theServerServerSocket);
+          } catch (Exception e) {
             theAppLog.exception("LocalSocket.closeV()",e);
           }
         theServerServerSocket= null; // Indicate closed no matter what.
@@ -203,13 +203,13 @@ public class LocalSocket
               theClientSocket.getOutputStream();
           theOutputStream.write(  // Send output string to other app via stream.
             outputString.getBytes());
-          theOutputStream.close();  // Close stream.
-          theClientSocket.close();  // Close socket.
+          Closeables.closeV(theOutputStream);
+          Closeables.closeV(theClientSocket);
           theAppLog.info(
             "======== SUCCESS SENDING TCP LOOPBACK PACKET ========"
             +commonString);
           successB= true;  // Packet sent, meaning success and should exit.
-        } catch (IOException e1) {
+        } catch (Exception e1) {
           theAppLog.exception(
             "======== FAILED SENDING LOOPBACK PACKET ========" 
             + commonString, e1);

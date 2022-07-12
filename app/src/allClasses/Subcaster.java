@@ -1,6 +1,5 @@
 package allClasses;
 
-import java.io.IOException;
 
 import static allClasses.AppLog.theAppLog;
 
@@ -73,9 +72,9 @@ public class Subcaster
               ///tmp pingReplyProtocolV();
               theLockAndSignal.waitingForInterruptOrNotificationE(); // Waiting for any input.
               } // while(true)
-          theSubcasterOutputStream.close(); // Closing output stream.
+          Closeables.closeV(theSubcasterOutputStream); // Closing output stream.
           }
-        catch( IOException e ) {
+        catch( Exception e ) {
           Misc.logAndRethrowAsRuntimeExceptionV( 
               "run() IOException", e 
               );

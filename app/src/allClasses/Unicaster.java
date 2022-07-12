@@ -201,10 +201,10 @@ public class Unicaster
         return theEpiThread;
         }
 
-    protected void finalizingV() throws IOException
+    protected void finalizingV() throws Exception
       // This is the opposite of initilizingV().
       {
-        theEpiOutputStreamO.close(); // Closing output stream.
+        Closeables.closeV(theEpiOutputStreamO); // Closing output stream.
         super.finalizeV();
         }
 
@@ -236,7 +236,7 @@ public class Unicaster
             /// Nulls.fastFailNullCheckT(theDataTreeModel);
             /// theDataTreeModel.displayTreeModelChangesV(); // Display tree after removal.
             }
-          catch( IOException theIOException) {
+          catch( Exception theIOException) {
             Misc.logAndRethrowAsRuntimeExceptionV( 
                 "run() IOException", theIOException 
                 );

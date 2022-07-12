@@ -400,9 +400,8 @@ public class ConnectionManager
           }
         catch ( SocketException e ) { // Handling SocketException.
           theAppLog.error("unconnectedDatagramSocket:"+e);
-          if ( unconnectedDatagramSocket != null )
-            unconnectedDatagramSocket.close();
-          EpiThread.interruptibleSleepB(  // Don't hog CPU in error loop.
+          Closeables.closeAndReportErrorsV(unconnectedDatagramSocket);
+          EpiThread.interruptibleSleepB(  // Prevent CPU in error loop.
             Config.errorRetryPause1000MsL
             );
           }
@@ -557,8 +556,7 @@ public class ConnectionManager
         }
       catch ( IOException e ) { // Handling SocketException.
         theAppLog.error("theMulticastSocket:"+e);
-        if ( theMulticastSocket != null )
-          theMulticastSocket.close();
+        Closeables.closeAndReportErrorsV(theMulticastSocket);
         }
       finally {
         }

@@ -241,7 +241,7 @@ public class MetaFile { // For app's meta-data files.
         }
   
     public void closeV( )
-      throws IOException
+      throws Exception
       /* This method closes the file.
         It must be called for lazilly loaded files because
         they are left open for extended periods of time
@@ -249,7 +249,8 @@ public class MetaFile { // For app's meta-data files.
         */
       {
         if ( theRandomAccessFile != null )
-          theRandomAccessFile.close();
+          Closeables.closeV(theRandomAccessFile);
+
         }
 
   // Method to read or write entire file, depending on context.
@@ -333,13 +334,13 @@ public class MetaFile { // For app's meta-data files.
                 theRandomAccessFile.setLength( // Truncate file at file...
                   theRandomAccessFile.getFilePointer( )  // ...pointer.
                   );
-                theRandomAccessFile.close( );
+                Closeables.closeV(theRandomAccessFile);
                 { // Replace input file by output file.
                   inputFile.delete();
                   outFile.renameTo(inputFile);
                   } // Replace input file by output file.
                 } // Try writing all MetaNodes.
-              catch ( IOException e ) { // Handle any exception.
+              catch ( Exception e ) { // Handle any exception.
                 e.printStackTrace();
                 } // Handle any exception.
               } // Write the data rooted at inMetaNode.
@@ -362,11 +363,11 @@ public class MetaFile { // For app's meta-data files.
                 new RandomAccessFile( FileNameFile, "r" );
               loadedMetaNode= rwFileMetaNode( loadedMetaNode );  // Read all state.
               dumpRemainder( );  // Output any file remainder for debugging.
-              theRandomAccessFile.close( );  // Close the input file.
+              Closeables.closeV(theRandomAccessFile); // Close the input file.
               } //  Read state from file.
           } // Read state.
-        catch ( IOException | NumberFormatException e ) {  // Process any errors.
-          e.printStackTrace();
+        catch ( Exception e ) { // Process any exceptions.
+          e.printStackTrace(); // Handle NumberFormatException or close error.
           }  // Process any errors.
 
         return loadedMetaNode;

@@ -192,7 +192,7 @@ public class MetaFileManager {
             lazyLoadMetaFile.closeV( );
             //appLogger.debug( "MetaFileManager.finish() lazyLoadMetaFile closed.");
             }
-          catch ( IOException e ) {  // Processing any errors.
+          catch ( Exception e ) {  // Processing any errors.
             e.printStackTrace();
             }
 

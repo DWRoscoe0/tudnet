@@ -434,10 +434,10 @@ public class VolumeChecker
               }
             finally {
               replaceOperationAndRefreshProgressReportV("syncing-file");
-              volumeDoneFilesL++;
               FileOps.syncV(theFileDescriptor);
               replaceOperationAndRefreshProgressReportV("closing-file");
               FileOps.closeOutputStreamV(theFileOutputStream);
+              volumeDoneFilesL++;
               theFileOutputStream= null; // Prevent another close.
               popOperationV(); // File operation. 
               if (! EpiString.isAbsentB(errorString)) break fileLoop;
@@ -454,7 +454,8 @@ public class VolumeChecker
           theAppLog.exception(errorString, theException);
         } finally {
           try {
-            if ( theFileOutputStream != null ) theFileOutputStream.close(); 
+            if ( theFileOutputStream != null ) 
+              Closeables.closeV(theFileOutputStream);
           } catch ( Exception theException ) {
             errorString= EpiString.combine1And2WithNewlineString(errorString,
               "VolumeCheck.writeTestReturnString(.) in error close "
@@ -536,7 +537,7 @@ public class VolumeChecker
             readCheckedBytesL= toCheckDoneBytesL;
           } // blockLoop:
             replaceOperationAndRefreshProgressReportV("closing\n");
-            theFileInputStream.close();
+            Closeables.closeV(theFileInputStream);
             popOperationV(); // "opening"
             if (! EpiString.isAbsentB(errorString)) break fileLoop;
             volumeDoneFilesL++;
@@ -548,7 +549,8 @@ public class VolumeChecker
           theAppLog.exception(errorString, theException);
         } finally {
           try {
-            if ( theFileInputStream != null ) theFileInputStream.close(); 
+            if ( theFileInputStream != null )
+              Closeables.closeV(theFileInputStream);
           } catch ( Exception theException ) { 
             errorString= EpiString.combine1And2WithNewlineString(errorString, 
               "VolumeCheck.readTestReturnString(.) in error close "
