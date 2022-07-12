@@ -66,10 +66,18 @@ public class Misc
       This is code which is or was useful for debugging.
       */
 
+      public static boolean trueB( )
+        /* This method returns true.
+         * It can be used to deactivate code with an if-statement, such as
+         *   if (trueB) break somewhereElse;
+         * without resulting in a dead-code warning. 
+         */
+        { return true; }
+
       public static void noOp( ) {} // Convenience for setting breakpoints.
-      
+
       private static boolean dbgEventDoneB= false;  // Set true to output Debug.txt.
-      
+
       public static void dbgEventDone()
         /* This is a convenient place to output state information
           after a user input event is processed or 
@@ -84,8 +92,8 @@ public class Misc
               noOp( );
               }
           }
-      
-      
+
+
     // Logging and logging utility code.
       
       public static void dbgConversionDone()

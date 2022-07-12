@@ -974,9 +974,14 @@ public class ConnectionManager
       /* This method does as its name describes.
        * Various condition can cause it to quietly fail to complete its task.
        * If it does complete its task then it deletes the input data file.
+       * 
+       * ///enh Rewrite this and calling methods so it is not necessary to
+       *   open the PersistentEpiNode.txt file every second.
+       *   Should be able to use a copy of the file in main memory. 
        */
       {
       toExit: {
+        if ( Misc.trueB() ) break toExit; /// Exit now, since no work ahead.
         if (! importDestinationFileFile.exists()) break toExit; // No file.
         MapEpiNode loadedMapEpiNode= 
             Persistent.loadMapEpiNode(importDestinationFileFile);
