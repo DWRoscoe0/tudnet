@@ -683,9 +683,7 @@ public class FileOps
         break toReturn;
       } finally {
         OSTime.directoryDutyCycle.updateActivityWithFalseV();
-        OSTime.closingDutyCycle.updateActivityWithTrueV();
         Closeables.closeAndReportNothingV(subtreeStreamOfPaths);
-        OSTime.closingDutyCycle.updateActivityWithFalseV();
       }
       } // toReturn:
         OSTime.directoryDutyCycle.updateActivityWithFalseV();
