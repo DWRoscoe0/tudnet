@@ -65,7 +65,7 @@ public class JavaFXGUI
     // Startup confirmation variables.
     private static LockAndSignal runningLockAndSignal= new LockAndSignal();
     private static volatile JavaFXGUI theJavaFXGUI= null; // Only instance. 
-    public static volatile boolean runtimeIsActiveB= false; 
+    private static volatile boolean runtimeIsActiveB= false; 
 
 
     static { // Code to log when this class is loaded.
