@@ -188,7 +188,7 @@ public class VolumeChecker
         if (! EpiString.isAbsentB(resultString)) 
           break goUpdateProgressAndReturn;
         buildFolderFile= new File(volumeFile,Config.appString + "Temp");
-        initialVolumeFreeBytesL= volumeTotalBytesL;
+        initialVolumeFreeBytesL= volumeFreeSpaceL;
         toCheckTotalBytesL= initialVolumeFreeBytesL;
         if (!getConfirmationKeyPressB( // Exit if write-read check not wanted.
             "\nDo you want to write-read-compare check this volume?")
