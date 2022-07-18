@@ -181,10 +181,10 @@ public class VolumeChecker
         doneTimeMsL= 0;
         passStartTimeMsL= getTimeMsL();
         volumeTotalBytesL= volumeFile.getTotalSpace();
-        volumeFreeSpaceL= volumeFile.getUsableSpace(); 
         spinnerStepStateI= 0;
         queueAndDisplayOutputSlowV("\n\nChecking " + volumeFile + "\n");
         resultString= maybeDeleteAllVolumeFilesReturnString(volumeFile);
+        volumeFreeSpaceL= volumeFile.getUsableSpace(); // Get new free space. 
         if (! EpiString.isAbsentB(resultString)) 
           break goUpdateProgressAndReturn;
         buildFolderFile= new File(volumeFile,Config.appString + "Temp");
@@ -334,6 +334,7 @@ public class VolumeChecker
         resultString= FileOps.parentPostorderTraversalReturningString(
           volumeFile, deletionScanFunctionOfFileToString);
         theAppLog.debug("in maybeDeleteAllVolumeFilesReturnString(.)...");
+        progressReportUpdateV(); // Do final progress report.
         progressReportResetV(); // Make last progress report permanent. 
         if (null != resultString) // Handle possible traversal termination.
           { // Handle traversal termination.
