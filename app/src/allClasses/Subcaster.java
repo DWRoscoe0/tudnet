@@ -72,7 +72,7 @@ public class Subcaster
               ///tmp pingReplyProtocolV();
               theLockAndSignal.waitingForInterruptOrNotificationE(); // Waiting for any input.
               } // while(true)
-          Closeables.closeV(theSubcasterOutputStream); // Closing output stream.
+          Closeables.closeAndReportTimeUsedAndThrowExceptionsV(theSubcasterOutputStream); // Closing output stream.
           }
         catch( Exception e ) {
           Misc.logAndRethrowAsRuntimeExceptionV( 

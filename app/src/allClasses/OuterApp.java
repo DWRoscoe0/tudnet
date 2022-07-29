@@ -65,6 +65,7 @@ public class OuterApp { // The outer part of app, with a very limited UI.
     {
       // OuterApp initialization.
       theAppLog.info("OuterApp.run() begins.");
+      theAppLog.setBufferedModeV(false); // For OSTime tests. 
       defineRootIdV();
       theShutdowner.initializeV();
 

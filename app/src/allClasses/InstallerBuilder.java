@@ -93,13 +93,21 @@ public class InstallerBuilder
       goReturn: {
       goFinish: {
         /// resultString= deleteAllVolumeFilesReturnString(volumeFile);
+        theAppLog.debug("InstallerBuilder.installToVolumeV(.) "
+            + "calling deleteRecursivelyIfItExistsReturnString().");
         resultString= FileOps.deleteRecursivelyIfItExistsReturnString(
           buildFolderFile,FileOps.requiredConfirmationString);
         if (! EpiString.isAbsentB(resultString)) break goFinish;
+        theAppLog.debug("InstallerBuilder.installToVolumeV(.) "
+            + "calling createFolderReturnString().");
         resultString= createFolderReturnString(buildFolderFile);
         if (! EpiString.isAbsentB(resultString)) break goFinish;
+        theAppLog.debug("InstallerBuilder.installToVolumeV(.) "
+            + "calling writeAppFileReturnString().");
         resultString= writeAppFileReturnString(buildFolderFile);
         if (! EpiString.isAbsentB(resultString)) break goFinish;
+        theAppLog.debug("InstallerBuilder.installToVolumeV(.) "
+            + "calling writeReadMeFileReturnString().");
         resultString= writeReadMeFileReturnString(buildFolderFile);
         if (! EpiString.isAbsentB(resultString)) break goFinish;
         resultString= writeConfigurationFileReturnString(buildFolderFile);

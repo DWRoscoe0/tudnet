@@ -173,9 +173,9 @@ public class Persistent
           finally { 
             try { 
               if ( theRandomAccessInputStream != null ) 
-                Closeables.closeV(theRandomAccessInputStream);
+                Closeables.closeAndReportTimeUsedAndThrowExceptionsV(theRandomAccessInputStream);
               if ( theRandomAccessFile != null ) 
-                Closeables.closeV(theRandomAccessFile);
+                Closeables.closeAndReportTimeUsedAndThrowExceptionsV(theRandomAccessFile);
               }
             catch (Exception theException) { 
               theAppLog.exception(

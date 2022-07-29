@@ -1,5 +1,7 @@
 package allClasses;
 
+import static allClasses.AppLog.theAppLog;
+
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
@@ -26,10 +28,22 @@ public class ThreadScheduler extends ScheduledThreadPoolExecutor
      *   that was set for this purpose. 
      *   try-catch blocks were added to report these Exceptions.
      *
-     *   This class simply wraps ScheduledThreadPoolExecutor.  
-     *   It is used but is also a no-op.
-     *   It was decided to leave the class to hold this documentation,
-     *   and in case ScheduledThreadPoolExecutor monitoring is needed later.
+     * This class simply wraps ScheduledThreadPoolExecutor.  
+     * It is used but is also a no-op.
+     * It was decided to leave the class to hold this documentation,
+     * and in case ScheduledThreadPoolExecutor monitoring is needed later.
+     * 
+     * ScheduledThreadPoolExecutor is used by extension.
+     * Unfortunately it appears that ScheduledThreadPoolExecutor disables
+     * some functionality of the ThreadPoolExecutor for controlling
+     * the thread pool.  In the ScheduledThreadPoolExecutor,
+     * the pool size, the so-called core size, is fixed.
+     * It can not expand or contract as needed.
+     * 
+     * ///enh It might be necessary to create a new class that uses
+     * the ThreadPoolExecutor configured for a widely variable number of threads
+     * to provide a ThreadScheduler-like class
+     * that can provide a potentially large number of timer threads.
      */
 
     public ThreadScheduler( // constructor
@@ -37,6 +51,13 @@ public class ThreadScheduler extends ScheduledThreadPoolExecutor
       {
         super(corePoolSize, handler);
         }
-    
-  
-}
+
+    static public ThreadScheduler 
+        // Single ThreadScheduler for many app threads and timers.
+        theThreadScheduler= new ThreadScheduler(
+            10, /// 5, // Fixed thread pool size.
+            (theRunnable,theThreadPoolExecutor) -> { theAppLog.error(
+                "ThreadScheduler rejected execution."); }
+            ); // Minimum of 1 thread,
+
+  }

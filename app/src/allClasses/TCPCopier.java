@@ -171,15 +171,15 @@ public class TCPCopier extends EpiThread
         try { // Also close the server ServerSocket.
             if (serverServerSocket!= null) {
               theAppLog.debug("TCPCopier","TCPCopier.stopV(): closing serverServerSocket");            
-              Closeables.closeV(serverServerSocket);
+              Closeables.closeAndReportTimeUsedAndThrowExceptionsV(serverServerSocket);
               }
           } catch (Exception theException) {
             theAppLog.exception("TCPCopier.stopV(): closing", theException);            
           }
         
         // Also close the Sockets of
-        Closeables.closeAndReportErrorsV(clientSocket); // the client
-        Closeables.closeAndReportErrorsV(serverSocket); // and server.
+        Closeables.closeAndReportTimeUsedAndExceptionsV(clientSocket); // the client
+        Closeables.closeAndReportTimeUsedAndExceptionsV(serverSocket); // and server.
 
         theAppLog.debug("TCPCopier","TCPCopier.stopV(): interrupt and socket closes done.");
         }
@@ -380,7 +380,7 @@ public class TCPCopier extends EpiThread
             theAppLog.info(
               "tryExchangingFilesWithServerL() failed" + NL + "  "+ theIOException);
           } finally {
-            Closeables.closeAndReportErrorsV(clientSocket);
+            Closeables.closeAndReportTimeUsedAndExceptionsV(clientSocket);
           }
         return resultL;
         }
@@ -454,8 +454,8 @@ public class TCPCopier extends EpiThread
               else
               theAppLog.exception("serviceOneRequestFromAnyClientV()",ex);
           } finally { // Be certain resources are closed.
-            Closeables.closeAndReportErrorsV(serverSocket);
-            Closeables.closeAndReportErrorsV(serverServerSocket);
+            Closeables.closeAndReportTimeUsedAndExceptionsV(serverSocket);
+            Closeables.closeAndReportTimeUsedAndExceptionsV(serverServerSocket);
             } // toReturn: 
         return successB;
         }
@@ -586,7 +586,7 @@ public class TCPCopier extends EpiThread
               // This signals that remote peer has received all our sent file data.
             theAppLog.info("sendNewerLocalFileV() remote peer output shutdown.");
           } finally {
-            Closeables.closeAndReportErrorsV(localFileInputStream);
+            Closeables.closeAndReportTimeUsedAndExceptionsV(localFileInputStream);
           }
         }
 
@@ -648,7 +648,7 @@ public class TCPCopier extends EpiThread
               + "Doing shutdownOutput().");
           theSocket.shutdownOutput(); // Do an output half-close, signaling EOF.
           try { 
-              Closeables.closeV(tmpFileOutputStream); // Close output file.
+              Closeables.closeAndReportTimeUsedAndThrowExceptionsV(tmpFileOutputStream); // Close output file.
             } catch ( Exception e ) {
               theAppLog.exception("receiveNewerRemoteFileB() close failure", e);
               break toReturn; // Exit because close failed.
@@ -666,7 +666,7 @@ public class TCPCopier extends EpiThread
             break toReturn;
             }
           } // toReturn:
-        Closeables.closeAndReportErrorsV(tmpFileOutputStream); ///opt done needed?
+        Closeables.closeAndReportTimeUsedAndExceptionsV(tmpFileOutputStream); ///opt done needed?
         FileOps.deleteDeleteable(tmpFile); // Delete possible temporary debris.
         theAppLog.info("receiveNewerRemoteFileB(..) successB="+successB);
         return successB;

@@ -36,7 +36,7 @@ public class Confingleton
           FileReader theFileReader= new FileReader(theFile);
           char[] chars= new char[(int) theFile.length()];
           theFileReader.read(chars);
-          Closeables.closeV(theFileReader);
+          Closeables.closeAndReportTimeUsedAndThrowExceptionsV(theFileReader);
           valueString= new String(chars);
         } catch (Exception theException) {
             // Ignore exception caused by no file or bad data.

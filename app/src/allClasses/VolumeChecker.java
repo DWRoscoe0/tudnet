@@ -456,7 +456,7 @@ public class VolumeChecker
         } finally {
           try {
             if ( theFileOutputStream != null ) 
-              Closeables.closeV(theFileOutputStream);
+              Closeables.closeAndReportTimeUsedAndThrowExceptionsV(theFileOutputStream);
           } catch ( Exception theException ) {
             errorString= EpiString.combine1And2WithNewlineString(errorString,
               "VolumeCheck.writeTestReturnString(.) in error close "
@@ -538,7 +538,7 @@ public class VolumeChecker
             readCheckedBytesL= toCheckDoneBytesL;
           } // blockLoop:
             replaceOperationAndRefreshProgressReportV("closing\n");
-            Closeables.closeV(theFileInputStream);
+            Closeables.closeAndReportTimeUsedAndThrowExceptionsV(theFileInputStream);
             popOperationV(); // "opening"
             if (! EpiString.isAbsentB(errorString)) break fileLoop;
             volumeDoneFilesL++;
@@ -551,7 +551,7 @@ public class VolumeChecker
         } finally {
           try {
             if ( theFileInputStream != null )
-              Closeables.closeV(theFileInputStream);
+              Closeables.closeAndReportTimeUsedAndThrowExceptionsV(theFileInputStream);
           } catch ( Exception theException ) { 
             errorString= EpiString.combine1And2WithNewlineString(errorString, 
               "VolumeCheck.readTestReturnString(.) in error close "

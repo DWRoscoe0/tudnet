@@ -6,72 +6,75 @@ import static allClasses.AppLog.theAppLog;
 public class Closeables 
 
   {
-  
     /* This class contains static methods that provide several ways 
      * of closing resources that implement the AutoCloseable interface.
      *   
      * The methods provide 
      * 1 SOME of the convenience of the Java try-with-resources statement, and
-     * 2 the ability to monitor time spent in the OS API close method.
+     * 2 the ability to monitor time used by the OS API close method
+     *   for progress reports and over limit detection.
      * 
      * The methods differ in:
-     * * Whether they do error logging.
-     * * Whether and how they handle Exceptions that happen during the close.
-     * * Whether and how they handle a null reference to the AutoCloseable.
+     * * Whether they report close() Exceptions.
+     * * Whether they report null AutoCloseable references.
+     * * Whether they report excessive time used by the close().
+     * * Whether they handle or throw close() Exceptions.
      *
      * Note that AutoCloseable, even though it came later, 
      * was made a super interface of Closeable, for back-compatibility.
-  
-      ///enh: Maybe make these methods more orthogonal,
-         maybe by using a new lowest-level buck-stops-here method, 
-         and having other methods call it, a method such as:
-           static boolean closeB(
-             boolean nullIsErrorB,
-             boolean reportErrorsB
-             AutoCloseable theAutoCloseable
-             )B
 
       ///enh: maybe add methods which take an array... of AutoCloseables
         instead of a single AutoCloseable.
 
       ///enh: maybe add methods which return errors as a String.
 
-       */
-   
-    public static void closeAndReportNothingV(
-        AutoCloseable theAutoCloseable)
-      /* This method closes theAutoCloseable if it's not null.
-       * It does not report a null theAutoCloseable or close errors. 
-       */
+     */
+
+
+    /* The following methods close AutoCloseable resources,
+     * but handling and-or reports close() Exceptions.  
+     * It does not throw them.
+     */
+
+    public static void closeV(AutoCloseable theAutoCloseable)
       {
-        closeWithOptionsV(theAutoCloseable,
+        closeControlledByOptionsV(theAutoCloseable,
             false, // Don't report null. 
-            false // Don't report close errors.
+            false, // Don't report close Exceptions.
+            false // Don't report over time limit.
             );
         }
-  
-    public static void closeAndReportErrorsV(
-        AutoCloseable theAutoCloseable)
-      /* This method closes theAutoCloseable if it's not null.
-       * It does not report a null theAutoCloseable 
-       * but does report close errors. 
-       */
+
+    public static void closeAndReportTimeUsedV(AutoCloseable theAutoCloseable)
       {
-        closeWithOptionsV(theAutoCloseable, 
+        closeControlledByOptionsV(theAutoCloseable,
             false, // Don't report null. 
-            true // Report close errors.
+            false, // Don't report close Exceptions.
+            true // Report over time limit.
             );
         }
-  
-    private static void closeWithOptionsV(
+
+    public static void closeAndReportTimeUsedAndExceptionsV(
+        AutoCloseable theAutoCloseable)
+      {
+        closeControlledByOptionsV(theAutoCloseable, 
+            false, // Don't report null. 
+            true, // Report close Exceptions.
+            true // Report over time limit.
+            );
+        }
+
+    private static void closeControlledByOptionsV(
         AutoCloseable theAutoCloseable,
         boolean reportNullsB,
-        boolean reportExceptionsB
+        boolean reportExceptionsB,
+        boolean reportOverLimitB
         )
-      /* This method is for closing resources.
+      /* This method is for closing resources with several options.
         It is private, but is called by other local public methods.
         It reports when theAutoCloseable is null if reportNullsB is true.
         It reports close exceptions if reportExceptionsB is true.
+        It reports excessive close time exceptions if reportOverLimitB is true.
         */
       {
         if (theAutoCloseable == null) {
@@ -79,8 +82,11 @@ public class Closeables
               theAppLog.error(
                 "Closeables.closeWithOptionsV(.): null AutoCloseable resource");            
         } else { // theAutoCloseable != null
-            try { 
-                closeV(theAutoCloseable);
+            try {
+                if (reportOverLimitB)
+                  closeAndReportTimeUsedAndThrowExceptionsV(theAutoCloseable);
+                  else
+                  closeAndThrowExceptionsV(theAutoCloseable);
               } catch (Exception theException) {
                 if (reportExceptionsB) 
                   theAppLog.exception(
@@ -90,7 +96,7 @@ public class Closeables
         }
   
     @SuppressWarnings("unused") ///
-    private static Exception closeAccumulateAndReturnException(
+    private static Exception closeAndAccumulateAndReturnException( // Unused.
           AutoCloseable theAutoCloseable, Exception earlierException)
       /* This method is for closing a resource but retaining
         the ability to detect and process exceptions during the close.
@@ -119,7 +125,7 @@ public class Closeables
         if (theAutoCloseable != null)
           try { 
               OSTime.closingDutyCycle.updateActivityWithTrueV();
-              closeV(theAutoCloseable);
+              closeAndReportTimeUsedAndThrowExceptionsV(theAutoCloseable);
             } catch (Exception newException) {
               theAppLog.exception(
                   "closeAndAccumulateException(..): ", newException
@@ -133,26 +139,28 @@ public class Closeables
         return earlierException;
         }
 
-    public static void closeV(AutoCloseable theAutoCloseable)
+
+    /* The following methods also close AutoCloseable resources,
+     * but instead of handling and-or reporting close() Exceptions, 
+     * it throws them.
+     */
+
+    public static void closeAndReportTimeUsedAndThrowExceptionsV(
+          AutoCloseable theAutoCloseable)
         throws Exception
-      /* This method attempts to close theAutoCloseable.
-       * It works like the regular close() method.
-       * It passes on any Exception that the close() method throws.
-       * 
-       * The only difference is that this method also monitors 
-       * time spent in the operating system doing the close operation.
-       * 
-       * This method may be used in place of close() 
-       * if handling exceptions locally is desired.  However,
-       * it might be necessary to catch Exception instead of IOException.
-       */
       {
         try { 
             OSTime.closingDutyCycle.updateActivityWithTrueV(); // Monitor on.
-            theAutoCloseable.close();
+            closeAndThrowExceptionsV(theAutoCloseable);
           } finally { // Do this regardless of exceptions.
             OSTime.closingDutyCycle.updateActivityWithFalseV(); // Monitor off.
           }
+        }
+
+    public static void closeAndThrowExceptionsV(AutoCloseable theAutoCloseable)
+        throws Exception
+      {
+        theAutoCloseable.close();
         }
 
     }

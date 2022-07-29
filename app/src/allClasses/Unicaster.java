@@ -204,7 +204,7 @@ public class Unicaster
     protected void finalizingV() throws Exception
       // This is the opposite of initilizingV().
       {
-        Closeables.closeV(theEpiOutputStreamO); // Closing output stream.
+        Closeables.closeAndReportTimeUsedAndThrowExceptionsV(theEpiOutputStreamO); // Closing output stream.
         super.finalizeV();
         }
 

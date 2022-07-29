@@ -173,7 +173,7 @@ public class TextStream2
             finally {
               try {
                 if ( theBufferedReader != null ) 
-                  Closeables.closeV(theBufferedReader);
+                  Closeables.closeAndReportTimeUsedAndThrowExceptionsV(theBufferedReader);
                 }
               catch ( Exception theIOException ) { 
                 theAppLog.exception("TextStream2.loadStreamV(..)", theIOException);
@@ -262,7 +262,7 @@ public class TextStream2
             finally {
               try {
                 if ( theFileWriter != null ) 
-                  Closeables.closeV(theFileWriter);
+                  Closeables.closeAndReportTimeUsedAndThrowExceptionsV(theFileWriter);
                 }
               catch ( Exception theIOException ) { 
                 theAppLog.exception("TextStream2.storeDocumentV(..)", theIOException);

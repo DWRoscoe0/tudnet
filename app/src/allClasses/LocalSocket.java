@@ -132,7 +132,7 @@ public class LocalSocket
          theCommandArgs= // Parse string into separate string arguments using
            new CommandArgs(readString.split("\\s")); // white-space delimiters.
          theAppLog.debug("inputFromConnectionV(): theCommandArgs created.");
-         Closeables.closeAndReportErrorsV(inBufferedReader);
+         Closeables.closeAndReportTimeUsedAndExceptionsV(inBufferedReader);
          theAppLog.debug("inputFromConnectionV(): inBufferedReader.closed.");
          }
     
@@ -150,7 +150,7 @@ public class LocalSocket
       { 
         try { 
           if (theServerSocket != null)
-            Closeables.closeV(theServerSocket);
+            Closeables.closeAndReportTimeUsedAndThrowExceptionsV(theServerSocket);
           } catch (Exception e) {
             theAppLog.exception("closeConnectionV()",e);
           } 
@@ -178,7 +178,7 @@ public class LocalSocket
         closeConnectionV(); // Close any single associated socket connection.
         try { // Close the server socket.
             if (theServerServerSocket != null) 
-              Closeables.closeV(theServerServerSocket);
+              Closeables.closeAndReportTimeUsedAndThrowExceptionsV(theServerServerSocket);
           } catch (Exception e) {
             theAppLog.exception("LocalSocket.closeV()",e);
           }
@@ -203,8 +203,8 @@ public class LocalSocket
               theClientSocket.getOutputStream();
           theOutputStream.write(  // Send output string to other app via stream.
             outputString.getBytes());
-          Closeables.closeV(theOutputStream);
-          Closeables.closeV(theClientSocket);
+          Closeables.closeAndReportTimeUsedAndThrowExceptionsV(theOutputStream);
+          Closeables.closeAndReportTimeUsedAndThrowExceptionsV(theClientSocket);
           theAppLog.info(
             "======== SUCCESS SENDING TCP LOOPBACK PACKET ========"
             +commonString);

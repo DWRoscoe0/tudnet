@@ -1158,10 +1158,10 @@ public class AppLog
                 }
               else {
                 System.err.println("openWithRetryDelayFileWriter() common exception "+e);
-                Closeables.closeAndReportNothingV(resultWriter);
+                Closeables.closeV(resultWriter);
                 if (theLogFileLock!=null) theLogFileLock.release();
-                Closeables.closeAndReportNothingV(theFileChannel);
-                Closeables.closeAndReportNothingV(theFileOutputStream);
+                Closeables.closeV(theFileChannel);
+                Closeables.closeV(theFileOutputStream);
                 interruptibleSleepB( 1 ); // Pause 1 ms.
                 openSleepDelayMsI++; //* Count the pause and the time.
                 }
@@ -1259,7 +1259,7 @@ public class AppLog
           } catch (IOException e){
             System.out.println("closeFileV() during release(), "+e);
           }
-        Closeables.closeAndReportNothingV(thePrintWriter); // Close file.
+        Closeables.closeV(thePrintWriter); // Close file.
         thePrintWriter= null; // Indicate file is closed.
         }
       

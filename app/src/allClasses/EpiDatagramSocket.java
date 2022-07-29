@@ -21,7 +21,7 @@ public class EpiDatagramSocket extends DatagramSocket
 
     static public void closeIfNotNullV( DatagramSocket theDatagramSocket )
       {
-        Closeables.closeAndReportErrorsV(theDatagramSocket);
+        Closeables.closeAndReportTimeUsedAndExceptionsV(theDatagramSocket);
         }
     
     }

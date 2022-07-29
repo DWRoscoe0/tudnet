@@ -348,7 +348,7 @@ public class FileOps
           } finally { // Close things, error or not.
             theAppLog.debug("FileOps","FileOps.tryRawCopyFileB(.) "
                 + "closing InputStream.");
-            Closeables.closeAndReportErrorsV(theInputStream);
+            Closeables.closeAndReportTimeUsedAndExceptionsV(theInputStream);
           }
         theAppLog.debug("FileOps","FileOps.tryRawCopyFileB(.) ends, "
             +"closes done, errorString="+errorString);
@@ -379,13 +379,16 @@ public class FileOps
       {
         theAppLog.debug("FileOps",
             "FileOps.tryCopyingInputStreamToFileReturnString(.) begins.");
-        OutputStream theOutputStream= null;
+        FileOutputStream theFileOutputStream= null;
         boolean successB= false;
         String errorString= null;
+        FileDescriptor theFileDescriptor= null;
         try {
-            theOutputStream= new FileOutputStream(destinationFile);
+            theFileOutputStream= new FileOutputStream(destinationFile);
+            theFileDescriptor= theFileOutputStream.getFD();
             errorString= copyStreamBytesReturnString(
-                theInputStream,theOutputStream);
+                theInputStream,theFileOutputStream);
+            FileOps.syncV(theFileDescriptor); // Do this so close() is fast.
           } catch (Exception e) {
               theAppLog.exception(
                   "FileOps.tryCopyingInputStreamToFileReturnString(.)",e); 
@@ -393,7 +396,7 @@ public class FileOps
             theAppLog.debug("FileOps","FileOps."
               + "tryCopyingInputStreamToFileReturnString(.) "
               + "closing OutputStream.");
-            Closeables.closeAndReportErrorsV(theOutputStream);
+            Closeables.closeAndReportTimeUsedAndExceptionsV(theFileOutputStream);
               // Closing the OutputStream can block temporarily.
           }
         theAppLog.debug("FileOps","FileOps."
@@ -683,7 +686,7 @@ public class FileOps
         break toReturn;
       } finally {
         OSTime.directoryDutyCycle.updateActivityWithFalseV();
-        Closeables.closeAndReportNothingV(subtreeStreamOfPaths);
+        Closeables.closeAndReportTimeUsedV(subtreeStreamOfPaths);
       }
       } // toReturn:
         OSTime.directoryDutyCycle.updateActivityWithFalseV();
@@ -916,7 +919,7 @@ public class FileOps
        * It throws an IOException if there is an error.
        */
       {
-        Closeables.closeAndReportErrorsV(theFileOutputStream);
+        Closeables.closeAndReportTimeUsedAndExceptionsV(theFileOutputStream);
         }
 
     public static boolean deleteFileB(File theFile)

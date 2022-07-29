@@ -249,7 +249,7 @@ public class MetaFile { // For app's meta-data files.
         */
       {
         if ( theRandomAccessFile != null )
-          Closeables.closeV(theRandomAccessFile);
+          Closeables.closeAndReportTimeUsedAndThrowExceptionsV(theRandomAccessFile);
 
         }
 
@@ -334,7 +334,7 @@ public class MetaFile { // For app's meta-data files.
                 theRandomAccessFile.setLength( // Truncate file at file...
                   theRandomAccessFile.getFilePointer( )  // ...pointer.
                   );
-                Closeables.closeV(theRandomAccessFile);
+                Closeables.closeAndReportTimeUsedAndThrowExceptionsV(theRandomAccessFile);
                 { // Replace input file by output file.
                   inputFile.delete();
                   outFile.renameTo(inputFile);
@@ -363,7 +363,7 @@ public class MetaFile { // For app's meta-data files.
                 new RandomAccessFile( FileNameFile, "r" );
               loadedMetaNode= rwFileMetaNode( loadedMetaNode );  // Read all state.
               dumpRemainder( );  // Output any file remainder for debugging.
-              Closeables.closeV(theRandomAccessFile); // Close the input file.
+              Closeables.closeAndReportTimeUsedAndThrowExceptionsV(theRandomAccessFile); // Close the input file.
               } //  Read state from file.
           } // Read state.
         catch ( Exception e ) { // Process any exceptions.

@@ -307,7 +307,7 @@ public class Anomalies
         return resultString;
         }
 
-    public static String testAndDisplayDialogReturnString(
+    public static String displayMaybeLimitDialogReturnString(
         String nameString,
         String stateString,
         long maximumTimeMsL,

@@ -94,7 +94,7 @@ public class Outline
                 catch ( IOException e ) {
                   try {
                     theAppLog.info( "Outline.readLineV() re-openning file." );
-                    Closeables.closeV(theRandomAccessFile); // Closing bad file.
+                    Closeables.closeAndReportTimeUsedAndThrowExceptionsV(theRandomAccessFile); // Closing bad file.
                     theRandomAccessFile=  // Re-opening it.
                         new RandomAccessFile( "Outline.tmp", "r" );
                     }

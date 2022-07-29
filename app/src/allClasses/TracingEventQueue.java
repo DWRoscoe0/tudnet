@@ -206,7 +206,7 @@ class TracingEventQueueMonitor extends Thread {
     {
       long timeSinceDispatchStartMsL = timeNowMsL - dispatchStartTimeMsL;
 
-      String resultString= Anomalies.testAndDisplayDialogReturnString(
+      String resultString= Anomalies.displayMaybeLimitDialogReturnString(
           "EDT-Dispatch",
           dispatchStateString, 
           dispatchTimeMaximumMsL,

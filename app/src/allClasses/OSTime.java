@@ -1,5 +1,9 @@
 package allClasses;
 
+import static allClasses.AppLog.theAppLog;
+
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class OSTime 
   {
@@ -117,7 +121,6 @@ public class OSTime
     static long lastReportTimeNsL;
     static long thisReportTimeNsL;
 
-
     static class DutyCycle
       /* This class is used to calculate the duty-cycle of operations.
        * It was created to do this for IO operations,
@@ -181,35 +184,83 @@ public class OSTime
           {
             long timeSinceLastActivityUpdateNsL= 
                timeNowNsL - timeOfLastActivityUpdateNsL;
-            if (operationIsActiveB)
-              timeActiveNsL+= timeSinceLastActivityUpdateNsL;
+            if (operationIsActiveB) 
+              { timeActiveNsL+= timeSinceLastActivityUpdateNsL;
+                }
               else
-              timeInactiveNsL+= timeSinceLastActivityUpdateNsL;
+              { timeInactiveNsL+= timeSinceLastActivityUpdateNsL;
+                }
             operationIsActiveB= newActivityB;
             timeOfLastActivityUpdateNsL= timeNowNsL;
-            doLimitCheckV(timeNowNsL);
+            doLimitChecksV(timeNowNsL);
             }
 
-        private void doLimitCheckV(long timeNowNsL)
+        private void activateLimitPollingIfInactiveV()
+          {
+            if (null == outputFuture) // If polling is inactive then
+              { // activate polling.
+                logV("OSTime DutyCycle.activatePolling() scheduling");
+                outputFuture= ThreadScheduler.theThreadScheduler.scheduleAtFixedRate(
+                  pollerRunnable,
+                  1000, // delay.
+                  1000, // period.
+                  TimeUnit.MILLISECONDS
+                  );
+                }
+            }
+
+        private void deactivateLimitPollingIfActiveV()
+          {
+            if (null != outputFuture) // If polling is active then 
+              { // deactivate it.
+                logV("OSTime DutyCycle.deactivatePolling() canceling");
+                outputFuture.cancel(true);
+                outputFuture= null;
+                }
+            }
+
+        private void doLimitChecksV(long timeNowNsL)
           /* This method tests whether the activity maximum time limit
            * has been exceeded.  If it has then it reports it.
            * This method should be called often enough
            * to give the user timely reports.
            */
           {
-            if (limitedPeriodIsActiveB)
-              Anomalies.testAndDisplayDialogReturnString(
+            boolean showDialogB= false;
+            if (operationIsActiveB) 
+              { 
+                showDialogB= true; // For the "ACTIVE" displays. 
+                if (!limitedPeriodIsActiveB) 
+                  { // Process start of active interval. 
+                    activateLimitPollingIfInactiveV();
+                    activePeriodStartTimeNsL= timeNowNsL;
+                    limitedPeriodIsActiveB= true;
+                    }
+                }
+              else // !operationIsActiveB
+              { if (limitedPeriodIsActiveB)
+                  { // Process end of active interval.
+                    showDialogB= true; // For the final "Done" display. 
+                    deactivateLimitPollingIfActiveV();
+                    limitedPeriodIsActiveB= false;
+                    }
+                }
+            if (showDialogB) // Display maybe if operation is active.
+              Anomalies.displayMaybeLimitDialogReturnString(
                   nameString,
-                  operationIsActiveB ? "ACTIVE" : "Done", 
+                  limitedPeriodIsActiveB ? "ACTIVE" : "Done", 
                   maximumTimeMsL, // maximum time for operation
                   (timeNowNsL - activePeriodStartTimeNsL) / 1000000
                   );
-            if (limitedPeriodIsActiveB != operationIsActiveB)
-              {
-                limitedPeriodIsActiveB= operationIsActiveB;
-                activePeriodStartTimeNsL= timeNowNsL;
-                }
             }
+
+        private void logV(String theString) {
+          theAppLog.debug(theString
+              +",n="+nameString
+              +",lpa="+limitedPeriodIsActiveB
+              +",oia="+operationIsActiveB
+              );
+          }
 
         private DutyCycle(String nameString,long maximumTimeMsL) // constructor.
           {
@@ -226,6 +277,22 @@ public class OSTime
         private long timeOfLastActivityUpdateNsL;
         private long timeActiveNsL;
         private long timeInactiveNsL;
+        private Future<?> outputFuture;
+        private Runnable pollerRunnable= 
+          () -> {
+            try { ///ano Handle ignored ThreadPoolExecutor Exceptions.
+                EpiThread.setPoolThreadNameV("OSTime-Poller");
+                logV("OSTime pollerRunnable running");
+                updateActivityV(operationIsActiveB,System.nanoTime());
+                EpiThread.unsetPoolThreadNameV("OSTime-Poller");
+              } catch (Exception theException) {
+                Anomalies.displayDialogReturnString(
+                  "OSTime-Poller pollerRunnable",
+                  theException.toString(),
+                  true
+                  );
+              };
+            };
 
         } // DutyCycle
 

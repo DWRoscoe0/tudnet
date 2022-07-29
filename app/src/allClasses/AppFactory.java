@@ -24,18 +24,6 @@ public class AppFactory {  // For App class lifetimes.
     The app has exactly one instance of this factory.
     This class wires together the top level of the application.
 
-    ThreadScheduler is used in this class.
-    Unfortunately it appears that ThreadScheduler disables
-    some functionality of the ThreadPoolExecutor for controlling  
-    the thread pool.  In the ThreadScheduler,
-    the pool size, the so-called core size, is fixed.
-    It can not expand or contract as needed.
-
-    ///enh It might be necessary to create a new class that uses 
-    the ThreadPoolExecutor configured for a widely variable number of threads
-    to provide a ThreadScheduler-like class 
-    that can provide a potentially large number of timer threads.
-
     Some of the following code was moved from the old AppGUIFactory class, 
     which if it still existed, would be called InnerAppFactory.
     */
@@ -122,14 +110,7 @@ public class AppFactory {  // For App class lifetimes.
         new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE, "mccmp");
       NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue=
           new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE, "urcmp");
-      ThreadScheduler theThreadScheduler; {
-        // Single ThreadScheduler for many app threads and timers.
-        theThreadScheduler= new ThreadScheduler(
-            10, /// 5, // Fixed thread pool size.
-            (theRunnable,theThreadPoolExecutor) -> { theAppLog.error(
-                "ThreadScheduler rejected execution."); }
-            ); // Minimum of 1 thread,
-        }
+      ThreadScheduler theThreadScheduler= ThreadScheduler.theThreadScheduler;
       theTextStreams2= new TextStreams2(
           "Replication-Text-Streams",this,thePersistent,theUnicasterManager);
       theConnectionManager= new ConnectionManager(
