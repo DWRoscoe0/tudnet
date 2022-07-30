@@ -34,7 +34,15 @@ public class OSTime
      *   until no API method times were reported as excessive.
      *   As you can see, several of these times were multiple seconds,
      *   though none of them should be.
+     *
      * 
+     * Proper operation of this class requires that
+     * each API call completes before another starts,
+     * meaning a maximum of one thread for each function.
+     * The "synchronized" keyword is used in places to make this true.
+     * This prevents NullPointerExceptions, but might result
+     * in some inaccurate time measurements when multiple threads
+     * are using this class concurrently. 
      */
 
     static String getOsIoString()
@@ -112,7 +120,7 @@ public class OSTime
     static DutyCycle directoryDutyCycle= new DutyCycle("Directory-Read",4000);
     static DutyCycle writingDutyCycle= new DutyCycle("Data-Write",16300);
     static DutyCycle syncingDutyCycle= new DutyCycle("File-Sync",114000);
-    static DutyCycle closingDutyCycle= new DutyCycle("Close",86);
+    static DutyCycle closingDutyCycle= new DutyCycle("Close",89);
     static DutyCycle readingDutyCycle= new DutyCycle("Data-Read",193);
     static DutyCycle deletingDutyCycle= new DutyCycle("File-Delete",50000);
 
@@ -195,7 +203,7 @@ public class OSTime
             doLimitChecksV(timeNowNsL);
             }
 
-        private void activateLimitPollingIfInactiveV()
+        private synchronized void activateLimitPollingIfInactiveV()
           {
             if (null == outputFuture) // If polling is inactive then
               { // activate polling.
@@ -209,7 +217,7 @@ public class OSTime
                 }
             }
 
-        private void deactivateLimitPollingIfActiveV()
+        private synchronized void deactivateLimitPollingIfActiveV()
           {
             if (null != outputFuture) // If polling is active then 
               { // deactivate it.
