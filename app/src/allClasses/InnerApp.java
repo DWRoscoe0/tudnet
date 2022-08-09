@@ -190,7 +190,6 @@ public class InnerApp
         theCPUMonitorEpiThread.stopAndJoinV();
         theDataTreeModel.logListenersV(); ///dbg
         theConnectionManagerEpiThread.stopAndJoinV( );
-        theScheduledThreadPoolExecutor.shutdownNow(); // Terminate pool threads.
         finalizeUIV();
         theDataTreeModel.finalizeV();
         theAppLog.info("InnerApp.runV() ends.");

@@ -165,7 +165,9 @@ class TUDNet
 
         CommandArgs theCommandArgs= new CommandArgs(argStrings);
         AppSettings.initializeV(TUDNet.class, theCommandArgs);
-        AppFactory theAppFactory= new AppFactory(theCommandArgs, thePersistent);
+        ThreadScheduler theThreadScheduler= ThreadScheduler.theThreadScheduler;
+        AppFactory theAppFactory= 
+            new AppFactory(theCommandArgs, thePersistent,theThreadScheduler);
         OuterApp theOuterApp= theAppFactory.getOuterApp();
         theOuterApp.runV();  // Run the app until shutdown.
           // This might not return if a shutdown is initiated by the JVM!
@@ -176,6 +178,7 @@ class TUDNet
         theAppLog.info(true,"TUDNet.main() ======== APP IS ENDING ========"
           + NL + "    by closing log file and exiting the main(.) method.");
         theAppLog.closeFileIfOpenB(); // Close log file for exit.
+        theThreadScheduler.shutdownNow(); // Terminate pool threads.
         theBackupTerminator.setTerminationUnderwayV(); ///ano Start exit timer.
           // while(true) {} ///ano Uncomment this line to test BackupTerminator.
 

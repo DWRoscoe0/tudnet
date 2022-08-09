@@ -133,7 +133,7 @@ public class OuterApp { // The outer part of app, with a very limited UI.
       if ( theAppInstanceManager.tryDelegatingToAnotherAppInstanceB() )
         ; // Do nothing because delegation succeeded and shutdown is requested.
         else
-        { // Delegation failed.  Present inner app UI to user and interacting.
+        { // Delegation failed.  Present inner app UI to user and interact.
           InnerApp theInnerApp= theAppFactory.getInnerApp();
           theInnerApp.runV(); // Running inner app until shutdown is requested.
             // Network operations happen at this time also.

@@ -59,7 +59,10 @@ public class AppFactory {  // For App class lifetimes.
   private final ConnectionManager theConnectionManager;
 
   public AppFactory(   // Factory constructor.
-      CommandArgs inCommandArgs, Persistent inPersistent)
+      CommandArgs inCommandArgs, 
+      Persistent inPersistent,
+      ThreadScheduler theThreadScheduler
+      )
     {
       theAppLog.info("AppFactory(.) entry.");
 
@@ -110,7 +113,6 @@ public class AppFactory {  // For App class lifetimes.
         new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE, "mccmp");
       NetcasterQueue unconnectedReceiverToConnectionManagerNetcasterQueue=
           new NetcasterQueue(cmThreadLockAndSignal, Config.QUEUE_SIZE, "urcmp");
-      ThreadScheduler theThreadScheduler= ThreadScheduler.theThreadScheduler;
       theTextStreams2= new TextStreams2(
           "Replication-Text-Streams",this,thePersistent,theUnicasterManager);
       theConnectionManager= new ConnectionManager(

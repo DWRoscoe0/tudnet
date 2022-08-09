@@ -51,13 +51,18 @@ public class ThreadScheduler extends ScheduledThreadPoolExecutor
       {
         super(corePoolSize, handler);
         }
+    
+    protected void terminated() /// Added to determine cause of shutdown. 
+      {
+        theAppLog.debug("ThreadScheduler:terminated() called.");
+        }
 
     static public ThreadScheduler 
         // Single ThreadScheduler for many app threads and timers.
         theThreadScheduler= new ThreadScheduler(
             10, /// 5, // Fixed thread pool size.
             (theRunnable,theThreadPoolExecutor) -> { theAppLog.error(
-                "ThreadScheduler rejected execution."); }
+                "theThreadScheduler: RejectedExecutionHandler called."); }
             ); // Minimum of 1 thread,
 
   }
