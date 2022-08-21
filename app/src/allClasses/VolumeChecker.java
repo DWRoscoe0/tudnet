@@ -198,7 +198,7 @@ public class VolumeChecker
             break goReportErrorOrSuccessAndReturn;
             }
         theAppLog.debug("VolumeChecker.checkVolumeV(.) checking approved.");
-        progressReportSetV( () -> getVolumeWriteReadReportString() );
+        progressReportBeginV( () -> getVolumeWriteReadReportString() );
         pushOperationV("Volume-Check");
         theAppLog.debug(
             "VolumeChecker.checkVolumeV(.) deleting old temporary files.");
@@ -211,7 +211,6 @@ public class VolumeChecker
               "error occurred while creating folder", resultString);
           break goFinishPassAndReturn;
           }
-        progressReportSetV( () -> getVolumeWriteReadReportString() );
         progressReportUpdateV(); // First, slow progress report.
         theAppLog.debug("VolumeChecker.checkVolumeV(.) starting writeTest...");
         resultString= writeTestReturnString(buildFolderFile);
@@ -241,7 +240,7 @@ public class VolumeChecker
         progressReportUpdateV();
       }  // goReportErrorOrSuccessAndReturn:
         theAppLog.debug("after goReportErrorOrSuccessAndReturn:...");
-        progressReportResetV(); // End progress reports.
+        progressReportEndV(); // End progress reports.
         java.awt.Toolkit.getDefaultToolkit().beep(); // Get user's attention.
         if (! EpiString.isAbsentB(resultString)) // Report error or success.
           appendWithPromptSlowlyAndWaitForKeyV( // Report error.
@@ -330,12 +329,12 @@ public class VolumeChecker
         queueAndDisplayOutputSlowV(
             "\nPress any key to terminate the following file scan.\n");
         theAppLog.debug("starting deletionScan...");
-        progressReportSetV( deletionScanProgressReportSupplierOfString );
+        progressReportBeginV( deletionScanProgressReportSupplierOfString );
         resultString= FileOps.parentPostorderTraversalReturningString(
           volumeFile, deletionScanFunctionOfFileToString);
         theAppLog.debug("in maybeDeleteAllVolumeFilesReturnString(.)...");
         progressReportUpdateV(); // Do final progress report.
-        progressReportResetV(); // Make last progress report permanent. 
+        progressReportEndV(); // Make last progress report permanent. 
         if (null != resultString) // Handle possible traversal termination.
           { // Handle traversal termination.
             if ("file scan terminated by user" == resultString)

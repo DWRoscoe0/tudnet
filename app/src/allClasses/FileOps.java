@@ -16,6 +16,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.Iterator;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import allClasses.bundles.BundleOf2;
@@ -159,7 +160,7 @@ public class FileOps
             );
         }
 
-    public static String tryCopyFileReturnString( 
+    public static String tryCopyFileReturnString(
         File sourceFile, File destinationFile)
       /* This method tries to copy the sourceFile to the destinationFile.
         It returns null if the copy succeeds, 
@@ -433,6 +434,7 @@ public class FileOps
         String errorString;
         long startTimeMsL= System.currentTimeMillis();
         int byteCountI= 0;
+        bytesProcessedL= 0;
         try {
           byte[] bufferAB= new byte[1024];
           int lengthI;
@@ -442,6 +444,7 @@ public class FileOps
               { errorString= null; break; } // Record success and exit loop.
             theOutputStream.write(bufferAB, 0, lengthI);
             byteCountI+= lengthI;
+            bytesProcessedL+= lengthI;
             if (EpiThread.testInterruptB()) { // Thread interruption.
               errorString= "terminated by thread interrupt";
               break; // Exit loop without success.
@@ -961,5 +964,14 @@ public class FileOps
       {
         return Misc.dateAndTimeAkaMsString( theFile.lastModified() );
         }
+
+    
+    // Monitoring and progress-report code.
+    
+    private static long bytesProcessedL;
+
+    public static Supplier<String> fileOpsProgressReportSupplierOfString= 
+       () -> "\nTEST-REPORT, bytesProcessedL=" + bytesProcessedL ;
+
 
     }

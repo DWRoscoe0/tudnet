@@ -140,60 +140,78 @@ public class ConsoleBase
     private boolean progressReportsEnabledB= true;
     private final long progressReportDefaultPollPeriodMsL= 250;
     private final long progressReportBackgroundPeriodMsL= 1000;
-    private int progressReportHeadOffsetI= -1; /* -1 means report inactive. */
+    private int progressReportHeadOffsetI= -1; /* -1 means report inactive. 
+      This is the offset in the document of the progress report beginning.  */
     private int progressReportMaximumLengthI= -1;
     private long timeOfPreviousUpdateMsL;
     private ScheduledFuture<?> outputFuture;
     private Supplier<String> emptyProgressReportSupplierOfString= 
-      new Supplier<String>() {
-        public String get(){ return "!"; } 
-        };
-    private Supplier<String> progressReportSupplierOfString= 
-      new Supplier<String>() {
-        public String get(){ return "PROGRESS REPORT STUB!"; } 
-        };
+      () -> "!" ;
+    private Supplier<String> theProgressReportSupplierOfString= 
+      () -> "UNDEFINED PROGRESS-REPORT" ;
 
-    protected synchronized void progressReportResetV()
-      /* This method resets the progress report system
-       * in preparation for producing empty progress reports.
+    protected synchronized void progressReportUndoV()
+      /* This method undoes any presently displayed progress report 
+       * and then resets the progress report system.
+       * This is useful for temporary progress reports which
+       * disappear after use.
+       */
+      {
+        replaceDocumentTailAt1With2V( // Do simple and complete replacement.
+            progressReportHeadOffsetI,
+            ""
+            );
+        progressReportMaximumLengthI= 0; // Set report length to be 0.
+        this.theProgressReportSupplierOfString= // Set Supplier to return "".
+            emptyProgressReportSupplierOfString;
+        /// theAppLog.debug("ConsoleBase.progressReportResetV(() ends.");
+        }
+
+    protected synchronized void progressReportEndV()
+      /* This method ends the present progress report and sets the system to:
+       * * Stop producing timer-triggered reports.
+       * * To produce empty reports if activated.
+       * * To put any produced report at the end of the present document.
        */
       {
         /// theAppLog.debug("ConsoleBase.progressReportResetV(() begins.");
-        if (null != outputFuture) {
+        if (null != outputFuture) { // Cancel timer-triggered progress reports.
           /// theAppLog.debug(
           ///     "ConsoleBase.progressReportResetV(() outputFuture.cancel(true).");
           outputFuture.cancel(true);
           outputFuture= null;
           }
-        progressReportHeadOffsetI= thePlainDocument.getLength();
-        progressReportMaximumLengthI= 0;
-        this.progressReportSupplierOfString= 
+        progressReportHeadOffsetI= // Set report beginning to be document end.
+            thePlainDocument.getLength();
+        progressReportMaximumLengthI= 0; // Set report length to be 0.
+        this.theProgressReportSupplierOfString= // Set Supplier to return "".
             emptyProgressReportSupplierOfString;
         /// theAppLog.debug("ConsoleBase.progressReportResetV(() ends.");
         }
 
-    protected synchronized void progressReportSetV(
+    protected synchronized void progressReportBeginV(
         Supplier<String> newProgressReportSupplierOfString)
-      /* This method sets the progress report system
-       * in preparation for a new progress report.
-       * newProgressReportSupplierOfString is the Supplier of 
-       * the progress report String.
+      /* This method prepares the progress report system 
+       * for a new progress report.
+       * newProgressReportSupplierOfString is 
+       * the new Supplier of the progress report String.
        * It also sets up a timer to keep progress reports updating slowly
-       * if the regular program code stops polling an updater.
+       * if the regular program code doesn't do any report updates
+       * for a long time.
        */
       {
         /// theAppLog.debug("ConsoleBase.progressReportSetV(() begins.");
-        progressReportResetV(); // Do the common stuff.
-        this.progressReportSupplierOfString= // Override empty report
-            newProgressReportSupplierOfString; // with this.
-        outputFuture= theScheduledThreadPoolExecutor.scheduleAtFixedRate(
-          () -> {
+        progressReportEndV(); // Use the End operation to do the common stuff.
+        this.theProgressReportSupplierOfString= // Set report Supplier to be
+            newProgressReportSupplierOfString; // the new Supplier.
+        outputFuture= // Start timer to do slow periodic updates.
+          theScheduledThreadPoolExecutor.scheduleAtFixedRate( () -> {
             try { ///ano Handle ignored ThreadPoolExecutor Exceptions.
                 EpiThread.setPoolThreadNameV("BackgroundProgressReport");
                 if (progressReportsEnabledB)
                   progressReportUpdatePollV();
                 EpiThread.unsetPoolThreadNameV("BackgroundProgressReport");
-              } catch (Exception theException) {
+              } catch (Exception theException) { ///ano Handling continued.
                 Anomalies.displayDialogReturnString(
                   myToString()+"ConsoleBase.progressReportSetV(.) background",
                   theException.toString(),
@@ -201,7 +219,7 @@ public class ConsoleBase
                   );
               }
             },
-          progressReportBackgroundPeriodMsL, // delay.
+          progressReportBackgroundPeriodMsL, // initial delay.
           progressReportBackgroundPeriodMsL, // period.
           TimeUnit.MILLISECONDS
           );
@@ -248,27 +266,29 @@ public class ConsoleBase
        * It gets the content from progressReportSupplierOfString.
        * It outputs slowly any part of the report 
        * that extends past the existing document,
-       * thereby extending the document for next time.
+       * thereby slowly extending the document for next time.
+       * This prevents some multiple-line instantaneous scrolling.
+       * It doesn't prevent all of it because it doesn't account for newlines.
        */
       {
         /// theAppLog.debug("ConsoleBase.progressReportUpdateV() called.");
         timeOfPreviousUpdateMsL= getTimeMsL(); // Record update time.
-        String newTailString= progressReportSupplierOfString.get();
-        int newTailLengthI= newTailString.length();
-        if  // Document not being extended.
-          (newTailLengthI <= progressReportMaximumLengthI)
+        String newProgressReportString= theProgressReportSupplierOfString.get();
+        int newProgressReportLengthI= newProgressReportString.length();
+        if  // Document length IS NOT being extended.
+          (newProgressReportLengthI <= progressReportMaximumLengthI)
           replaceDocumentTailAt1With2V( // Do simple and complete replacement.
               progressReportHeadOffsetI,
-              newTailString
+              newProgressReportString
               );
-          else // We will have a new maximum document length.
-          { // Fast replace tail and slow output remainder.
+          else // Document length IS being extended.
+          { // Fast-replace the tail and do slow output of remainder.
             replaceDocumentTailAt1With2V( // Replace common part.
               progressReportHeadOffsetI, 
-              newTailString.substring(0,progressReportMaximumLengthI));
+              newProgressReportString.substring(0,progressReportMaximumLengthI));
             appendSlowlyV( // Append remainder slowly.
-                newTailString.substring(progressReportMaximumLengthI));
-            progressReportMaximumLengthI= newTailLengthI; // Update new maximum length.
+                newProgressReportString.substring(progressReportMaximumLengthI));
+            progressReportMaximumLengthI= newProgressReportLengthI; // Update new maximum length.
           }
         }
 

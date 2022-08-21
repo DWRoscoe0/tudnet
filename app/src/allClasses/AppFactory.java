@@ -222,7 +222,7 @@ public class AppFactory {  // For App class lifetimes.
         theSwingUI,
         theShutdowner,
         theTCPCopier,
-        theThreadScheduler,
+        //// theThreadScheduler,
         newAppInstanceManager,
         theConnectionManager,
         theDataRoot,

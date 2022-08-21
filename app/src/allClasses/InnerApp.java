@@ -1,7 +1,5 @@
 package allClasses;
 
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-
 import javax.swing.JFrame;
 
 import allClasses.javafx.JavaFXGUI;
@@ -49,7 +47,7 @@ public class InnerApp
     private SwingUI theSwingUI;
     private Shutdowner theShutdowner;
     private TCPCopier theTCPCopier;
-    private ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor;
+    //// private ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor;
     private AppInstanceManager theAppInstanceManager;
     private ConnectionManager theConnectionManager;
     private DataRoot theDataRoot;
@@ -64,7 +62,7 @@ public class InnerApp
         SwingUI theSwingUI,
         Shutdowner theShutdowner,
         TCPCopier theTCPCopier,
-        ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor,
+        //// ScheduledThreadPoolExecutor theScheduledThreadPoolExecutor,
         AppInstanceManager theAppInstanceManager,
         ConnectionManager theConnectionManager,
         DataRoot theDataRoot,
@@ -78,7 +76,7 @@ public class InnerApp
         this.theSwingUI= theSwingUI;
         this.theShutdowner= theShutdowner;
         this.theTCPCopier= theTCPCopier;
-        this.theScheduledThreadPoolExecutor= theScheduledThreadPoolExecutor;
+        //// this.theScheduledThreadPoolExecutor= theScheduledThreadPoolExecutor;
         this.theAppInstanceManager= theAppInstanceManager;
         this.theConnectionManager= theConnectionManager;
         this.theDataRoot= theDataRoot;
