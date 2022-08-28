@@ -971,7 +971,10 @@ public class FileOps
     private static long bytesProcessedL;
 
     public static Supplier<String> fileOpsProgressReportSupplierOfString= 
-       () -> "\nTEST-REPORT, bytesProcessedL=" + bytesProcessedL ;
+       () -> 
+          "\nFileOps: bytesProcessedL=" 
+          + bytesProcessedL
+          + OSTime.getOsIoString();
 
 
     }

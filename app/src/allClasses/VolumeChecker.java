@@ -179,7 +179,7 @@ public class VolumeChecker
         writtenBytesL= 0;
         readCheckedBytesL=0;
         doneTimeMsL= 0;
-        passStartTimeMsL= getTimeMsL();
+        passStartTimeMsL= Misc.getTimeMsL();
         volumeTotalBytesL= volumeFile.getTotalSpace();
         spinnerStepStateI= 0;
         queueAndDisplayOutputSlowV("\n\nChecking " + volumeFile + "\n");
@@ -198,7 +198,8 @@ public class VolumeChecker
             break goReportErrorOrSuccessAndReturn;
             }
         theAppLog.debug("VolumeChecker.checkVolumeV(.) checking approved.");
-        progressReportBeginV( () -> getVolumeWriteReadReportString() );
+        progressReportBeginV(
+              () -> getVolumeWriteReadReportString() );
         pushOperationV("Volume-Check");
         theAppLog.debug(
             "VolumeChecker.checkVolumeV(.) deleting old temporary files.");
@@ -385,7 +386,7 @@ public class VolumeChecker
         toCheckDoneBytesL=0;
         remainingFileBytesL= bytesPerFileL;
         volumeDoneFilesL= 0; // Index of next file to write.
-        passStartTimeMsL= getTimeMsL();
+        passStartTimeMsL= Misc.getTimeMsL();
         progressReportUpdateV(); // Initial progress report of write test.
         toCheckRemainingBytesL= testFolderFile.getUsableSpace();
         pushOperationV("FILE-NAME");
@@ -508,7 +509,7 @@ public class VolumeChecker
         toCheckDoneBytesL=0;
         remainingFileBytesL= bytesPerFileL;
         volumeDoneFilesL= 0;
-        passStartTimeMsL= getTimeMsL();
+        passStartTimeMsL= Misc.getTimeMsL();
         pushOperationV("read-and-compare pass");
         pushOperationV("FILE-NAME");
         try {
@@ -811,7 +812,7 @@ public class VolumeChecker
 
     private String timeString()
       {
-        long presentTimeMsL= getTimeMsL(); // [Try to] measure the time.
+        long presentTimeMsL= Misc.getTimeMsL(); // [Try to] measure the time.
         long safeToCheckDoneBytesL= // Prevent divide-by-zero ahead. 
             (0 == toCheckDoneBytesL) ? Integer.MAX_VALUE : toCheckDoneBytesL;
         doneTimeMsL= presentTimeMsL - passStartTimeMsL;
@@ -847,7 +848,7 @@ public class VolumeChecker
 
     private String speedString()
       {
-        long timeNowMsL= getTimeMsL(); // [Try to] measure the time.
+        long timeNowMsL= Misc.getTimeMsL(); // [Try to] measure the time.
         long speedDeltaTimeMsL= timeNowMsL - speedIntervalStartTimeMsL;
         if (250 <= speedDeltaTimeMsL) // If enough time has passed, 1/4 second,
           { // recalculate speeds.
@@ -878,7 +879,7 @@ public class VolumeChecker
       {
         final long stepPeriodMsL= // Set minimum step period.
             125; // This means a maximum of 8 steps, 1 revolution, per second.
-        long presentTimeMsL= getTimeMsL(); // [Try to] measure the time.
+        long presentTimeMsL= Misc.getTimeMsL(); // [Try to] measure the time.
         long timeSinceLastStepMsL= presentTimeMsL - timeOfLastSpinnerStepMsL;
         if // Step spinner if it's time.
           ((timeSinceLastStepMsL < 0) || (timeSinceLastStepMsL > stepPeriodMsL))

@@ -230,4 +230,11 @@ public class Misc
         return resultDateString;
         }
 
-  } // class Misc 
+
+    public static long getTimeMsL()
+      { 
+        return System.currentTimeMillis();
+        // return System.nanoTime()/1000;
+        }
+
+    } // class Misc 

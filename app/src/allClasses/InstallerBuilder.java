@@ -155,11 +155,12 @@ public class InstallerBuilder
             FileOps.makeRelativeToAppFolderFile(Config.appString + ".exe");
         File destinationFile= 
             new File(destinationFolderFile, sourceFile.getName());
-        //// progressReportBeginV( () -> "\nTEST-REPORT" );
-        progressReportBeginV(FileOps.fileOpsProgressReportSupplierOfString);
+        progressReportBeginV(
+            FileOps.fileOpsProgressReportSupplierOfString);
+        progressReportUpdateV();
         errorString= FileOps.tryCopyFileReturnString(
             sourceFile, destinationFile);
-        progressReportUndoV();
+        /// progressReportUndoV();
         progressReportEndV();
         if (! EpiString.isAbsentB(errorString))
           errorString= EpiString.combine1And2WithNewlineString(

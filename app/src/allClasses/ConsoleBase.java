@@ -1,7 +1,6 @@
 package allClasses;
 
 
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -56,7 +55,8 @@ public class ConsoleBase
       There are methods for getting, setting, 
       and listening for changes in its content.
        */
-
+    protected ProgressReport theProgressReport= new ProgressReport();
+    
     public ConsoleBase( // constructor
         String nameString, // Node name.
         Persistent thePersistent,
@@ -136,20 +136,8 @@ public class ConsoleBase
      * For more information, see class ThreadScheduler.
      * 
      */
-
-    private boolean progressReportsEnabledB= true;
-    private final long progressReportDefaultPollPeriodMsL= 250;
-    private final long progressReportBackgroundPeriodMsL= 1000;
-    private int progressReportHeadOffsetI= -1; /* -1 means report inactive. 
-      This is the offset in the document of the progress report beginning.  */
-    private int progressReportMaximumLengthI= -1;
-    private long timeOfPreviousUpdateMsL;
-    private ScheduledFuture<?> outputFuture;
-    private Supplier<String> emptyProgressReportSupplierOfString= 
-      () -> "!" ;
-    private Supplier<String> theProgressReportSupplierOfString= 
-      () -> "UNDEFINED PROGRESS-REPORT" ;
-
+    //// That code has been moved.
+  
     protected synchronized void progressReportUndoV()
       /* This method undoes any presently displayed progress report 
        * and then resets the progress report system.
@@ -158,12 +146,12 @@ public class ConsoleBase
        */
       {
         replaceDocumentTailAt1With2V( // Do simple and complete replacement.
-            progressReportHeadOffsetI,
+            theProgressReport.progressReportHeadOffsetI,
             ""
             );
-        progressReportMaximumLengthI= 0; // Set report length to be 0.
-        this.theProgressReportSupplierOfString= // Set Supplier to return "".
-            emptyProgressReportSupplierOfString;
+        theProgressReport.progressReportMaximumLengthI= 0;
+        theProgressReport.theProgressReportSupplierOfString= // Use "" Supplier.
+            theProgressReport.emptyProgressReportSupplierOfString;
         /// theAppLog.debug("ConsoleBase.progressReportResetV(() ends.");
         }
 
@@ -175,17 +163,18 @@ public class ConsoleBase
        */
       {
         /// theAppLog.debug("ConsoleBase.progressReportResetV(() begins.");
-        if (null != outputFuture) { // Cancel timer-triggered progress reports.
-          /// theAppLog.debug(
-          ///     "ConsoleBase.progressReportResetV(() outputFuture.cancel(true).");
-          outputFuture.cancel(true);
-          outputFuture= null;
-          }
-        progressReportHeadOffsetI= // Set report beginning to be document end.
-            thePlainDocument.getLength();
-        progressReportMaximumLengthI= 0; // Set report length to be 0.
-        this.theProgressReportSupplierOfString= // Set Supplier to return "".
-            emptyProgressReportSupplierOfString;
+        if (null != theProgressReport.outputFuture) 
+          { // Cancel timer-triggered progress reports.
+            /// theAppLog.debug(
+            ///     "ConsoleBase.progressReportResetV(() outputFuture.cancel(true).");
+            theProgressReport.outputFuture.cancel(true);
+            theProgressReport.outputFuture= null;
+            }
+        theProgressReport.progressReportHeadOffsetI= // Set beginning to be
+            thePlainDocument.getLength(); // document end.
+        theProgressReport.progressReportMaximumLengthI= 0;
+        theProgressReport.theProgressReportSupplierOfString= // Set "" Supplier.
+            theProgressReport.emptyProgressReportSupplierOfString;
         /// theAppLog.debug("ConsoleBase.progressReportResetV(() ends.");
         }
 
@@ -202,13 +191,13 @@ public class ConsoleBase
       {
         /// theAppLog.debug("ConsoleBase.progressReportSetV(() begins.");
         progressReportEndV(); // Use the End operation to do the common stuff.
-        this.theProgressReportSupplierOfString= // Set report Supplier to be
+        theProgressReport.theProgressReportSupplierOfString= // Set Supplier to
             newProgressReportSupplierOfString; // the new Supplier.
-        outputFuture= // Start timer to do slow periodic updates.
+        theProgressReport.outputFuture= // Start timer for periodic updates.
           theScheduledThreadPoolExecutor.scheduleAtFixedRate( () -> {
             try { ///ano Handle ignored ThreadPoolExecutor Exceptions.
                 EpiThread.setPoolThreadNameV("BackgroundProgressReport");
-                if (progressReportsEnabledB)
+                if (theProgressReport.progressReportsEnabledB)
                   progressReportUpdatePollV();
                 EpiThread.unsetPoolThreadNameV("BackgroundProgressReport");
               } catch (Exception theException) { ///ano Handling continued.
@@ -219,46 +208,13 @@ public class ConsoleBase
                   );
               }
             },
-          progressReportBackgroundPeriodMsL, // initial delay.
-          progressReportBackgroundPeriodMsL, // period.
+          theProgressReport.progressReportBackgroundPeriodMsL, // initial delay.
+          theProgressReport.progressReportBackgroundPeriodMsL, // period.
           TimeUnit.MILLISECONDS
           );
         /// Nulls.fastFailNullCheckT(null); ///
         /// theAppLog.debug("ConsoleBase.progressReportSetV(() ends.");
         }
-
-    protected synchronized void progressReportUpdatePollV()
-      /* This method updates the progress report, maybe.
-       * It depends on how much time has passed since the previous report.
-       * If enough time has passed then it updates, otherwise it does nothing.
-       */
-      {
-        progressReportUpdatePollV(progressReportDefaultPollPeriodMsL);
-        }
-
-    protected synchronized void progressReportUpdatePollV(
-        long intervalLengthTimeMsL)
-      /* This method updates the progress report, maybe.
-       * It depends on how much time has passed since the previous report.
-       * If enough time has passed then it updates, otherwise it does nothing.
-       */
-      {
-      goReturn: {
-        long timeNowMsL= getTimeMsL(); // Measure the present time.
-        long timeSincePreviousUpdateMsL= 
-            timeNowMsL - timeOfPreviousUpdateMsL;
-        if // Exit if time now is within do-nothing wait interval.
-          ( (0 <= timeSincePreviousUpdateMsL)
-            && (timeSincePreviousUpdateMsL < intervalLengthTimeMsL) )
-          { 
-            /// theAppLog.appendToFileV(NL+"[npr!!!]"); 
-            break goReturn; 
-            }
-        /// theAppLog.appendToFileV(NL+"[upr]");
-        progressReportUpdateV(); // This also records update time.
-      } // goReturn:
-        return;
-      }
 
     protected synchronized void progressReportUpdateV()
       /* This method unconditionally updates the progress report 
@@ -272,33 +228,72 @@ public class ConsoleBase
        */
       {
         /// theAppLog.debug("ConsoleBase.progressReportUpdateV() called.");
-        timeOfPreviousUpdateMsL= getTimeMsL(); // Record update time.
-        String newProgressReportString= theProgressReportSupplierOfString.get();
+        theProgressReport.timeOfPreviousUpdateMsL= 
+            Misc.getTimeMsL(); // Record update time.
+        String newProgressReportString= 
+            theProgressReport.theProgressReportSupplierOfString.get();
         int newProgressReportLengthI= newProgressReportString.length();
         if  // Document length IS NOT being extended.
-          (newProgressReportLengthI <= progressReportMaximumLengthI)
+          ( newProgressReportLengthI <= 
+            theProgressReport.progressReportMaximumLengthI)
           replaceDocumentTailAt1With2V( // Do simple and complete replacement.
-              progressReportHeadOffsetI,
+              theProgressReport.progressReportHeadOffsetI,
               newProgressReportString
               );
           else // Document length IS being extended.
           { // Fast-replace the tail and do slow output of remainder.
             replaceDocumentTailAt1With2V( // Replace common part.
-              progressReportHeadOffsetI, 
-              newProgressReportString.substring(0,progressReportMaximumLengthI));
+              theProgressReport.progressReportHeadOffsetI, 
+              newProgressReportString.substring(
+                  0,theProgressReport.progressReportMaximumLengthI));
             appendSlowlyV( // Append remainder slowly.
-                newProgressReportString.substring(progressReportMaximumLengthI));
-            progressReportMaximumLengthI= newProgressReportLengthI; // Update new maximum length.
+                newProgressReportString.substring(
+                    theProgressReport.progressReportMaximumLengthI));
+            theProgressReport.progressReportMaximumLengthI= 
+                newProgressReportLengthI; // Update new maximum length.
           }
         }
 
+    protected synchronized void progressReportUpdatePollV()
+      /* This method updates the progress report, maybe.
+       * It depends on how much time has passed since the previous report.
+       * If enough time has passed then it updates, otherwise it does nothing.
+       */
+      {
+        progressReportUpdatePollV(
+            theProgressReport.progressReportDefaultPollPeriodMsL);
+        }
+
+    protected synchronized void progressReportUpdatePollV(
+        long intervalLengthTimeMsL)
+      /* This method updates the progress report, maybe.
+       * It depends on how much time has passed since the previous report.
+       * If enough time has passed then it updates, otherwise it does nothing.
+       */
+      {
+      goReturn: {
+        long timeNowMsL= Misc.getTimeMsL(); // Measure the present time.
+        long timeSincePreviousUpdateMsL= 
+            timeNowMsL - theProgressReport.timeOfPreviousUpdateMsL;
+        if // Exit if time now is within do-nothing wait interval.
+          ( (0 <= timeSincePreviousUpdateMsL)
+            && (timeSincePreviousUpdateMsL < intervalLengthTimeMsL) )
+          { 
+            /// theAppLog.appendToFileV(NL+"[npr!!!]"); 
+            break goReturn; 
+            }
+        /// theAppLog.appendToFileV(NL+"[upr]");
+        progressReportUpdateV(); // This also records update time.
+      } // goReturn:
+        return;
+      }
     
     // Utility code begins.
 
     protected String testInterruptionGetConfirmation1ReturnResultString(
         String confirmationQuestionString,String resultDescriptionString)
       {
-        progressReportsEnabledB= false;
+        theProgressReport.progressReportsEnabledB= false;
         String returnString= null; // Assume no interruption.
       toReturn: {
         if  // Exit if no interruption key pressed.
@@ -309,7 +304,7 @@ public class ConsoleBase
           break toReturn;
         returnString= resultDescriptionString; // Override return value.
       } // toReturn:
-        progressReportsEnabledB= true;
+        theProgressReport.progressReportsEnabledB= true;
         return returnString;
       }
 
@@ -426,7 +421,7 @@ public class ConsoleBase
         queueOutputV(theString);
         appendQueuedOutputSlowV();
         }
-      
+
     protected void queueOutputV(String theString)
       /* This method adds theString to the output queue.
        */
@@ -689,11 +684,5 @@ public class ConsoleBase
         return resultTreeStuff; // Return the view that was created.
         }
 
-
-    protected long getTimeMsL()
-      { 
-        return System.currentTimeMillis();
-        // return System.nanoTime()/1000;
-        }
 
     }
