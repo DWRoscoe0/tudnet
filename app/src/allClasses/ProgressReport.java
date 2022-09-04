@@ -19,9 +19,11 @@ public class ProgressReport
     
     public boolean progressReportsEnabledB= true;
     public final long progressReportDefaultPollPeriodMsL= 250;
-    public final long progressReportBackgroundPeriodMsL= 3000; /// 1000;
+    public final long progressReportBackgroundPeriodMsL= 1000;
     public int progressReportHeadOffsetI= -1; /* -1 means report inactive. 
       This is the offset in the document of the progress report beginning.  */
+    public String progressReportString= "";
+    public int progressReportLengthI= -1;
     public int progressReportMaximumLengthI= -1;
     public long timeOfPreviousUpdateMsL;
     public ScheduledFuture<?> outputFuture;

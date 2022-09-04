@@ -55,6 +55,7 @@ public class ConsoleBase
       There are methods for getting, setting, 
       and listening for changes in its content.
        */
+    protected int editingOffsetI= 0; // Offset to use if none is specified.
     protected ProgressReport theProgressReport= new ProgressReport();
     
     public ConsoleBase( // constructor
@@ -101,6 +102,8 @@ public class ConsoleBase
         /// theAppLog.debug(myToString()+"ConsoleBase.run() begins.");
         EpiThread.setPoolThreadNameV("ConsoleBaseThread");
         try { ///ano Handle ignored ThreadPoolExecutor Exceptions.
+            queueAndDisplayOutputSlowV(" *-TEST-TAIL-* "); /// debug
+            editingOffsetI= 0; /// debug
             mainThreadLogicV();
           } catch (Exception theException) {
             Anomalies.displayDialogReturnString(
@@ -143,12 +146,17 @@ public class ConsoleBase
        * and then resets the progress report system.
        * This is useful for temporary progress reports which
        * disappear after use.
+       * 
+       * ///fix This is presently not being used.
+       *   It should not be using replaceDocumentTailAt1With2V(.)
+       *   which is being deprecated. 
        */
       {
         replaceDocumentTailAt1With2V( // Do simple and complete replacement.
             theProgressReport.progressReportHeadOffsetI,
             ""
             );
+        theProgressReport.progressReportLengthI= 0;
         theProgressReport.progressReportMaximumLengthI= 0;
         theProgressReport.theProgressReportSupplierOfString= // Use "" Supplier.
             theProgressReport.emptyProgressReportSupplierOfString;
@@ -171,7 +179,9 @@ public class ConsoleBase
             theProgressReport.outputFuture= null;
             }
         theProgressReport.progressReportHeadOffsetI= // Set beginning to be
-            thePlainDocument.getLength(); // document end.
+            //// thePlainDocument.getLength(); // document end.
+            editingOffsetI;
+        theProgressReport.progressReportLengthI= 0;
         theProgressReport.progressReportMaximumLengthI= 0;
         theProgressReport.theProgressReportSupplierOfString= // Set "" Supplier.
             theProgressReport.emptyProgressReportSupplierOfString;
@@ -216,44 +226,6 @@ public class ConsoleBase
         /// theAppLog.debug("ConsoleBase.progressReportSetV(() ends.");
         }
 
-    protected synchronized void progressReportUpdateV()
-      /* This method unconditionally updates the progress report 
-       * to the display by writing it to the thePlainDocument.
-       * It gets the content from progressReportSupplierOfString.
-       * It outputs slowly any part of the report 
-       * that extends past the existing document,
-       * thereby slowly extending the document for next time.
-       * This prevents some multiple-line instantaneous scrolling.
-       * It doesn't prevent all of it because it doesn't account for newlines.
-       */
-      {
-        /// theAppLog.debug("ConsoleBase.progressReportUpdateV() called.");
-        theProgressReport.timeOfPreviousUpdateMsL= 
-            Misc.getTimeMsL(); // Record update time.
-        String newProgressReportString= 
-            theProgressReport.theProgressReportSupplierOfString.get();
-        int newProgressReportLengthI= newProgressReportString.length();
-        if  // Document length IS NOT being extended.
-          ( newProgressReportLengthI <= 
-            theProgressReport.progressReportMaximumLengthI)
-          replaceDocumentTailAt1With2V( // Do simple and complete replacement.
-              theProgressReport.progressReportHeadOffsetI,
-              newProgressReportString
-              );
-          else // Document length IS being extended.
-          { // Fast-replace the tail and do slow output of remainder.
-            replaceDocumentTailAt1With2V( // Replace common part.
-              theProgressReport.progressReportHeadOffsetI, 
-              newProgressReportString.substring(
-                  0,theProgressReport.progressReportMaximumLengthI));
-            appendSlowlyV( // Append remainder slowly.
-                newProgressReportString.substring(
-                    theProgressReport.progressReportMaximumLengthI));
-            theProgressReport.progressReportMaximumLengthI= 
-                newProgressReportLengthI; // Update new maximum length.
-          }
-        }
-
     protected synchronized void progressReportUpdatePollV()
       /* This method updates the progress report, maybe.
        * It depends on how much time has passed since the previous report.
@@ -287,7 +259,71 @@ public class ConsoleBase
       } // goReturn:
         return;
       }
-    
+
+    protected synchronized void progressReportUpdateV()
+      /* This method unconditionally updates the progress report 
+       * to the display by writing it to the thePlainDocument.
+       * It gets the report content from progressReportSupplierOfString.
+       * It outputs slowly any part of the report 
+       * that extends past the existing document,
+       * thereby slowly extending the document for next time.
+       * 
+       * ///enh The purpose of the conditional slow output 
+       *   is to reduce jerky multiple-line instantaneous scrolling.
+       *   It doesn't prevent all of it because it doesn't account for newlines.
+       *   What it should do is output slowly the tail part of the content
+       *   that occurs after the end of the document based on lines,
+       *   not based on characters.
+       *   Hard newlines could be counted.  Newlines resulting from 
+       *   wrap-around would be more difficult to calculate.
+       */
+      {
+        /// theAppLog.debug("ConsoleBase.progressReportUpdateV() called.");
+        String documentString = null; 
+        try {
+          documentString= 
+              thePlainDocument.getText(0,thePlainDocument.getLength());
+        } catch (BadLocationException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        }
+        String string = documentString; string=null;
+        theProgressReport.timeOfPreviousUpdateMsL= 
+            Misc.getTimeMsL(); // Record update time.
+        //// String oldProgressReportString= theProgressReport.progressReportString; 
+        int oldProgressReportLengthI= theProgressReport.progressReportLengthI;
+        String newProgressReportString= 
+            theProgressReport.theProgressReportSupplierOfString.get();
+        int newProgressReportLengthI= newProgressReportString.length();
+        //// theProgressReport.progressReportLengthI= newProgressReportLengthI;
+        if  // Progress report length IS NOT being extended.
+          ////( theProgressReport.progressReportLengthI <=
+            ( newProgressReportLengthI <= 
+              theProgressReport.progressReportMaximumLengthI)
+          replaceInDocumentV( // Do simple and complete replacement of report.
+              theProgressReport.progressReportHeadOffsetI,
+              oldProgressReportLengthI,
+              newProgressReportString
+              );
+          else // Progress report length IS being extended.
+          { // Fast-replace the tail and do slow output of remainder.
+            replaceInDocumentV( // Replace report with front part of new one.
+              theProgressReport.progressReportHeadOffsetI, 
+              theProgressReport.progressReportMaximumLengthI,
+              newProgressReportString.substring(
+                  0,theProgressReport.progressReportMaximumLengthI));
+            appendSlowlyV( // Append remainder slowly.
+                newProgressReportString.substring(
+                    theProgressReport.progressReportMaximumLengthI));
+            theProgressReport.progressReportMaximumLengthI= 
+                //// theProgressReport.progressReportLengthI;
+                newProgressReportLengthI;
+          }
+        theProgressReport.progressReportString= newProgressReportString; 
+        theProgressReport.progressReportLengthI= newProgressReportLengthI;
+        }
+
+
     // Utility code begins.
 
     protected String testInterruptionGetConfirmation1ReturnResultString(
@@ -514,16 +550,32 @@ public class ConsoleBase
         }
 
     private void appendToDocumentV(String theString)
-      // Convenience method that appends to the document and handles exceptions.
+      /* Convenience method that appends to the document and handles exceptions.
+       * 
+       * ///tmp Note, though this method's name indicates an "append" operation,
+       *   it is actually an insert at the editingOffsetI.  
+       */
       {
-        replaceInDocumentV(
-          thePlainDocument.getLength(),
-           0,
-           theString
-           );
+        //// replaceInDocumentV(
+        insertInDocumentV( // Insert
+          editingOffsetI, /// at editing point
+          //// thePlainDocument.getLength(), // at end of document
+          ////  0,
+          theString // this string.
+          );
       }
 
-    protected void replaceDocumentTailAt1With2V(
+    private void insertInDocumentV(int offsetI,String theString)
+      // This method inserts theString into the document at offset offsetI.
+      {
+        replaceInDocumentV( // Replace in document the old string
+          offsetI, // starting at this offset
+          0, // and this long
+          theString // with this new string.
+          );
+      }
+
+    protected void replaceDocumentTailAt1With2V( ///fix Being deprecated.
         int tailOffsetI,String newTailString)
       /* This method replaces the tail end of the document.
        * This is used mainly for when the tail of the document
@@ -542,8 +594,9 @@ public class ConsoleBase
            int oldTextLengthI,
            String newTextString
            )
-      /* This method replaces a piece of the document by a new  piece
-       * and handles exceptions.
+      /* This general-purpose low-level method is used for all document edits.
+       * It replaces a piece of text in the document with a new  piece of text.
+       * It also handles any exceptions, which are not supposed to occur.
        */
       {
         try {
@@ -566,11 +619,14 @@ public class ConsoleBase
             SimpleAttributeSet.EMPTY // with no special attributes.
             );
           ///dbg logPlainDocumentStateV("after..replace");
+          editingOffsetI= oldTextOffsetI + newTextString.length();  
         } catch (BadLocationException theBadLocationException) {
           theAppLog.warning(
             "ConsoleBase.replaceInDocumentV(.) " + theBadLocationException);
         }
       }
+
+
 
     /*  ///dbg  Some methods I was using to debug.
 
